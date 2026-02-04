@@ -126,10 +126,10 @@ export default function AutoFollowUps() {
     if (!lead.cold_email_date) return null;
     
     if (!lead.email_follow_up_1_sent) {
-      return lead.email_follow_up_1_date || addDays(new Date(lead.cold_email_date), 3).toISOString().split('T')[0];
+      return lead.email_follow_up_1_date || addDays(new Date(lead.cold_email_date), 4).toISOString().split('T')[0];
     }
     if (!lead.email_follow_up_2_sent && lead.email_follow_up_1_date) {
-      return lead.email_follow_up_2_date || addDays(new Date(lead.email_follow_up_1_date), 4).toISOString().split('T')[0];
+      return lead.email_follow_up_2_date || addDays(new Date(lead.email_follow_up_1_date), 3).toISOString().split('T')[0];
     }
     return null;
   };

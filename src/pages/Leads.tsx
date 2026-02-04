@@ -1070,9 +1070,9 @@ export default function Leads() {
                           if (newDate) {
                             // Auto-calculate other dates based on sequence
                             const coldDate = new Date(newDate + 'T00:00:00');
-                            const smsDate = format(addDays(coldDate, 2), 'yyyy-MM-dd');
-                            const email1Date = format(addDays(coldDate, 6), 'yyyy-MM-dd');
-                            const email2Date = format(addDays(coldDate, 10), 'yyyy-MM-dd');
+                            const smsDate = format(addDays(coldDate, 1), 'yyyy-MM-dd');
+                            const email1Date = format(addDays(coldDate, 4), 'yyyy-MM-dd');
+                            const email2Date = format(addDays(coldDate, 7), 'yyyy-MM-dd');
                             setFormData({ 
                               ...formData, 
                               cold_email_date: newDate,
