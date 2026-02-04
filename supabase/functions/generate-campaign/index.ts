@@ -43,12 +43,12 @@ serve(async (req) => {
 
     const { clientName, industry, city, budget, objective, targetAudience, services } = validationResult.data;
     
-    const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
-    if (!GOOGLE_GEMINI_API_KEY) {
-      console.error('GOOGLE_GEMINI_API_KEY is not configured in Supabase Secrets');
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) {
+      console.error('GROQ_API_KEY is not configured in Supabase Secrets');
       return new Response(JSON.stringify({ 
-        error: 'Brak klucza Google Gemini API w Secrets',
-        details: 'Dodaj GOOGLE_GEMINI_API_KEY w panelu Supabase → Project Settings → Secrets'
+        error: 'Brak klucza Groq API w Secrets',
+        details: 'Dodaj GROQ_API_KEY w panelu Supabase → Project Settings → Secrets'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -114,52 +114,50 @@ Wygeneruj:
 4. 4 warianty copy w różnych stylach
 5. 5 rekomendacji optymalizacji`;
 
-    console.log('Generating campaign for:', clientName, '| Key present:', !!GOOGLE_GEMINI_API_KEY);
+    console.log('Generating campaign for:', clientName, '| Key present:', !!GROQ_API_KEY);
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GOOGLE_GEMINI_API_KEY, {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: systemPrompt + '\n\n' + userPrompt }]
-          }
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
         ],
-        generationConfig: {
-          temperature: 0.7,
-          responseMimeType: 'application/json',
-        },
+        temperature: 0.7,
+        response_format: { type: 'json_object' },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
+      console.error('Groq API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({
-          error: 'Przekroczono limit zapytań Gemini. Spróbuj ponownie za chwilę.',
+          error: 'Przekroczono limit zapytań Groq. Spróbuj ponownie za chwilę.',
           details: errorText,
         }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 403) {
+      if (response.status === 401) {
         return new Response(JSON.stringify({
-          error: 'Brak dostępu do Gemini (403). Sprawdź klucz API i restrykcje w Google AI Studio.',
+          error: 'Nieprawidłowy klucz Groq API (401). Sprawdź GROQ_API_KEY w Secrets.',
           details: errorText,
         }), {
-          status: 403,
+          status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       if (response.status === 400) {
         return new Response(JSON.stringify({
-          error: 'Nieprawidłowe zapytanie do Gemini (400). Sprawdź model i parametry.',
+          error: 'Nieprawidłowe zapytanie do Groq (400). Sprawdź model i parametry.',
           details: errorText,
         }), {
           status: 400,
@@ -167,9 +165,8 @@ Wygeneruj:
         });
       }
 
-      // Propagate upstream status + body for easier debugging on the client
       return new Response(JSON.stringify({
-        error: `Gemini API error: ${response.status}`,
+        error: `Groq API error: ${response.status}`,
         details: errorText,
       }), {
         status: response.status,
@@ -178,11 +175,10 @@ Wygeneruj:
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const content = data.choices?.[0]?.message?.content || '';
     
     let campaign;
     try {
-      // Gemini with responseMimeType='application/json' returns clean JSON
       campaign = JSON.parse(content);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
