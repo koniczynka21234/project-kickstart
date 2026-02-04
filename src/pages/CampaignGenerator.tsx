@@ -159,12 +159,40 @@ export default function CampaignGenerator() {
         body: formData,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error codes from edge function
+        const errorBody = error.message || '';
+        if (errorBody.includes('429') || errorBody.includes('Rate limit')) {
+          toast.error('Przekroczono limit zapytań AI. Spróbuj ponownie za chwilę.');
+        } else if (errorBody.includes('402') || errorBody.includes('Payment')) {
+          toast.error('Brak kredytów AI. Doładuj konto w ustawieniach workspace.');
+        } else {
+          throw error;
+        }
+        setCurrentStep(2);
+        return;
+      }
+
+      // Check for error in data response
+      if (data?.error) {
+        if (data.error.includes('429') || data.error.includes('limit')) {
+          toast.error('Przekroczono limit zapytań AI. Spróbuj za 1 minutę.');
+        } else if (data.error.includes('402') || data.error.includes('kredyt')) {
+          toast.error('Brak kredytów AI. Doładuj konto.');
+        } else {
+          toast.error(data.error);
+        }
+        setCurrentStep(2);
+        return;
+      }
 
       if (data?.campaign) {
         setCampaign(data.campaign);
         setCurrentStep(4);
-        toast.success('Kampania wygenerowana!');
+        toast.success('Kampania wygenerowana przez AI!');
+      } else {
+        toast.error('Brak danych kampanii w odpowiedzi');
+        setCurrentStep(2);
       }
     } catch (err: any) {
       console.error('Error generating campaign:', err);
