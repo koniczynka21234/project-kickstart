@@ -43,9 +43,9 @@ serve(async (req) => {
 
     const { clientName, industry, city, budget, objective, targetAudience, services } = validationResult.data;
     
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+    if (!GOOGLE_GEMINI_API_KEY) {
+      throw new Error('GOOGLE_GEMINI_API_KEY is not configured');
     }
 
     const systemPrompt = `Jesteś ekspertem od Facebook Ads dla branży beauty. Generujesz strategie kampanii reklamowych dla salonów kosmetycznych, fryzjerskich i spa.
@@ -109,53 +109,65 @@ Wygeneruj:
 
     console.log('Generating campaign for:', clientName);
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GOOGLE_GEMINI_API_KEY, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-3-flash-preview',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: systemPrompt + '\n\n' + userPrompt }]
+          }
         ],
-        temperature: 0.7,
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: 'application/json',
+        },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+      console.error('Gemini API error:', response.status, errorText);
       
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Przekroczono limit zapytań. Spróbuj ponownie za chwilę.' }), {
+        return new Response(JSON.stringify({ error: 'Przekroczono limit zapytań Gemini. Spróbuj ponownie za chwilę.' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Brak kredytów AI. Doładuj konto.' }), {
-          status: 402,
+      if (response.status === 403) {
+        return new Response(JSON.stringify({ error: 'Nieprawidłowy klucz API Gemini. Sprawdź konfigurację.' }), {
+          status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
     let campaign;
     try {
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : content;
-      campaign = JSON.parse(jsonStr.trim());
+      // Gemini with responseMimeType='application/json' returns clean JSON
+      campaign = JSON.parse(content);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      campaign = { rawContent: content };
+      // Try to extract JSON from markdown code blocks
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        try {
+          campaign = JSON.parse(jsonMatch[1].trim());
+        } catch {
+          campaign = { rawContent: content };
+        }
+      } else {
+        campaign = { rawContent: content };
+      }
     }
 
     console.log('Campaign generated successfully');
