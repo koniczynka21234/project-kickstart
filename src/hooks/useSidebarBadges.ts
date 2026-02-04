@@ -254,6 +254,9 @@ export function useSidebarBadges(userId: string | undefined) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'campaign_metrics' }, debouncedRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_reports' }, debouncedRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'auto_followup_logs' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pending_final_invoices' }, debouncedRefresh)
       .subscribe();
 
     return () => {
