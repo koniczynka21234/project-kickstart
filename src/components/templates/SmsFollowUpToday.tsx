@@ -71,9 +71,11 @@ export function SmsFollowUpToday() {
         supabase
           .from('leads')
           .select('id, salon_name, owner_name, city, phone, sms_follow_up_date')
-          .eq('sms_follow_up_date', today)
+          .lte('sms_follow_up_date', today) // Include overdue SMS too
           .eq('sms_follow_up_sent', false)
-          .order('salon_name'),
+          .eq('cold_email_sent', true) // SMS only after cold email sent
+          .not('status', 'in', '("converted","lost")') // Exclude converted/lost leads
+          .order('sms_follow_up_date', { ascending: true }),
         supabase
           .from('sms_templates')
           .select('*')
