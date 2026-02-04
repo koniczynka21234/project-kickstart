@@ -45,7 +45,14 @@ serve(async (req) => {
     
     const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
     if (!GOOGLE_GEMINI_API_KEY) {
-      throw new Error('GOOGLE_GEMINI_API_KEY is not configured');
+      console.error('GOOGLE_GEMINI_API_KEY is not configured in Supabase Secrets');
+      return new Response(JSON.stringify({ 
+        error: 'Brak klucza Google Gemini API w Secrets',
+        details: 'Dodaj GOOGLE_GEMINI_API_KEY w panelu Supabase → Project Settings → Secrets'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const systemPrompt = `Jesteś ekspertem od Facebook Ads dla branży beauty. Generujesz strategie kampanii reklamowych dla salonów kosmetycznych, fryzjerskich i spa.
@@ -107,7 +114,7 @@ Wygeneruj:
 4. 4 warianty copy w różnych stylach
 5. 5 rekomendacji optymalizacji`;
 
-    console.log('Generating campaign for:', clientName);
+    console.log('Generating campaign for:', clientName, '| Key present:', !!GOOGLE_GEMINI_API_KEY);
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GOOGLE_GEMINI_API_KEY, {
       method: 'POST',
@@ -147,6 +154,15 @@ Wygeneruj:
           details: errorText,
         }), {
           status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (response.status === 400) {
+        return new Response(JSON.stringify({
+          error: 'Nieprawidłowe zapytanie do Gemini (400). Sprawdź model i parametry.',
+          details: errorText,
+        }), {
+          status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
