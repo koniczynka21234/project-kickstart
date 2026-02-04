@@ -14,46 +14,29 @@ interface SidebarBadges {
   hasCurrentMonthReport: boolean;
 }
 
-const CACHE_DURATION = 30000; // 30 seconds cache
-
-// Module-level cache to persist across component remounts
-let cachedBadges: SidebarBadges | null = null;
-let lastFetchTime = 0;
-let isFetching = false;
+const initialBadges: SidebarBadges = {
+  incompleteTasks: 0,
+  pendingFollowUps: 0,
+  leadsNeedingAction: 0,
+  expiringContracts: 0,
+  clientsNeedingInvoice: 0,
+  upcomingPayments: 0,
+  pendingFinalInvoices: 0,
+  todayEvents: 0,
+  campaignsNeedingMetrics: 0,
+  hasCurrentMonthReport: false,
+};
 
 export function useSidebarBadges(userId: string | undefined) {
-  const [badges, setBadges] = useState<SidebarBadges>(() => cachedBadges || {
-    incompleteTasks: 0,
-    pendingFollowUps: 0,
-    leadsNeedingAction: 0,
-    expiringContracts: 0,
-    clientsNeedingInvoice: 0,
-    upcomingPayments: 0,
-    pendingFinalInvoices: 0,
-    todayEvents: 0,
-    campaignsNeedingMetrics: 0,
-    hasCurrentMonthReport: false,
-  });
-  
-  const [loading, setLoading] = useState(!cachedBadges);
+  const [badges, setBadges] = useState<SidebarBadges>(initialBadges);
+  const [loading, setLoading] = useState(true);
   const mountedRef = useRef(true);
+  const fetchingRef = useRef(false);
 
-  const loadData = useCallback(async (forceRefresh = false) => {
-    if (!userId) return;
+  const loadData = useCallback(async () => {
+    if (!userId || fetchingRef.current) return;
     
-    // Use cache if fresh enough and not forcing refresh
-    const now = Date.now();
-    if (!forceRefresh && cachedBadges && (now - lastFetchTime) < CACHE_DURATION) {
-      if (mountedRef.current) {
-        setBadges(cachedBadges);
-        setLoading(false);
-      }
-      return;
-    }
-
-    // Prevent concurrent fetches
-    if (isFetching) return;
-    isFetching = true;
+    fetchingRef.current = true;
 
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -85,11 +68,8 @@ export function useSidebarBadges(userId: string | undefined) {
         supabase.from('campaigns').select('id, campaign_metrics!inner(id, period_start)').eq('status', 'active'),
         supabase.from('campaigns').select('id').eq('status', 'active'),
         supabase.from('monthly_reports').select('id').eq('month', new Date().getMonth() + 1).eq('year', new Date().getFullYear()).maybeSingle(),
-        // Upcoming payments (due within 3 days, not paid)
         supabase.from('payments').select('id, client_id').eq('status', 'pending').lte('due_date', threeDaysDate).gte('due_date', today),
-        // All invoices to check which clients have invoices
         supabase.from('documents').select('id, client_id').eq('type', 'invoice'),
-        // Pending final invoices (expected within 3 days)
         supabase.from('pending_final_invoices').select('id, client_id').eq('status', 'pending').lte('expected_date', threeDaysDate)
       ]);
 
@@ -196,10 +176,6 @@ export function useSidebarBadges(userId: string | undefined) {
         hasCurrentMonthReport,
       };
 
-      // Update cache
-      cachedBadges = newBadges;
-      lastFetchTime = Date.now();
-
       if (mountedRef.current) {
         setBadges(newBadges);
         setLoading(false);
@@ -207,20 +183,13 @@ export function useSidebarBadges(userId: string | undefined) {
     } catch (error) {
       console.error('Error loading sidebar badges:', error);
     } finally {
-      isFetching = false;
+      fetchingRef.current = false;
     }
   }, [userId]);
 
+  // Initial load
   useEffect(() => {
     mountedRef.current = true;
-    
-    // Initial load - use cache if available
-    if (cachedBadges) {
-      setBadges(cachedBadges);
-      setLoading(false);
-    }
-    
-    // Load fresh data
     loadData();
 
     return () => {
@@ -228,42 +197,44 @@ export function useSidebarBadges(userId: string | undefined) {
     };
   }, [loadData]);
 
-  // Realtime subscription - only trigger refresh, don't cause flicker
+  // Realtime subscriptions - refresh badges when data changes
   useEffect(() => {
     if (!userId) return;
 
-    // Debounce refresh to avoid multiple rapid updates
-    let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
-    const debouncedRefresh = () => {
-      if (refreshTimeout) clearTimeout(refreshTimeout);
-      refreshTimeout = setTimeout(() => {
-        // Force cache invalidation for realtime updates
-        cachedBadges = null;
-        lastFetchTime = 0;
-        loadData(true);
-      }, 300);
+    // Simple refresh function with minimal debounce
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const triggerRefresh = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        loadData();
+      }, 100); // Short debounce - 100ms
     };
 
+    // Subscribe to all relevant tables
     const channel = supabase
-      .channel('sidebar-badge-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaign_metrics' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_reports' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'auto_followup_logs' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pending_final_invoices' }, debouncedRefresh)
-      .subscribe();
+      .channel(`sidebar-badges-${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaigns' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaign_metrics' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_reports' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'auto_followup_logs' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, triggerRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pending_final_invoices' }, triggerRefresh)
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[SidebarBadges] Realtime subscription active');
+        }
+      });
 
     return () => {
-      if (refreshTimeout) clearTimeout(refreshTimeout);
+      if (timeoutId) clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
   }, [userId, loadData]);
 
-  return { badges, loading, refresh: () => loadData(true) };
+  return { badges, loading, refresh: loadData };
 }
