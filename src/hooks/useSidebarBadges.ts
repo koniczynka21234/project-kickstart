@@ -89,7 +89,7 @@ export function useSidebarBadges(userId: string | undefined) {
         }).length;
       }
 
-      // Calculate leads needing action (cold mail OR SMS to send today or overdue)
+      // Calculate leads needing action (cold mail, SMS, or email follow-ups)
       let leadsNeedingAction = 0;
       let pendingFollowUps = 0;
       let pendingSmsFollowUps = 0;
@@ -101,22 +101,19 @@ export function useSidebarBadges(userId: string | undefined) {
             leadsNeedingAction++;
           }
           // SMS needs sending (only if cold mail already sent)
-          else if (lead.cold_email_sent && !lead.sms_follow_up_sent && lead.sms_follow_up_date && lead.sms_follow_up_date <= today) {
-            leadsNeedingAction++;
-          }
-
-          // SMS follow-ups pending (for Follow-up SMS badge)
           if (lead.cold_email_sent && !lead.sms_follow_up_sent && lead.sms_follow_up_date && lead.sms_follow_up_date <= today) {
+            leadsNeedingAction++;
             pendingSmsFollowUps++;
           }
-          
-          // Email follow-ups pending (for Auto Follow-up badge)
-          if (lead.cold_email_sent) {
-            if (!lead.email_follow_up_1_sent && lead.email_follow_up_1_date && lead.email_follow_up_1_date <= today) {
-              pendingFollowUps++;
-            } else if (lead.email_follow_up_1_sent && !lead.email_follow_up_2_sent && lead.email_follow_up_2_date && lead.email_follow_up_2_date <= today) {
-              pendingFollowUps++;
-            }
+          // Email follow-up 1 needs sending (only if cold mail AND SMS already sent)
+          if (lead.cold_email_sent && lead.sms_follow_up_sent && !lead.email_follow_up_1_sent && lead.email_follow_up_1_date && lead.email_follow_up_1_date <= today) {
+            leadsNeedingAction++;
+            pendingFollowUps++;
+          }
+          // Email follow-up 2 needs sending (only if FU1 already sent)
+          if (lead.cold_email_sent && lead.sms_follow_up_sent && lead.email_follow_up_1_sent && !lead.email_follow_up_2_sent && lead.email_follow_up_2_date && lead.email_follow_up_2_date <= today) {
+            leadsNeedingAction++;
+            pendingFollowUps++;
           }
         });
       }
