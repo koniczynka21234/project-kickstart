@@ -24,6 +24,7 @@ import ClientProfile from "./pages/ClientProfile";
 import Campaigns from "./pages/Campaigns";
 import CampaignDetails from "./pages/CampaignDetails";
 import Templates from "./pages/Templates";
+import FollowUpSms from "./pages/FollowUpSms";
 import Tasks from "./pages/Tasks";
 import AdminPanel from "./pages/AdminPanel";
 import SalesFunnelPage from "./pages/SalesFunnelPage";
@@ -78,6 +79,7 @@ function AppContent() {
             <Route path="/campaigns/:id" element={<CampaignDetails />} />
             <Route path="/funnel" element={<SalesFunnelPage />} />
             <Route path="/templates" element={<Templates />} />
+            <Route path="/followup-sms" element={<FollowUpSms />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/profile/:id" element={<UserProfile />} />
             <Route path="/notifications" element={<Notifications />} />

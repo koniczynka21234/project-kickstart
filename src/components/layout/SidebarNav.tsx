@@ -9,7 +9,7 @@ import {
   History, Users, UserPlus, LogOut, User, Shield, Crown,
   Target, Mail, CheckSquare, TrendingDown, Bell, UsersRound, Calendar,
   Settings, Zap, X, MailCheck, Sparkles, Gift, Megaphone, Wand2, Share2,
-  Smartphone, BarChart3, PieChart,
+  Smartphone, BarChart3, PieChart, MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -182,6 +182,7 @@ export function SidebarNav({ onNavigate, showCloseButton, onClose }: SidebarNavP
     { title: "Kalendarz", url: "/calendar", icon: Calendar, badge: badges.todayEvents || undefined },
     { title: "Kampanie", url: "/campaigns", icon: Target, badge: badges.campaignsNeedingMetrics || undefined },
     { title: "Auto Follow-up", url: "/auto-followups", icon: MailCheck, badge: badges.pendingFollowUps || undefined },
+    { title: "Follow-up SMS", url: "/followup-sms", icon: MessageSquare, badge: badges.pendingSmsFollowUps || undefined },
     { title: "Aurine Academy", url: "/aurine-academy", icon: Smartphone },
     { title: "Obsługa klienta", url: "/client-service", icon: Sparkles },
     { title: "Social Media", url: "/social-media", icon: Share2 },
