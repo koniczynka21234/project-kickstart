@@ -133,13 +133,19 @@ Wygeneruj:
       console.error('Gemini API error:', response.status, errorText);
       
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Przekroczono limit zapytań Gemini. Spróbuj ponownie za chwilę.' }), {
+        return new Response(JSON.stringify({
+          error: 'Przekroczono limit zapytań Gemini. Spróbuj ponownie za chwilę.',
+          details: errorText,
+        }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       if (response.status === 403) {
-        return new Response(JSON.stringify({ error: 'Nieprawidłowy klucz API Gemini. Sprawdź konfigurację.' }), {
+        return new Response(JSON.stringify({
+          error: 'Brak dostępu do Gemini (403). Sprawdź klucz API i restrykcje w Google AI Studio.',
+          details: errorText,
+        }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
