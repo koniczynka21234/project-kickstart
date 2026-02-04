@@ -8,13 +8,14 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  error: Error | null;
 }
 
 export class AppErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false };
+  state: State = { hasError: false, error: null };
 
-  static getDerivedStateFromError(): State {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -22,7 +23,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   handleReload = () => {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, error: null });
     window.location.reload();
   };
 
@@ -39,6 +40,18 @@ export class AppErrorBoundary extends Component<Props, State> {
               <p className="text-sm text-muted-foreground">
                 Wystąpił błąd podczas wyświetlania aplikacji. Odśwież stronę, aby spróbować ponownie.
               </p>
+              {this.state.error && (
+                <details className="mt-4 text-left">
+                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                    Szczegóły błędu
+                  </summary>
+                  <pre className="mt-2 p-3 rounded-lg bg-destructive/5 text-destructive text-xs overflow-auto max-h-40">
+                    {this.state.error.message}
+                    {'\n\n'}
+                    {this.state.error.stack}
+                  </pre>
+                </details>
+              )}
             </div>
             <Button onClick={this.handleReload} className="w-full">
               Odśwież aplikację
