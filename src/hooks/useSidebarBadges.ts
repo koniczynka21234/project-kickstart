@@ -197,6 +197,33 @@ export function useSidebarBadges(userId: string | undefined) {
     };
   }, [loadData]);
 
+  // Fallback polling + refresh on tab focus.
+  // Realtime can be flaky depending on DB publication/replica identity/RLS;
+  // this ensures badges converge quickly without requiring a full page refresh.
+  useEffect(() => {
+    if (!userId) return;
+
+    const POLL_MS = 5000;
+    const intervalId = window.setInterval(() => {
+      loadData();
+    }, POLL_MS);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", loadData);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", loadData);
+    };
+  }, [userId, loadData]);
+
   // Realtime subscriptions - refresh badges when data changes
   useEffect(() => {
     if (!userId) return;
