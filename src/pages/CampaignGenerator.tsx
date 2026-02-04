@@ -160,28 +160,20 @@ export default function CampaignGenerator() {
       });
 
       if (error) {
-        // Handle specific error codes from edge function
-        const errorBody = error.message || '';
-        if (errorBody.includes('429') || errorBody.includes('Rate limit')) {
-          toast.error('Przekroczono limit zapytań AI. Spróbuj ponownie za chwilę.');
-        } else if (errorBody.includes('402') || errorBody.includes('Payment')) {
-          toast.error('Brak kredytów AI. Doładuj konto w ustawieniach workspace.');
-        } else {
-          throw error;
-        }
+        // Supabase FunctionError carries status in context
+        const status = (error as any)?.context?.status;
+        console.error('generate-campaign invoke error:', { status, error });
+        toast.error(`Błąd generowania (${status ?? 'unknown'}): ${error.message}`);
         setCurrentStep(2);
         return;
       }
 
       // Check for error in data response
       if (data?.error) {
-        if (data.error.includes('429') || data.error.includes('limit')) {
-          toast.error('Przekroczono limit zapytań AI. Spróbuj za 1 minutę.');
-        } else if (data.error.includes('402') || data.error.includes('kredyt')) {
-          toast.error('Brak kredytów AI. Doładuj konto.');
-        } else {
-          toast.error(data.error);
-        }
+        // Our edge function returns { error, details } for upstream failures
+        console.error('generate-campaign edge error:', data);
+        const details = typeof data.details === 'string' ? data.details : '';
+        toast.error(details ? `${data.error}: ${details}` : data.error);
         setCurrentStep(2);
         return;
       }

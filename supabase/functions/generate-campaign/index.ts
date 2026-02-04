@@ -22,7 +22,7 @@ const campaignInputSchema = z.object({
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -144,8 +144,15 @@ Wygeneruj:
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      
-      throw new Error(`Gemini API error: ${response.status}`);
+
+      // Propagate upstream status + body for easier debugging on the client
+      return new Response(JSON.stringify({
+        error: `Gemini API error: ${response.status}`,
+        details: errorText,
+      }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
