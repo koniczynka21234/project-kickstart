@@ -11,11 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Mail, MessageSquare, MailOpen, MoreVertical, Copy, Loader2, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, MailOpen, MoreVertical, Copy, Loader2 } from 'lucide-react';
 import { emailTemplateSchema } from '@/lib/validationSchemas';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
-import { SmsFollowUpToday } from '@/components/templates/SmsFollowUpToday';
 
 interface EmailTemplate {
   id: string;
@@ -27,14 +24,6 @@ interface EmailTemplate {
   updated_at: string;
 }
 
-interface SmsTemplate {
-  id: string;
-  template_name: string;
-  content: string;
-  created_by: string | null;
-  created_at: string;
-}
-
 const emailPlaceholders = [
   { key: '{salon_name}', desc: 'Nazwa salonu' },
   { key: '{owner_name}', desc: 'Imię właściciela' },
@@ -43,33 +32,20 @@ const emailPlaceholders = [
   { key: '{phone}', desc: 'Telefon' },
 ];
 
-const smsPlaceholders = [
-  { key: '{imie}', desc: 'Imię właściciela' },
-  { key: '{salon}', desc: 'Nazwa salonu' },
-  { key: '{miasto}', desc: 'Miasto' },
-];
-
 export default function Templates() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('sms-today');
+  const [activeTab, setActiveTab] = useState('cold-email');
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
-  const [smsTemplates, setSmsTemplates] = useState<SmsTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState<'cold-email' | 'follow-up-email' | 'sms'>('cold-email');
+  const [dialogType, setDialogType] = useState<'cold-email' | 'follow-up-email'>('cold-email');
   const [editingEmailTemplate, setEditingEmailTemplate] = useState<EmailTemplate | null>(null);
-  const [editingSmsTemplate, setEditingSmsTemplate] = useState<SmsTemplate | null>(null);
   
   const [emailFormData, setEmailFormData] = useState({
     template_name: '',
     subject: '',
     body: ''
-  });
-
-  const [smsFormData, setSmsFormData] = useState({
-    template_name: '',
-    content: ''
   });
 
   useEffect(() => {
@@ -79,13 +55,11 @@ export default function Templates() {
   const fetchAllTemplates = async () => {
     setLoading(true);
     try {
-      const [emailRes, smsRes] = await Promise.all([
+      const [emailRes] = await Promise.all([
         supabase.from('email_templates').select('*').order('template_name'),
-        supabase.from('sms_templates').select('*').order('created_at', { ascending: false })
       ]);
 
       setEmailTemplates(emailRes.data || []);
-      setSmsTemplates(smsRes.data || []);
     } catch (error) {
       console.error('Error fetching templates:', error);
     } finally {
@@ -120,20 +94,6 @@ export default function Templates() {
     setIsDialogOpen(true);
   };
 
-  const openSmsDialog = (template?: SmsTemplate) => {
-    setDialogType('sms');
-    if (template) {
-      setEditingSmsTemplate(template);
-      setSmsFormData({
-        template_name: template.template_name,
-        content: template.content
-      });
-    } else {
-      setEditingSmsTemplate(null);
-      setSmsFormData({ template_name: '', content: '' });
-    }
-    setIsDialogOpen(true);
-  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,52 +149,6 @@ export default function Templates() {
     }
   };
 
-  const handleSmsSubmit = async () => {
-    if (!smsFormData.template_name || !smsFormData.content) {
-      toast({
-        title: "Błąd",
-        description: "Wypełnij wszystkie pola",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      if (editingSmsTemplate) {
-        const { error } = await supabase
-          .from('sms_templates')
-          .update({
-            template_name: smsFormData.template_name,
-            content: smsFormData.content
-          })
-          .eq('id', editingSmsTemplate.id);
-
-        if (error) throw error;
-        toast({ title: "Sukces", description: "Szablon SMS zaktualizowany" });
-      } else {
-        const { error } = await supabase.from('sms_templates').insert({
-          template_name: smsFormData.template_name,
-          content: smsFormData.content,
-          created_by: user?.id
-        });
-
-        if (error) throw error;
-        toast({ title: "Sukces", description: "Szablon SMS dodany" });
-      }
-
-      setIsDialogOpen(false);
-      setEditingSmsTemplate(null);
-      setSmsFormData({ template_name: '', content: '' });
-      fetchAllTemplates();
-    } catch (error) {
-      console.error('Error saving SMS template:', error);
-      toast({
-        title: "Błąd",
-        description: "Nie udało się zapisać szablonu SMS",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleDeleteEmail = async (id: string) => {
     if (!confirm('Czy na pewno chcesz usunąć ten szablon?')) return;
@@ -249,18 +163,6 @@ export default function Templates() {
     }
   };
 
-  const handleDeleteSms = async (id: string) => {
-    if (!confirm('Czy na pewno chcesz usunąć ten szablon?')) return;
-
-    try {
-      const { error } = await supabase.from('sms_templates').delete().eq('id', id);
-      if (error) throw error;
-      toast({ title: "Sukces", description: "Szablon SMS usunięty" });
-      fetchAllTemplates();
-    } catch (error) {
-      toast({ title: "Błąd", description: "Nie udało się usunąć szablonu", variant: "destructive" });
-    }
-  };
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -273,16 +175,6 @@ export default function Templates() {
       body: prev.body + placeholder
     }));
   };
-
-  const insertSmsPlaceholder = (placeholder: string) => {
-    setSmsFormData(prev => ({
-      ...prev,
-      content: prev.content + placeholder
-    }));
-  };
-
-  const charCount = smsFormData.content.length;
-  const smsCount = Math.ceil(charCount / 160) || 1;
 
   if (loading) {
     return (
@@ -343,50 +235,6 @@ export default function Templates() {
     </Card>
   );
 
-  const renderSmsTemplateCard = (template: SmsTemplate) => (
-    <Card key={template.id} className="hover:shadow-lg transition-shadow border-border/50 bg-card/80 hover:border-green-500/30">
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-green-400" />
-            {template.template_name}
-          </CardTitle>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleCopy(template.content)}>
-                <Copy className="w-4 h-4 mr-2" />
-                Kopiuj treść
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openSmsDialog(template)}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edytuj
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => handleDeleteSms(template.id)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Usuń
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground line-clamp-3 mb-3">{template.content}</p>
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{template.content.length} znaków</span>
-          <span>{format(new Date(template.created_at), 'd MMM yyyy', { locale: pl })}</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <AppLayout>
       <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
@@ -394,17 +242,11 @@ export default function Templates() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent mb-2">
             Szablony Wiadomości
           </h1>
-          <p className="text-muted-foreground">
-            Zarządzaj szablonami cold maili, follow-upów i SMS
-          </p>
+          <p className="text-muted-foreground">Zarządzaj szablonami cold maili i follow-upów email</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="sms-today" className="gap-2">
-              <Calendar className="w-4 h-4" />
-              SMS na dziś
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-grid">
             <TabsTrigger value="cold-email" className="gap-2">
               <Mail className="w-4 h-4" />
               Cold Email
@@ -413,16 +255,7 @@ export default function Templates() {
               <MailOpen className="w-4 h-4" />
               Follow-up Email
             </TabsTrigger>
-            <TabsTrigger value="sms" className="gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Szablony SMS
-            </TabsTrigger>
           </TabsList>
-
-          {/* SMS Today Tab */}
-          <TabsContent value="sms-today" className="mt-6">
-            <SmsFollowUpToday />
-          </TabsContent>
 
           {/* Cold Email Tab */}
           <TabsContent value="cold-email" className="mt-6">
@@ -464,25 +297,6 @@ export default function Templates() {
             </div>
           </TabsContent>
 
-          {/* SMS Tab */}
-          <TabsContent value="sms" className="mt-6">
-            <div className="flex justify-end mb-4">
-              <Button onClick={() => openSmsDialog()} className="gap-2 bg-green-600 hover:bg-green-700">
-                <Plus className="h-4 w-4" />
-                Nowy szablon
-              </Button>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {smsTemplates.length === 0 ? (
-                <Card className="p-8 text-center text-muted-foreground border-border/50 col-span-full">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Brak szablonów SMS. Utwórz pierwszy szablon.</p>
-                </Card>
-              ) : (
-                smsTemplates.map(t => renderSmsTemplateCard(t))
-              )}
-            </div>
-          </TabsContent>
         </Tabs>
 
         {/* Dialog for Email Templates */}
@@ -571,84 +385,6 @@ export default function Templates() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog for SMS Templates */}
-        <Dialog open={isDialogOpen && dialogType === 'sms'} onOpenChange={(open) => {
-          if (!open) {
-            setIsDialogOpen(false);
-            setEditingSmsTemplate(null);
-            setSmsFormData({ template_name: '', content: '' });
-          }
-        }}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-green-400" />
-                {editingSmsTemplate ? 'Edytuj szablon SMS' : 'Nowy szablon SMS'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <Label>Nazwa szablonu</Label>
-                <Input
-                  placeholder="np. Follow-up po rozmowie"
-                  value={smsFormData.template_name}
-                  onChange={(e) => setSmsFormData({ ...smsFormData, template_name: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <Label>Treść wiadomości</Label>
-                  <span className={`text-xs ${charCount > 160 ? 'text-yellow-400' : 'text-muted-foreground'}`}>
-                    {charCount}/160 ({smsCount} SMS)
-                  </span>
-                </div>
-                <Textarea
-                  placeholder="Cześć {imie}, dziękuję za rozmowę..."
-                  value={smsFormData.content}
-                  onChange={(e) => setSmsFormData({ ...smsFormData, content: e.target.value })}
-                  rows={5}
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-2 block">Wstaw placeholder</Label>
-                <div className="flex flex-wrap gap-2">
-                  {smsPlaceholders.map((p) => (
-                    <Button
-                      key={p.key}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => insertSmsPlaceholder(p.key)}
-                      className="text-xs"
-                    >
-                      {p.key}
-                      <span className="text-muted-foreground ml-1">({p.desc})</span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {smsFormData.content && (
-                <div className="p-3 bg-secondary/50 rounded-lg border border-border/50">
-                  <p className="text-xs text-muted-foreground mb-1">Podgląd:</p>
-                  <p className="text-sm">{smsFormData.content}</p>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Anuluj
-                </Button>
-                <Button onClick={handleSmsSubmit} className="bg-green-600 hover:bg-green-700">
-                  {editingSmsTemplate ? 'Zapisz zmiany' : 'Dodaj szablon'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </AppLayout>
   );

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface SidebarBadges {
   incompleteTasks: number;
   pendingFollowUps: number;
+  pendingSmsFollowUps: number;
   leadsNeedingAction: number;
   expiringContracts: number;
   clientsNeedingInvoice: number;
@@ -17,6 +18,7 @@ interface SidebarBadges {
 const initialBadges: SidebarBadges = {
   incompleteTasks: 0,
   pendingFollowUps: 0,
+  pendingSmsFollowUps: 0,
   leadsNeedingAction: 0,
   expiringContracts: 0,
   clientsNeedingInvoice: 0,
@@ -90,6 +92,7 @@ export function useSidebarBadges(userId: string | undefined) {
       // Calculate leads needing action (cold mail OR SMS to send today or overdue)
       let leadsNeedingAction = 0;
       let pendingFollowUps = 0;
+      let pendingSmsFollowUps = 0;
       
       if (leadsResult.data) {
         leadsResult.data.forEach(lead => {
@@ -100,6 +103,11 @@ export function useSidebarBadges(userId: string | undefined) {
           // SMS needs sending (only if cold mail already sent)
           else if (lead.cold_email_sent && !lead.sms_follow_up_sent && lead.sms_follow_up_date && lead.sms_follow_up_date <= today) {
             leadsNeedingAction++;
+          }
+
+          // SMS follow-ups pending (for Follow-up SMS badge)
+          if (lead.cold_email_sent && !lead.sms_follow_up_sent && lead.sms_follow_up_date && lead.sms_follow_up_date <= today) {
+            pendingSmsFollowUps++;
           }
           
           // Email follow-ups pending (for Auto Follow-up badge)
@@ -166,6 +174,7 @@ export function useSidebarBadges(userId: string | undefined) {
       const newBadges: SidebarBadges = {
         incompleteTasks,
         pendingFollowUps,
+        pendingSmsFollowUps,
         leadsNeedingAction,
         expiringContracts,
         clientsNeedingInvoice,
