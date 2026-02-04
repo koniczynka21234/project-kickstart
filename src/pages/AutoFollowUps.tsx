@@ -279,7 +279,7 @@ export default function AutoFollowUps() {
               <div className="flex-1">
                 <p className="text-sm font-medium text-foreground">Automatyczne wysyłanie</p>
                 <p className="text-xs text-muted-foreground">
-                  System automatycznie sprawdza codziennie o 9:00 czy są zaległe follow-upy i je wysyła.
+                  System automatycznie sprawdza codziennie o 10:00 (czas polski) czy są zaległe follow-upy i je wysyła.
                   Przycisk "Wyślij zaległe" pozwala ręcznie uruchomić wysyłkę.
                 </p>
               </div>

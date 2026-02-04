@@ -695,7 +695,7 @@ export default function AdminPanel() {
               <CardContent className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-border/50">
                   <span className="text-muted-foreground">CRON Follow-upy</span>
-                  <span className="text-green-400">Aktywny (9:00 codziennie)</span>
+                  <span className="text-green-400">Aktywny (10:00 codziennie)</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border/50">
                   <span className="text-muted-foreground">Integracja Zoho</span>
