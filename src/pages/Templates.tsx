@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Mail, MailOpen, MoreVertical, Copy, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Mail, MailOpen, MoreVertical, Copy, Loader2, AlertCircle } from 'lucide-react';
 import { emailTemplateSchema } from '@/lib/validationSchemas';
 
 interface EmailTemplate {
@@ -32,6 +33,12 @@ const emailPlaceholders = [
   { key: '{phone}', desc: 'Telefon' },
 ];
 
+// Fixed follow-up template names that the backend expects
+const FOLLOW_UP_TEMPLATES = [
+  { value: 'follow_up_1', label: 'Follow-up #1', description: 'Pierwszy follow-up (wysyłany ~3 dni po cold mailu)' },
+  { value: 'follow_up_2', label: 'Follow-up #2', description: 'Drugi follow-up (wysyłany ~4 dni po FU1)' },
+];
+
 export default function Templates() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -47,6 +54,9 @@ export default function Templates() {
     subject: '',
     body: ''
   });
+
+  // For follow-up: which slot are we creating/editing
+  const [selectedFollowUpSlot, setSelectedFollowUpSlot] = useState<string>('');
 
   useEffect(() => {
     fetchAllTemplates();
@@ -78,6 +88,11 @@ export default function Templates() {
     t.template_name.toLowerCase().includes('follow_up')
   );
 
+  // Check which follow-up slots are already taken
+  const existingFollowUpSlots = followUpEmailTemplates.map(t => t.template_name.toLowerCase());
+  const hasFollowUp1 = existingFollowUpSlots.includes('follow_up_1');
+  const hasFollowUp2 = existingFollowUpSlots.includes('follow_up_2');
+
   const openEmailDialog = (type: 'cold-email' | 'follow-up-email', template?: EmailTemplate) => {
     setDialogType(type);
     if (template) {
@@ -87,9 +102,24 @@ export default function Templates() {
         subject: template.subject,
         body: template.body
       });
+      // For follow-up editing, set the slot based on template name
+      if (type === 'follow-up-email') {
+        const slot = template.template_name.toLowerCase();
+        setSelectedFollowUpSlot(slot);
+      }
     } else {
       setEditingEmailTemplate(null);
       setEmailFormData({ template_name: '', subject: '', body: '' });
+      // For new follow-up, pre-select first available slot
+      if (type === 'follow-up-email') {
+        if (!hasFollowUp1) {
+          setSelectedFollowUpSlot('follow_up_1');
+        } else if (!hasFollowUp2) {
+          setSelectedFollowUpSlot('follow_up_2');
+        } else {
+          setSelectedFollowUpSlot('');
+        }
+      }
     }
     setIsDialogOpen(true);
   };
@@ -98,7 +128,17 @@ export default function Templates() {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validationResult = emailTemplateSchema.safeParse(emailFormData);
+    // For follow-up, use selected slot as template_name
+    const finalTemplateName = dialogType === 'follow-up-email' 
+      ? selectedFollowUpSlot 
+      : emailFormData.template_name;
+
+    const dataToValidate = {
+      ...emailFormData,
+      template_name: finalTemplateName
+    };
+
+    const validationResult = emailTemplateSchema.safeParse(dataToValidate);
     if (!validationResult.success) {
       toast({
         title: "Błąd walidacji",
@@ -108,12 +148,27 @@ export default function Templates() {
       return;
     }
 
+    // For follow-up: check for duplicates (unless editing the same one)
+    if (dialogType === 'follow-up-email' && !editingEmailTemplate) {
+      const exists = emailTemplates.some(t => 
+        t.template_name.toLowerCase() === selectedFollowUpSlot.toLowerCase()
+      );
+      if (exists) {
+        toast({
+          title: "Szablon już istnieje",
+          description: `Szablon ${selectedFollowUpSlot} już istnieje. Edytuj istniejący zamiast tworzyć nowy.`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     try {
       if (editingEmailTemplate) {
         const { error } = await supabase
           .from('email_templates')
           .update({
-            template_name: emailFormData.template_name,
+            template_name: finalTemplateName,
             subject: emailFormData.subject,
             body: emailFormData.body
           })
@@ -125,7 +180,7 @@ export default function Templates() {
         const { error } = await supabase
           .from('email_templates')
           .insert({
-            template_name: emailFormData.template_name,
+            template_name: finalTemplateName,
             subject: emailFormData.subject,
             body: emailFormData.body,
             created_by: user?.id
@@ -138,6 +193,7 @@ export default function Templates() {
       setIsDialogOpen(false);
       setEditingEmailTemplate(null);
       setEmailFormData({ template_name: '', subject: '', body: '' });
+      setSelectedFollowUpSlot('');
       fetchAllTemplates();
     } catch (error) {
       console.error('Error saving email template:', error);
@@ -235,6 +291,9 @@ export default function Templates() {
     </Card>
   );
 
+  // Check if all follow-up slots are taken
+  const allFollowUpSlotsTaken = hasFollowUp1 && hasFollowUp2;
+
   return (
     <AppLayout>
       <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
@@ -279,17 +338,41 @@ export default function Templates() {
 
           {/* Follow-up Email Tab */}
           <TabsContent value="follow-up-email" className="mt-6">
+            {/* Info about required templates */}
+            <Card className="mb-4 border-amber-500/30 bg-amber-500/5">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-500 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground mb-1">Wymagane szablony dla automatycznych follow-upów:</p>
+                    <div className="flex gap-4 text-muted-foreground">
+                      <span className={hasFollowUp1 ? 'text-green-400' : 'text-amber-400'}>
+                        {hasFollowUp1 ? '✓' : '○'} follow_up_1
+                      </span>
+                      <span className={hasFollowUp2 ? 'text-green-400' : 'text-amber-400'}>
+                        {hasFollowUp2 ? '✓' : '○'} follow_up_2
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="flex justify-end mb-4">
-              <Button onClick={() => openEmailDialog('follow-up-email')} className="gap-2 bg-orange-600 hover:bg-orange-700">
+              <Button 
+                onClick={() => openEmailDialog('follow-up-email')} 
+                className="gap-2 bg-orange-600 hover:bg-orange-700"
+                disabled={allFollowUpSlotsTaken}
+              >
                 <Plus className="h-4 w-4" />
-                Nowy szablon
+                {allFollowUpSlotsTaken ? 'Wszystkie szablony utworzone' : 'Nowy szablon'}
               </Button>
             </div>
             <div className="grid gap-4">
               {followUpEmailTemplates.length === 0 ? (
                 <Card className="p-8 text-center text-muted-foreground border-border/50">
                   <MailOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Brak szablonów follow-up. Utwórz pierwszy szablon (nazwa powinna zawierać "follow_up").</p>
+                  <p>Brak szablonów follow-up. Utwórz follow_up_1 i follow_up_2.</p>
                 </Card>
               ) : (
                 followUpEmailTemplates.map(t => renderEmailTemplateCard(t, 'follow-up-email'))
@@ -305,6 +388,7 @@ export default function Templates() {
             setIsDialogOpen(false);
             setEditingEmailTemplate(null);
             setEmailFormData({ template_name: '', subject: '', body: '' });
+            setSelectedFollowUpSlot('');
           }
         }}>
           <DialogContent className="max-w-2xl">
@@ -318,21 +402,58 @@ export default function Templates() {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleEmailSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="template_name">Nazwa szablonu</Label>
-                <Input
-                  id="template_name"
-                  value={emailFormData.template_name}
-                  onChange={(e) => setEmailFormData({ ...emailFormData, template_name: e.target.value })}
-                  placeholder={dialogType === 'follow-up-email' ? "np. follow_up_1" : "np. cold_mail_beauty"}
-                  required
-                />
-                {dialogType === 'follow-up-email' && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Dla automatycznych follow-upów użyj: follow_up_1 lub follow_up_2
-                  </p>
-                )}
-              </div>
+              {dialogType === 'cold-email' ? (
+                <div>
+                  <Label htmlFor="template_name">Nazwa szablonu</Label>
+                  <Input
+                    id="template_name"
+                    value={emailFormData.template_name}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, template_name: e.target.value })}
+                    placeholder="np. cold_mail_beauty"
+                    required
+                  />
+                </div>
+              ) : (
+                <div>
+                  <Label>Typ szablonu follow-up</Label>
+                  <Select 
+                    value={selectedFollowUpSlot} 
+                    onValueChange={setSelectedFollowUpSlot}
+                    disabled={!!editingEmailTemplate}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Wybierz typ follow-up" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FOLLOW_UP_TEMPLATES.map(fu => {
+                        const isExisting = existingFollowUpSlots.includes(fu.value);
+                        const isCurrentlyEditing = editingEmailTemplate?.template_name.toLowerCase() === fu.value;
+                        const isDisabled = isExisting && !isCurrentlyEditing;
+                        
+                        return (
+                          <SelectItem 
+                            key={fu.value} 
+                            value={fu.value}
+                            disabled={isDisabled}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span>{fu.label}</span>
+                              {isExisting && !isCurrentlyEditing && (
+                                <span className="text-xs text-muted-foreground">(już istnieje)</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {selectedFollowUpSlot && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {FOLLOW_UP_TEMPLATES.find(f => f.value === selectedFollowUpSlot)?.description}
+                    </p>
+                  )}
+                </div>
+              )}
               <div>
                 <Label htmlFor="subject">Temat wiadomości</Label>
                 <Input
@@ -377,7 +498,11 @@ export default function Templates() {
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Anuluj
                 </Button>
-                <Button type="submit" className={dialogType === 'follow-up-email' ? 'bg-orange-600 hover:bg-orange-700' : ''}>
+                <Button 
+                  type="submit" 
+                  className={dialogType === 'follow-up-email' ? 'bg-orange-600 hover:bg-orange-700' : ''}
+                  disabled={dialogType === 'follow-up-email' && !selectedFollowUpSlot}
+                >
                   {editingEmailTemplate ? 'Zapisz zmiany' : 'Utwórz szablon'}
                 </Button>
               </div>
