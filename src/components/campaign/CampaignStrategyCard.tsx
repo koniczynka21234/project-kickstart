@@ -37,6 +37,27 @@
    className?: string;
  }
  
+// Safe text helper - converts objects to readable strings
+function safeText(v: unknown, fallback = '—'): string {
+  if (v === null || v === undefined) return fallback;
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  if (typeof v === 'object') {
+    try {
+      const entries = Object.entries(v as Record<string, unknown>);
+      if (entries.length) {
+        return entries
+          .map(([k, val]) => `${k}: ${typeof val === 'object' ? JSON.stringify(val) : String(val)}`)
+          .join(' • ');
+      }
+      return JSON.stringify(v);
+    } catch {
+      return fallback;
+    }
+  }
+  return String(v);
+}
+
  export function CampaignStrategyCard({ strategy, clientName, className }: CampaignStrategyCardProps) {
    const budgetAllocation = renderBudgetAllocation(strategy.budget_allocation);
    
@@ -50,7 +71,7 @@
            </div>
            <div className="flex-1">
              <h3 className="text-xl font-bold text-foreground">Strategia dla {clientName}</h3>
-             <p className="text-muted-foreground mt-1">{strategy.objective}</p>
+              <p className="text-muted-foreground mt-1">{safeText(strategy.objective)}</p>
            </div>
          </div>
          
@@ -59,25 +80,25 @@
            <MetricCard
              icon={Users}
              label="Grupa docelowa"
-             value={typeof strategy.targetAudience === 'string' ? strategy.targetAudience.slice(0, 50) + '...' : 'Zdefiniowana'}
+              value={typeof strategy.targetAudience === 'string' ? (strategy.targetAudience.length > 50 ? strategy.targetAudience.slice(0, 50) + '...' : strategy.targetAudience) : safeText(strategy.targetAudience, 'Zdefiniowana')}
              color="amber"
            />
            <MetricCard
              icon={DollarSign}
              label="Budżet całkowity"
-             value={strategy.total_budget || 'Wg planu'}
+              value={safeText(strategy.total_budget, 'Wg planu')}
              color="success"
            />
            <MetricCard
              icon={Calendar}
              label="Czas trwania"
-             value={strategy.campaign_duration || strategy.timeline || '30 dni'}
+              value={safeText(strategy.campaign_duration, safeText(strategy.timeline, '30 dni'))}
              color="primary"
            />
            <MetricCard
              icon={BarChart3}
              label="Budżet dzienny"
-             value={strategy.daily_budget || 'Dynamiczny'}
+              value={safeText(strategy.daily_budget, 'Dynamiczny')}
              color="muted"
            />
          </div>
