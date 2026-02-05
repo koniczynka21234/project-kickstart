@@ -16,11 +16,12 @@
    ChevronRight, BarChart3, RefreshCw, Zap, Image as ImageIcon, MousePointerClick
  } from 'lucide-react';
  import { cn } from '@/lib/utils';
- import { FacebookAdMockup } from '@/components/campaign/FacebookAdMockup';
- import { InstagramAdMockup } from '@/components/campaign/InstagramAdMockup';
- import { AdsManagerMockup } from '@/components/campaign/AdsManagerMockup';
- import { CampaignStrategyCard } from '@/components/campaign/CampaignStrategyCard';
- import { ABTestingCard } from '@/components/campaign/ABTestingCard';
+import { FacebookAdMockupPro } from '@/components/campaign/FacebookAdMockupPro';
+import { InstagramAdMockupPro } from '@/components/campaign/InstagramAdMockupPro';
+import { AdsManagerMockup } from '@/components/campaign/AdsManagerMockup';
+import { CampaignStrategyCard } from '@/components/campaign/CampaignStrategyCard';
+import { ABTestingCard } from '@/components/campaign/ABTestingCard';
+import { ImplementationPlanCard } from '@/components/campaign/ImplementationPlanCard';
  
  // Helper to safely render unknown values
  const renderValue = (value: unknown): string => {
@@ -127,13 +128,14 @@
    { id: 5, title: 'Wyniki', icon: CheckCircle2 },
  ];
  
- // Result tabs with short PL names
- const RESULT_TABS = [
-   { id: 'strategia', label: 'Strategia', icon: Target },
-   { id: 'ustawienia', label: 'Ustawienia', icon: Settings2 },
-   { id: 'kreacje', label: 'Kreacje', icon: ImageIcon },
-   { id: 'copy', label: 'Copy', icon: FlaskConical },
- ];
+// Result tabs with short PL names
+const RESULT_TABS = [
+  { id: 'strategia', label: 'Strategia', icon: Target },
+  { id: 'plan', label: 'Plan wdrożenia', icon: CheckCircle2 },
+  { id: 'ustawienia', label: 'Ustawienia', icon: Settings2 },
+  { id: 'kreacje', label: 'Kreacje', icon: ImageIcon },
+  { id: 'copy', label: 'Copy', icon: FlaskConical },
+];
  
  export default function CampaignGenerator() {
    const [clients, setClients] = useState<Client[]>([]);
@@ -772,34 +774,45 @@
                {/* Tab Content */}
                <div className="min-h-[400px]">
                  
-                 {/* Strategia */}
-                 {activeResultTab === 'strategia' && (
-                   <div className="space-y-6 animate-fade-in">
-                     {campaign.strategy && (
-                       <CampaignStrategyCard strategy={campaign.strategy} clientName={formData.clientName} />
-                     )}
-                     {campaign.recommendations && campaign.recommendations.length > 0 && (
-                       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                         <CardHeader className="pb-3">
-                           <CardTitle className="flex items-center gap-2 text-base">
-                             <Lightbulb className="w-5 h-5 text-primary" />
-                             Rekomendacje AI
-                           </CardTitle>
-                         </CardHeader>
-                         <CardContent>
-                           <ul className="space-y-2">
-                             {campaign.recommendations.map((rec, idx) => (
-                               <li key={idx} className="flex items-start gap-3">
-                                 <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" />
-                                 <span className="text-foreground/80">{rec}</span>
-                               </li>
-                             ))}
-                           </ul>
-                         </CardContent>
-                       </Card>
-                     )}
-                   </div>
-                 )}
+                  {/* Strategia */}
+                  {activeResultTab === 'strategia' && (
+                    <div className="space-y-6 animate-fade-in">
+                      {campaign.strategy && (
+                        <CampaignStrategyCard strategy={campaign.strategy} clientName={formData.clientName} />
+                      )}
+                      {campaign.recommendations && campaign.recommendations.length > 0 && (
+                        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                              <Lightbulb className="w-5 h-5 text-primary" />
+                              Rekomendacje AI
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <ul className="space-y-2">
+                              {campaign.recommendations.map((rec, idx) => (
+                                <li key={idx} className="flex items-start gap-3">
+                                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 shrink-0" />
+                                  <span className="text-foreground/80">{rec}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Plan wdrożenia */}
+                  {activeResultTab === 'plan' && (
+                    <div className="animate-fade-in">
+                      <ImplementationPlanCard 
+                        stages={campaign.strategy?.funnel_stages}
+                        totalBudget={renderValue(campaign.strategy?.total_budget)}
+                        duration={renderValue(campaign.strategy?.campaign_duration)}
+                      />
+                    </div>
+                  )}
  
                  {/* Ustawienia (Ads Manager) */}
                  {activeResultTab === 'ustawienia' && (
@@ -841,54 +854,63 @@
                    </div>
                  )}
  
-                 {/* Kreacje (Mockups) */}
-                 {activeResultTab === 'kreacje' && (
-                   <div className="space-y-6 animate-fade-in">
-                     <div className="grid gap-6 lg:grid-cols-2">
-                       {campaign.posts?.slice(0, 4).map((post, idx) => (
-                         <Card key={idx} className="border-border/50 overflow-hidden">
-                           <CardHeader className="pb-3 border-b border-border/30">
-                             <div className="flex items-center justify-between">
-                               <Badge variant="outline" className="text-xs">
-                                 {post.platform || 'Facebook'} • {post.type}
-                               </Badge>
-                               <Button 
-                                 variant="ghost" 
-                                 size="sm"
-                                 onClick={() => copyToClipboard(post.primaryText)}
-                                 className="h-8 gap-1.5 text-xs"
-                               >
-                                 <Copy className="w-3 h-3" /> Kopiuj tekst
-                               </Button>
-                             </div>
-                           </CardHeader>
-                           <CardContent className="p-4">
-                             {idx % 2 === 0 ? (
-                               <FacebookAdMockup
-                                 salonName={formData.clientName}
-                                 headline={post.headline}
-                                 primaryText={post.primaryText}
-                                 cta={post.cta}
-                                 description={post.description}
-                                 imageIdea={post.imageIdea}
-                                 variant={idx === 0 ? 'feed' : 'story'}
-                               />
-                             ) : (
-                               <InstagramAdMockup
-                                 salonName={formData.clientName}
-                                headline={post.headline}
-                                 primaryText={post.primaryText}
-                                 cta={post.cta}
-                                 imageIdea={post.imageIdea}
-                                 variant={idx === 1 ? 'feed' : 'reels'}
-                               />
-                             )}
-                           </CardContent>
-                         </Card>
-                       ))}
-                     </div>
-                   </div>
-                 )}
+                  {/* Kreacje (Mockups) */}
+                  {activeResultTab === 'kreacje' && (
+                    <div className="space-y-6 animate-fade-in">
+                      <div className="grid gap-6 lg:grid-cols-2">
+                        {campaign.posts?.slice(0, 6).map((post, idx) => (
+                          <Card key={idx} className="border-border/50 overflow-hidden">
+                            <CardHeader className="pb-3 border-b border-border/30">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {post.platform || 'Facebook'} • {post.type}
+                                  </Badge>
+                                  {post.targetEmotion && (
+                                    <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">
+                                      {post.targetEmotion}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => copyToClipboard(post.primaryText)}
+                                  className="h-8 gap-1.5 text-xs"
+                                >
+                                  <Copy className="w-3 h-3" /> Kopiuj tekst
+                                </Button>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="p-4 flex justify-center">
+                              {post.platform?.includes('instagram') || idx % 2 === 1 ? (
+                                <InstagramAdMockupPro
+                                  salonName={formData.clientName}
+                                  headline={post.headline}
+                                  primaryText={post.primaryText}
+                                  cta={post.cta}
+                                  imageIdea={post.imageIdea}
+                                  variant={post.type === 'reels' ? 'reels' : post.type === 'story' ? 'story' : 'feed'}
+                                  index={idx}
+                                />
+                              ) : (
+                                <FacebookAdMockupPro
+                                  salonName={formData.clientName}
+                                  headline={post.headline}
+                                  primaryText={post.primaryText}
+                                  cta={post.cta}
+                                  description={post.description}
+                                  imageIdea={post.imageIdea}
+                                  variant={post.type === 'carousel' ? 'carousel' : post.type === 'story' ? 'story' : 'feed'}
+                                  index={idx}
+                                />
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
  
                  {/* Copy (A/B Tests) */}
                  {activeResultTab === 'copy' && (
