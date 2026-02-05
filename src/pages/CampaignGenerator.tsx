@@ -32,6 +32,24 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Helper function to safely render values that might be objects
+const renderValue = (value: unknown): string => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object') {
+    // Convert object to readable string format
+    try {
+      return Object.entries(value as Record<string, unknown>)
+        .map(([key, val]) => `${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`)
+        .join(', ');
+    } catch {
+      return JSON.stringify(value);
+    }
+  }
+  return String(value);
+};
+
 interface Client {
   id: string;
   salon_name: string;
@@ -648,7 +666,7 @@ export default function CampaignGenerator() {
                                 <item.icon className="w-4 h-4" />
                                 {item.label}
                               </div>
-                              <p className="text-foreground">{item.value}</p>
+                              <p className="text-foreground">{renderValue(item.value)}</p>
                             </div>
                           ))}
                         </div>
@@ -687,11 +705,11 @@ export default function CampaignGenerator() {
                           <div className="grid gap-4 sm:grid-cols-2">
                             <div className="p-3 rounded-xl bg-background/50">
                               <span className="text-muted-foreground text-xs">Odbiorcy</span>
-                              <p className="text-foreground text-sm mt-1">{adSet.audience}</p>
+                              <p className="text-foreground text-sm mt-1">{renderValue(adSet.audience)}</p>
                             </div>
                             <div className="p-3 rounded-xl bg-background/50">
                               <span className="text-muted-foreground text-xs">Umiejscowienie</span>
-                              <p className="text-foreground text-sm mt-1">{adSet.placement}</p>
+                              <p className="text-foreground text-sm mt-1">{renderValue(adSet.placement)}</p>
                             </div>
                           </div>
                         </div>
