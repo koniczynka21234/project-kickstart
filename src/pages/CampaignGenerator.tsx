@@ -39,6 +39,8 @@
    Snowflake,
    Sun,
    Heart,
+   Play,
+   ChevronRight,
  } from 'lucide-react';
  import { cn } from '@/lib/utils';
  import { FacebookAdMockup } from '@/components/campaign/FacebookAdMockup';
@@ -127,11 +129,11 @@
  }
  
  const objectives = [
-   'Generowanie leadów',
-   'Rezerwacje online',
-   'Świadomość marki',
-   'Ruch na stronie',
-   'Wiadomości',
+   { id: 'leads', label: 'Generowanie leadów', icon: Users, description: 'Pozyskaj kontakty potencjalnych klientów' },
+   { id: 'bookings', label: 'Rezerwacje online', icon: Calendar, description: 'Zwiększ liczbę rezerwacji przez internet' },
+   { id: 'awareness', label: 'Świadomość marki', icon: Megaphone, description: 'Dotrzyj do nowych odbiorców' },
+   { id: 'traffic', label: 'Ruch na stronie', icon: TrendingUp, description: 'Przyciągnij więcej odwiedzających' },
+   { id: 'messages', label: 'Wiadomości', icon: FileText, description: 'Zachęć do kontaktu przez Messenger' },
  ];
  
  const industries = [
@@ -145,22 +147,19 @@
  ];
  
  const STEPS = [
-   { id: 1, name: 'Klient', icon: Building2, description: 'Dane salonu i kontekst' },
-   { id: 2, name: 'Strategia', icon: Target, description: 'Cel, grupa docelowa, USP' },
-   { id: 3, name: 'Szczegóły', icon: Settings2, description: 'Sezonowość, promocje, konkurencja' },
-   { id: 4, name: 'Generuj', icon: Wand2, description: 'AI tworzy kampanię' },
-   { id: 5, name: 'Wyniki', icon: Sparkles, description: 'Pełna strategia i mockupy' },
+   { id: 1, name: 'Klient', icon: Building2 },
+   { id: 2, name: 'Cel', icon: Target },
+   { id: 3, name: 'Szczegóły', icon: Settings2 },
+   { id: 4, name: 'Wyniki', icon: Sparkles },
  ];
  
  const seasonOptions = [
-   { value: 'walentynki', label: 'Walentynki', icon: Heart },
-   { value: 'wiosna', label: 'Wiosna/Wielkanoc', icon: Sun },
-   { value: 'lato', label: 'Lato/Wakacje', icon: Sun },
-   { value: 'jesien', label: 'Jesień/Back to school', icon: TrendingUp },
-   { value: 'zima', label: 'Zima/Święta', icon: Snowflake },
-   { value: 'sylwester', label: 'Sylwester/Karnawał', icon: Sparkles },
-   { value: 'dzien_kobiet', label: 'Dzień Kobiet', icon: Gift },
-   { value: 'brak', label: 'Brak konkretnej okazji', icon: Calendar },
+   { value: 'walentynki', label: 'Walentynki', icon: Heart, color: 'from-pink-500 to-rose-500' },
+   { value: 'wiosna', label: 'Wiosna', icon: Sun, color: 'from-green-500 to-emerald-500' },
+   { value: 'lato', label: 'Lato', icon: Sun, color: 'from-yellow-500 to-orange-500' },
+   { value: 'zima', label: 'Święta', icon: Snowflake, color: 'from-blue-500 to-cyan-500' },
+   { value: 'sylwester', label: 'Sylwester', icon: Sparkles, color: 'from-purple-500 to-violet-500' },
+   { value: 'brak', label: 'Brak okazji', icon: Calendar, color: 'from-gray-500 to-gray-600' },
  ];
  
  export default function CampaignGenerator() {
@@ -169,6 +168,7 @@
    const [loading, setLoading] = useState(false);
    const [campaign, setCampaign] = useState<CampaignData | null>(null);
    const [currentStep, setCurrentStep] = useState(1);
+   const [loadingProgress, setLoadingProgress] = useState(0);
    
    const [formData, setFormData] = useState({
      clientName: '',
@@ -190,6 +190,20 @@
    useEffect(() => {
      fetchClients();
    }, []);
+ 
+   useEffect(() => {
+     if (loading) {
+       const interval = setInterval(() => {
+         setLoadingProgress(prev => {
+           if (prev >= 95) return prev;
+           return prev + Math.random() * 15;
+         });
+       }, 500);
+       return () => clearInterval(interval);
+     } else {
+       setLoadingProgress(0);
+     }
+   }, [loading]);
  
    const fetchClients = async () => {
      const { data } = await supabase
@@ -221,7 +235,6 @@
  
      setLoading(true);
      setCampaign(null);
-     setCurrentStep(4);
  
      try {
        const { data, error } = await supabase.functions.invoke('generate-campaign', {
@@ -230,32 +243,25 @@
  
        if (error) {
          const status = (error as any)?.context?.status;
-         console.error('generate-campaign invoke error:', { status, error });
          toast.error(`Błąd generowania (${status ?? 'unknown'}): ${error.message}`);
-         setCurrentStep(3);
          return;
        }
  
        if (data?.error) {
-         console.error('generate-campaign edge error:', data);
          const details = typeof data.details === 'string' ? data.details : '';
          toast.error(details ? `${data.error}: ${details}` : data.error);
-         setCurrentStep(3);
          return;
        }
  
        if (data?.campaign) {
          setCampaign(data.campaign);
-         setCurrentStep(5);
-         toast.success('Kampania wygenerowana przez AI!');
+         setCurrentStep(4);
+         toast.success('Kampania wygenerowana!');
        } else {
          toast.error('Brak danych kampanii w odpowiedzi');
-         setCurrentStep(3);
        }
      } catch (err: any) {
-       console.error('Error generating campaign:', err);
        toast.error(err.message || 'Błąd generowania kampanii');
-       setCurrentStep(3);
      } finally {
        setLoading(false);
      }
@@ -270,71 +276,55 @@
    const canProceedStep2 = formData.objective;
  
    const goToNextStep = () => {
-     if (currentStep === 1 && canProceedStep1) {
-       setCurrentStep(2);
-     } else if (currentStep === 2 && canProceedStep2) {
-       setCurrentStep(3);
-     } else if (currentStep === 3) {
-       generateCampaign();
-     }
+     if (currentStep === 1 && canProceedStep1) setCurrentStep(2);
+     else if (currentStep === 2 && canProceedStep2) setCurrentStep(3);
+     else if (currentStep === 3) generateCampaign();
    };
  
    const goToPrevStep = () => {
-     if (currentStep > 1 && currentStep !== 4) {
-       setCurrentStep(currentStep - 1);
-     }
+     if (currentStep > 1 && currentStep < 4) setCurrentStep(currentStep - 1);
    };
  
    const resetWizard = () => {
      setCurrentStep(1);
      setCampaign(null);
      setFormData({
-       clientName: '',
-       industry: '',
-       city: '',
-       budget: '',
-       objective: '',
-       targetAudience: '',
-       services: '',
-       seasonality: '',
-       promotions: '',
-       competitors: '',
-       usp: '',
-       priceRange: '',
-       existingFollowers: '',
-       previousCampaigns: '',
+       clientName: '', industry: '', city: '', budget: '', objective: '', targetAudience: '',
+       services: '', seasonality: '', promotions: '', competitors: '', usp: '', priceRange: '',
+       existingFollowers: '', previousCampaigns: '',
      });
      setSelectedClient('');
    };
  
+   // RENDERING
    return (
      <AppLayout>
        <div className="min-h-screen bg-background">
-         {/* Header */}
-         <div className="border-b border-border/50 bg-gradient-to-r from-primary/5 via-background to-primary/5">
-           <div className="px-6 py-6">
-             <div className="flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                 <div className="relative">
-                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-xl shadow-primary/30">
-                     <Megaphone className="w-7 h-7 text-primary-foreground" />
-                   </div>
-                   <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                     <Zap className="w-3 h-3 text-primary-foreground" />
+         {/* Premium Hero Header */}
+         <div className="relative overflow-hidden border-b border-border/30">
+           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/5" />
+           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+           
+           <div className="relative px-6 py-8">
+             <div className="flex items-center justify-between max-w-6xl mx-auto">
+               <div className="flex items-center gap-5">
+                 <div className="relative group">
+                   <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
+                   <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                     <Megaphone className="w-8 h-8 text-primary-foreground" />
                    </div>
                  </div>
                  <div>
-                   <h1 className="text-2xl font-bold text-foreground">Generator Kampanii AI</h1>
-                   <p className="text-muted-foreground text-sm">Profesjonalne kampanie Meta Ads z mockupami</p>
+                   <h1 className="text-3xl font-bold text-foreground tracking-tight">
+                     Generator Kampanii
+                     <span className="ml-2 text-sm font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">AI</span>
+                   </h1>
+                   <p className="text-muted-foreground mt-1">Profesjonalne kampanie Meta Ads w kilka minut</p>
                  </div>
                </div>
                
-               {currentStep === 5 && (
-                 <Button
-                   variant="outline"
-                   onClick={resetWizard}
-                   className="border-primary/30 text-primary hover:bg-primary/10"
-                 >
+               {currentStep === 4 && (
+                 <Button onClick={resetWizard} variant="outline" className="border-primary/30 hover:bg-primary/10">
                    <ArrowLeft className="w-4 h-4 mr-2" />
                    Nowa kampania
                  </Button>
@@ -343,37 +333,40 @@
            </div>
          </div>
  
-         {/* Progress Steps */}
-         <div className="border-b border-border/30 bg-card/30 backdrop-blur-sm">
+         {/* Premium Step Indicator */}
+         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border/30">
            <div className="px-6 py-4">
-             <div className="flex items-center justify-between max-w-4xl mx-auto">
+             <div className="flex items-center justify-center gap-2 max-w-xl mx-auto">
                {STEPS.map((step, index) => {
-                 const isActive = currentStep === step.id;
-                 const isCompleted = currentStep > step.id;
+                 const isActive = currentStep === step.id || (currentStep === 4 && loading && step.id === 3);
+                 const isCompleted = currentStep > step.id || (currentStep === 4 && !loading && step.id < 4);
                  const isPending = currentStep < step.id;
+                 const Icon = step.icon;
                  
                  return (
                    <div key={step.id} className="flex items-center">
                      <div className="flex flex-col items-center">
-                       <div 
-                         className={cn(
-                           "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300",
-                           isActive && "bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30 scale-110",
-                           isCompleted && "bg-primary/20 text-primary",
-                           isPending && "bg-muted/50 text-muted-foreground"
-                         )}
-                       >
+                       <div className={cn(
+                         "relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500",
+                         isActive && "bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/40 scale-110",
+                         isCompleted && "bg-primary/20",
+                         isPending && "bg-muted/50"
+                       )}>
                          {isCompleted ? (
-                           <Check className="w-4 h-4" />
+                           <Check className="w-5 h-5 text-primary" />
                          ) : (
-                           <step.icon className={cn(
-                             "w-4 h-4",
-                             isActive && "text-primary-foreground"
+                           <Icon className={cn(
+                             "w-5 h-5 transition-colors",
+                             isActive && "text-primary-foreground",
+                             !isActive && "text-muted-foreground"
                            )} />
+                         )}
+                         {isActive && (
+                           <div className="absolute inset-0 rounded-xl bg-primary/30 animate-ping" style={{ animationDuration: '2s' }} />
                          )}
                        </div>
                        <span className={cn(
-                         "text-xs font-medium mt-2 transition-colors hidden sm:block",
+                         "text-xs font-medium mt-2 transition-all",
                          isActive && "text-primary",
                          isCompleted && "text-primary/70",
                          isPending && "text-muted-foreground"
@@ -384,8 +377,8 @@
                      
                      {index < STEPS.length - 1 && (
                        <div className={cn(
-                         "w-8 sm:w-16 h-0.5 mx-1 sm:mx-2 rounded-full transition-colors",
-                         isCompleted ? "bg-primary/50" : "bg-border"
+                         "w-12 h-1 mx-2 rounded-full transition-all duration-500",
+                         isCompleted ? "bg-gradient-to-r from-primary to-primary/50" : "bg-muted"
                        )} />
                      )}
                    </div>
@@ -395,87 +388,105 @@
            </div>
          </div>
  
-         {/* Main Content */}
-         <div className="flex-1 px-6 py-8">
-           <div className="max-w-4xl mx-auto">
+         {/* Main Content Area */}
+         <div className="px-6 py-8">
+           <div className="max-w-5xl mx-auto">
              
-             {/* Step 1: Client Data */}
+             {/* ============ STEP 1: Client Selection ============ */}
              {currentStep === 1 && (
-               <div className="animate-fade-in">
-                 <div className="text-center mb-8">
-                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                     <Building2 className="w-4 h-4" />
-                     Krok 1 z 4
-                   </div>
-                   <h2 className="text-2xl font-bold text-foreground">Wybierz klienta</h2>
-                   <p className="text-muted-foreground mt-2">Wprowadź dane salonu lub wybierz z listy</p>
+               <div className="animate-fade-in space-y-8">
+                 <div className="text-center">
+                   <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">Krok 1 z 3</Badge>
+                   <h2 className="text-2xl font-bold text-foreground">Wybierz lub dodaj klienta</h2>
+                   <p className="text-muted-foreground mt-2">Dane zostaną wykorzystane do personalizacji kampanii</p>
                  </div>
  
-                 <div className="grid gap-6 md:grid-cols-2">
-                   {/* Select existing client */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                     <div className="flex items-center gap-3 mb-4">
-                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                         <Users className="w-5 h-5 text-primary" />
+                 <div className="grid gap-6 lg:grid-cols-2">
+                   {/* Existing Clients Card */}
+                   <div className="group relative rounded-2xl bg-card border border-border/50 p-6 hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5">
+                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                     <div className="relative">
+                       <div className="flex items-center gap-4 mb-6">
+                         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                           <Users className="w-7 h-7 text-primary" />
+                         </div>
+                         <div>
+                           <h3 className="font-semibold text-foreground text-lg">Z bazy klientów</h3>
+                           <p className="text-sm text-muted-foreground">Automatyczne uzupełnienie danych</p>
+                         </div>
                        </div>
-                       <div>
-                         <h3 className="font-semibold text-foreground">Z listy klientów</h3>
-                         <p className="text-xs text-muted-foreground">Dane uzupełnione automatycznie</p>
-                       </div>
+                       
+                       <Select value={selectedClient} onValueChange={handleClientSelect}>
+                         <SelectTrigger className="h-14 text-base bg-muted/30 border-border/50 hover:border-primary/50 focus:border-primary transition-all">
+                           <SelectValue placeholder="Wybierz klienta z listy..." />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {clients.map(client => (
+                             <SelectItem key={client.id} value={client.id} className="py-3">
+                               <div className="flex items-center gap-3">
+                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                                   {client.salon_name.charAt(0)}
+                                 </div>
+                                 <div>
+                                   <span className="font-medium">{client.salon_name}</span>
+                                   {client.city && <span className="text-muted-foreground text-sm ml-2">• {client.city}</span>}
+                                 </div>
+                               </div>
+                             </SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                       
+                       {selectedClient && (
+                         <div className="mt-4 p-4 rounded-xl bg-success/10 border border-success/20 flex items-center gap-3">
+                           <CheckCircle2 className="w-5 h-5 text-success" />
+                           <span className="text-success text-sm font-medium">Dane klienta załadowane</span>
+                         </div>
+                       )}
                      </div>
-                     <Select value={selectedClient} onValueChange={handleClientSelect}>
-                       <SelectTrigger className="bg-background/50 border-border/50 hover:border-primary/50 transition-colors">
-                         <SelectValue placeholder="Wybierz klienta..." />
-                       </SelectTrigger>
-                       <SelectContent>
-                         {clients.map(client => (
-                           <SelectItem key={client.id} value={client.id}>
-                             <div className="flex items-center gap-2">
-                               <span>{client.salon_name}</span>
-                               {client.city && <span className="text-muted-foreground text-xs">• {client.city}</span>}
-                             </div>
-                           </SelectItem>
-                         ))}
-                       </SelectContent>
-                     </Select>
                    </div>
  
-                   {/* Manual input */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                     <div className="flex items-center gap-3 mb-4">
-                       <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                         <FileText className="w-5 h-5 text-amber-500" />
+                   {/* Manual Entry Card */}
+                   <div className="group relative rounded-2xl bg-card border border-border/50 p-6 hover:border-amber-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/5">
+                     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                     <div className="relative">
+                       <div className="flex items-center gap-4 mb-6">
+                         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/10 flex items-center justify-center">
+                           <FileText className="w-7 h-7 text-amber-500" />
+                         </div>
+                         <div>
+                           <h3 className="font-semibold text-foreground text-lg">Nowy klient</h3>
+                           <p className="text-sm text-muted-foreground">Wprowadź dane ręcznie</p>
+                         </div>
                        </div>
-                       <div>
-                         <h3 className="font-semibold text-foreground">Wprowadź ręcznie</h3>
-                         <p className="text-xs text-muted-foreground">Dla nowych klientów</p>
-                       </div>
-                     </div>
-                     <div className="space-y-3">
-                       <div>
-                         <Label className="text-muted-foreground text-xs">Nazwa salonu *</Label>
-                         <Input
-                           value={formData.clientName}
-                           onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-                           placeholder="np. Beauty Studio"
-                           className="mt-1 bg-background/50 border-border/50 focus:border-primary"
-                         />
+                       
+                       <div className="space-y-4">
+                         <div>
+                           <Label className="text-muted-foreground text-sm mb-2 block">Nazwa salonu *</Label>
+                           <Input
+                             value={formData.clientName}
+                             onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
+                             placeholder="np. Beauty Studio Warszawa"
+                             className="h-14 text-base bg-muted/30 border-border/50 focus:border-amber-500"
+                           />
+                         </div>
                        </div>
                      </div>
                    </div>
                  </div>
  
-                 {/* Additional client info */}
-                 <div className="mt-6 p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                   <h3 className="font-semibold text-foreground mb-4">Szczegóły klienta</h3>
-                   <div className="grid gap-4 sm:grid-cols-3">
+                 {/* Client Details Section */}
+                 <div className="rounded-2xl bg-card border border-border/50 p-6">
+                   <h3 className="font-semibold text-foreground text-lg mb-6 flex items-center gap-2">
+                     <Settings2 className="w-5 h-5 text-primary" />
+                     Szczegóły klienta
+                   </h3>
+                   
+                   <div className="grid gap-6 sm:grid-cols-3">
                      <div>
-                       <Label className="text-muted-foreground text-xs">Branża *</Label>
-                       <Select 
-                         value={formData.industry} 
-                         onValueChange={(v) => setFormData(prev => ({ ...prev, industry: v }))}
-                       >
-                         <SelectTrigger className="mt-1 bg-background/50 border-border/50 hover:border-primary/50">
+                       <Label className="text-muted-foreground text-sm mb-2 block">Branża *</Label>
+                       <Select value={formData.industry} onValueChange={(v) => setFormData(prev => ({ ...prev, industry: v }))}>
+                         <SelectTrigger className="h-12 bg-muted/30 border-border/50 hover:border-primary/50">
                            <SelectValue placeholder="Wybierz branżę" />
                          </SelectTrigger>
                          <SelectContent>
@@ -485,147 +496,273 @@
                          </SelectContent>
                        </Select>
                      </div>
+                     
                      <div>
-                       <Label className="text-muted-foreground text-xs">Miasto</Label>
+                       <Label className="text-muted-foreground text-sm mb-2 block">Miasto</Label>
                        <Input
                          value={formData.city}
                          onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
                          placeholder="np. Warszawa"
-                         className="mt-1 bg-background/50 border-border/50"
+                         className="h-12 bg-muted/30 border-border/50"
                        />
                      </div>
+                     
                      <div>
-                       <Label className="text-muted-foreground text-xs">Budżet miesięczny</Label>
-                       <div className="relative mt-1">
+                       <Label className="text-muted-foreground text-sm mb-2 block">Budżet miesięczny</Label>
+                       <div className="relative">
                          <Input
                            type="number"
                            value={formData.budget}
                            onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
                            placeholder="2000"
-                           className="bg-background/50 border-border/50 pr-12"
+                           className="h-12 bg-muted/30 border-border/50 pr-14"
                          />
-                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">PLN</span>
+                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">PLN</span>
                        </div>
                      </div>
                    </div>
                  </div>
  
-                 <div className="mt-8 flex justify-center">
+                 {/* Navigation */}
+                 <div className="flex justify-center pt-4">
                    <Button
                      onClick={goToNextStep}
                      disabled={!canProceedStep1}
-                     className="h-12 px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
+                     size="lg"
+                     className="h-14 px-10 bg-gradient-to-r from-primary to-accent hover:opacity-90 shadow-lg shadow-primary/25 text-base font-semibold"
                    >
-                     Dalej: Strategia
-                     <ArrowRight className="w-4 h-4 ml-2" />
+                     Dalej: Wybierz cel
+                     <ArrowRight className="w-5 h-5 ml-2" />
                    </Button>
                  </div>
                </div>
              )}
  
-             {/* Step 2: Strategy */}
+             {/* ============ STEP 2: Campaign Objective ============ */}
              {currentStep === 2 && (
-               <div className="animate-fade-in">
-                 <div className="text-center mb-8">
-                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                     <Target className="w-4 h-4" />
-                     Krok 2 z 4
-                   </div>
-                   <h2 className="text-2xl font-bold text-foreground">Strategia kampanii</h2>
-                   <p className="text-muted-foreground mt-2">Określ cel, grupę docelową i unikalne wartości</p>
+               <div className="animate-fade-in space-y-8">
+                 <div className="text-center">
+                   <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">Krok 2 z 3</Badge>
+                   <h2 className="text-2xl font-bold text-foreground">Jaki jest cel kampanii?</h2>
+                   <p className="text-muted-foreground mt-2">Wybierz główny cel, który chcesz osiągnąć</p>
                  </div>
  
-                 {/* Client summary */}
-                 <div className="mb-6 p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-4">
-                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                     <Building2 className="w-6 h-6 text-primary" />
+                 {/* Client Summary */}
+                 <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50">
+                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                     {formData.clientName.charAt(0)}
                    </div>
                    <div>
                      <h4 className="font-semibold text-foreground">{formData.clientName}</h4>
-                     <p className="text-sm text-muted-foreground">
-                       {formData.industry} {formData.city && `• ${formData.city}`} {formData.budget && `• ${formData.budget} PLN/mies.`}
-                     </p>
+                     <p className="text-sm text-muted-foreground">{formData.industry} {formData.city && `• ${formData.city}`}</p>
                    </div>
+                   {formData.budget && (
+                     <Badge className="ml-auto bg-success/10 text-success border-success/20">
+                       {formData.budget} PLN/mies.
+                     </Badge>
+                   )}
                  </div>
  
-                 <div className="space-y-6">
-                   {/* Campaign objective */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                     <div className="flex items-center gap-3 mb-4">
-                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                         <Target className="w-5 h-5 text-primary" />
-                       </div>
-                       <div>
-                         <h3 className="font-semibold text-foreground">Cel kampanii *</h3>
-                         <p className="text-xs text-muted-foreground">Co chcesz osiągnąć?</p>
-                       </div>
-                     </div>
-                     <div className="grid gap-3 sm:grid-cols-3">
-                       {objectives.map(obj => (
-                         <button
-                           key={obj}
-                           onClick={() => setFormData(prev => ({ ...prev, objective: obj }))}
-                           className={cn(
-                             "p-4 rounded-xl border-2 text-left transition-all duration-200",
-                             formData.objective === obj
-                               ? "border-primary bg-primary/10 text-foreground shadow-md shadow-primary/10"
-                               : "border-border/50 hover:border-primary/30 text-muted-foreground hover:text-foreground"
-                           )}
-                         >
-                           <span className="font-medium">{obj}</span>
-                         </button>
-                       ))}
-                     </div>
-                   </div>
+                 {/* Objectives Grid */}
+                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                   {objectives.map((obj) => {
+                     const Icon = obj.icon;
+                     const isSelected = formData.objective === obj.label;
+                     
+                     return (
+                       <button
+                         key={obj.id}
+                         onClick={() => setFormData(prev => ({ ...prev, objective: obj.label }))}
+                         className={cn(
+                           "relative group p-6 rounded-2xl border-2 text-left transition-all duration-300",
+                           isSelected
+                             ? "border-primary bg-primary/10 shadow-lg shadow-primary/20"
+                             : "border-border/50 bg-card hover:border-primary/30 hover:bg-primary/5"
+                         )}
+                       >
+                         <div className={cn(
+                           "w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-all",
+                           isSelected
+                             ? "bg-gradient-to-br from-primary to-accent"
+                             : "bg-muted group-hover:bg-primary/20"
+                         )}>
+                           <Icon className={cn(
+                             "w-7 h-7 transition-colors",
+                             isSelected ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"
+                           )} />
+                         </div>
+                         <h3 className={cn(
+                           "font-semibold text-lg mb-1 transition-colors",
+                           isSelected ? "text-foreground" : "text-foreground/80"
+                         )}>
+                           {obj.label}
+                         </h3>
+                         <p className="text-sm text-muted-foreground">{obj.description}</p>
+                         
+                         {isSelected && (
+                           <div className="absolute top-4 right-4">
+                             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                               <Check className="w-4 h-4 text-primary-foreground" />
+                             </div>
+                           </div>
+                         )}
+                       </button>
+                     );
+                   })}
+                 </div>
  
-                   {/* Target audience */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
+                 {/* Additional Details */}
+                 <div className="grid gap-6 lg:grid-cols-2">
+                   <div className="rounded-2xl bg-card border border-border/50 p-6">
                      <div className="flex items-center gap-3 mb-4">
                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
                          <Users className="w-5 h-5 text-amber-500" />
                        </div>
                        <div>
-                         <h3 className="font-semibold text-foreground">Grupa docelowa</h3>
-                         <p className="text-xs text-muted-foreground">AI dopasuje jeśli nie podasz</p>
+                         <h4 className="font-semibold text-foreground">Grupa docelowa</h4>
+                         <p className="text-xs text-muted-foreground">Opcjonalne - AI dopasuje automatycznie</p>
                        </div>
                      </div>
                      <Textarea
                        value={formData.targetAudience}
                        onChange={(e) => setFormData(prev => ({ ...prev, targetAudience: e.target.value }))}
                        placeholder="np. Kobiety 25-45 lat, zainteresowane pielęgnacją, mieszkające w mieście..."
-                       className="bg-background/50 border-border/50 resize-none focus:border-primary"
-                       rows={3}
+                       className="bg-muted/30 border-border/50 resize-none min-h-[100px]"
                      />
                    </div>
  
-                   {/* Services */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
+                   <div className="rounded-2xl bg-card border border-border/50 p-6">
                      <div className="flex items-center gap-3 mb-4">
                        <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
                          <Sparkles className="w-5 h-5 text-success" />
                        </div>
                        <div>
-                         <h3 className="font-semibold text-foreground">Promowane usługi</h3>
-                         <p className="text-xs text-muted-foreground">Jakie usługi promować?</p>
+                         <h4 className="font-semibold text-foreground">Promowane usługi</h4>
+                         <p className="text-xs text-muted-foreground">Jakie usługi chcesz promować?</p>
                        </div>
                      </div>
                      <Textarea
                        value={formData.services}
                        onChange={(e) => setFormData(prev => ({ ...prev, services: e.target.value }))}
                        placeholder="np. Manicure hybrydowy, pedicure, stylizacja paznokci..."
-                       className="bg-background/50 border-border/50 resize-none focus:border-primary"
-                       rows={2}
+                       className="bg-muted/30 border-border/50 resize-none min-h-[100px]"
+                     />
+                   </div>
+                 </div>
+ 
+                 {/* Navigation */}
+                 <div className="flex justify-center gap-4 pt-4">
+                   <Button onClick={goToPrevStep} variant="outline" size="lg" className="h-14 px-8">
+                     <ArrowLeft className="w-5 h-5 mr-2" />
+                     Wstecz
+                   </Button>
+                   <Button
+                     onClick={goToNextStep}
+                     disabled={!canProceedStep2}
+                     size="lg"
+                     className="h-14 px-10 bg-gradient-to-r from-primary to-accent hover:opacity-90 shadow-lg shadow-primary/25 text-base font-semibold"
+                   >
+                     Dalej: Szczegóły
+                     <ArrowRight className="w-5 h-5 ml-2" />
+                   </Button>
+                 </div>
+               </div>
+             )}
+ 
+             {/* ============ STEP 3: Details ============ */}
+             {currentStep === 3 && !loading && (
+               <div className="animate-fade-in space-y-8">
+                 <div className="text-center">
+                   <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">Krok 3 z 3</Badge>
+                   <h2 className="text-2xl font-bold text-foreground">Ostatnie szczegóły</h2>
+                   <p className="text-muted-foreground mt-2">Dodatkowe informacje dla lepszej personalizacji</p>
+                 </div>
+ 
+                 {/* Summary Card */}
+                 <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
+                   <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
+                     {formData.clientName.charAt(0)}
+                   </div>
+                   <div className="flex-1">
+                     <h4 className="font-semibold text-foreground">{formData.clientName}</h4>
+                     <p className="text-sm text-muted-foreground">{formData.industry}</p>
+                   </div>
+                   <Badge className="bg-primary/20 text-primary border-primary/30">{formData.objective}</Badge>
+                 </div>
+ 
+                 {/* Season Selection */}
+                 <div className="rounded-2xl bg-card border border-border/50 p-6">
+                   <div className="flex items-center gap-3 mb-6">
+                     <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                       <Calendar className="w-5 h-5 text-amber-500" />
+                     </div>
+                     <div>
+                       <h4 className="font-semibold text-foreground">Sezonowość / Okazja</h4>
+                       <p className="text-xs text-muted-foreground">Czy kampania jest związana z konkretną okazją?</p>
+                     </div>
+                   </div>
+                   
+                   <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+                     {seasonOptions.map(option => {
+                       const Icon = option.icon;
+                       const isSelected = formData.seasonality === option.value;
+                       
+                       return (
+                         <button
+                           key={option.value}
+                           onClick={() => setFormData(prev => ({ ...prev, seasonality: option.value }))}
+                           className={cn(
+                             "relative p-4 rounded-xl border-2 transition-all duration-200",
+                             isSelected
+                               ? "border-primary bg-primary/10"
+                               : "border-border/50 hover:border-primary/30 bg-muted/30"
+                           )}
+                         >
+                            <div className={cn(
+                              "w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2 transition-all",
+                              isSelected ? "bg-primary" : "bg-muted"
+                            )}>
+                              <Icon className={cn("w-5 h-5", isSelected ? "text-primary-foreground" : "text-muted-foreground")} />
+                            </div>
+                           <span className={cn(
+                             "text-sm font-medium block text-center",
+                             isSelected ? "text-foreground" : "text-muted-foreground"
+                           )}>
+                             {option.label}
+                           </span>
+                         </button>
+                       );
+                     })}
+                   </div>
+                 </div>
+ 
+                 {/* Additional Details Grid */}
+                 <div className="grid gap-6 lg:grid-cols-2">
+                   <div className="rounded-2xl bg-card border border-border/50 p-6">
+                     <div className="flex items-center gap-3 mb-4">
+                       <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                         <Gift className="w-5 h-5 text-success" />
+                       </div>
+                       <div>
+                         <h4 className="font-semibold text-foreground">Aktualne promocje</h4>
+                         <p className="text-xs text-muted-foreground">Promocje do uwzględnienia w kampanii</p>
+                       </div>
+                     </div>
+                     <Textarea
+                       value={formData.promotions}
+                       onChange={(e) => setFormData(prev => ({ ...prev, promotions: e.target.value }))}
+                       placeholder="np. -20% na pierwszą wizytę, pakiet 5 zabiegów w cenie 4..."
+                       className="bg-muted/30 border-border/50 resize-none min-h-[100px]"
                      />
                    </div>
  
-                   {/* USP */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
+                   <div className="rounded-2xl bg-card border border-border/50 p-6">
                      <div className="flex items-center gap-3 mb-4">
                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                          <Award className="w-5 h-5 text-primary" />
                        </div>
                        <div>
-                         <h3 className="font-semibold text-foreground">Unikalna wartość (USP)</h3>
+                         <h4 className="font-semibold text-foreground">Unikalna wartość (USP)</h4>
                          <p className="text-xs text-muted-foreground">Co wyróżnia ten salon?</p>
                        </div>
                      </div>
@@ -633,187 +770,115 @@
                        value={formData.usp}
                        onChange={(e) => setFormData(prev => ({ ...prev, usp: e.target.value }))}
                        placeholder="np. Jedyny salon z certyfikatem X, 10 lat doświadczenia..."
-                       className="bg-background/50 border-border/50 resize-none focus:border-primary"
-                       rows={2}
+                       className="bg-muted/30 border-border/50 resize-none min-h-[100px]"
                      />
                    </div>
                  </div>
  
-                 <div className="mt-8 flex justify-center gap-4">
-                   <Button variant="outline" onClick={goToPrevStep} className="h-12 px-6 border-border">
-                     <ArrowLeft className="w-4 h-4 mr-2" />
-                     Wstecz
-                   </Button>
-                   <Button
-                     onClick={goToNextStep}
-                     disabled={!canProceedStep2}
-                     className="h-12 px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
-                   >
-                     Dalej: Szczegóły
-                     <ArrowRight className="w-4 h-4 ml-2" />
-                   </Button>
-                 </div>
-               </div>
-             )}
- 
-             {/* Step 3: Details */}
-             {currentStep === 3 && (
-               <div className="animate-fade-in">
-                 <div className="text-center mb-8">
-                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                     <Settings2 className="w-4 h-4" />
-                     Krok 3 z 4
-                   </div>
-                   <h2 className="text-2xl font-bold text-foreground">Szczegóły kampanii</h2>
-                   <p className="text-muted-foreground mt-2">Dodatkowe informacje dla personalizacji</p>
-                 </div>
- 
-                 {/* Client summary */}
-                 <div className="mb-6 p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-4">
-                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                     <Building2 className="w-6 h-6 text-primary" />
-                   </div>
-                   <div className="flex-1">
-                     <h4 className="font-semibold text-foreground">{formData.clientName}</h4>
-                     <p className="text-sm text-muted-foreground">
-                       {formData.industry} {formData.city && `• ${formData.city}`}
-                     </p>
-                   </div>
-                   <Badge className="bg-primary/10 text-primary border-primary/30">{formData.objective}</Badge>
-                 </div>
- 
-                 <div className="space-y-6">
-                   {/* Seasonality */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                     <div className="flex items-center gap-3 mb-4">
-                       <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                         <Calendar className="w-5 h-5 text-amber-500" />
-                       </div>
-                       <div>
-                         <h3 className="font-semibold text-foreground">Sezonowość / Okazja</h3>
-                         <p className="text-xs text-muted-foreground">Kampania związana z okazją?</p>
-                       </div>
-                     </div>
-                     <div className="grid gap-2 sm:grid-cols-4">
-                       {seasonOptions.map(option => (
-                         <button
-                           key={option.value}
-                           onClick={() => setFormData(prev => ({ ...prev, seasonality: option.value }))}
-                           className={cn(
-                             "p-3 rounded-xl border-2 text-left transition-all duration-200 flex items-center gap-2",
-                             formData.seasonality === option.value
-                               ? "border-primary bg-primary/10 text-foreground shadow-md shadow-primary/10"
-                               : "border-border/50 hover:border-primary/30 text-muted-foreground hover:text-foreground"
-                           )}
-                         >
-                           <option.icon className="w-4 h-4" />
-                           <span className="text-sm font-medium">{option.label}</span>
-                         </button>
-                       ))}
-                     </div>
-                   </div>
- 
-                   {/* Promotions */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                     <div className="flex items-center gap-3 mb-4">
-                       <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
-                         <Gift className="w-5 h-5 text-success" />
-                       </div>
-                       <div>
-                         <h3 className="font-semibold text-foreground">Aktualne promocje</h3>
-                         <p className="text-xs text-muted-foreground">Promocje do uwzględnienia</p>
-                       </div>
-                     </div>
-                     <Textarea
-                       value={formData.promotions}
-                       onChange={(e) => setFormData(prev => ({ ...prev, promotions: e.target.value }))}
-                       placeholder="np. -20% na pierwszą wizytę, pakiet 5 zabiegów w cenie 4..."
-                       className="bg-background/50 border-border/50 resize-none focus:border-primary"
-                       rows={2}
+                 {/* Quick Stats */}
+                 <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                   <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                     <Label className="text-muted-foreground text-xs">Przedział cenowy</Label>
+                     <Input
+                       value={formData.priceRange}
+                       onChange={(e) => setFormData(prev => ({ ...prev, priceRange: e.target.value }))}
+                       placeholder="80-250 PLN"
+                       className="mt-2 bg-transparent border-0 p-0 h-auto text-foreground font-semibold focus-visible:ring-0"
                      />
                    </div>
- 
-                   {/* Competitors */}
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                     <div className="flex items-center gap-3 mb-4">
-                       <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-                         <TrendingUp className="w-5 h-5 text-destructive" />
-                       </div>
-                       <div>
-                         <h3 className="font-semibold text-foreground">Główni konkurenci</h3>
-                         <p className="text-xs text-muted-foreground">Pomaga wyróżnić kampanię</p>
-                       </div>
-                     </div>
-                     <Textarea
+                   <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                     <Label className="text-muted-foreground text-xs">Obserwatorzy FB/IG</Label>
+                     <Input
+                       value={formData.existingFollowers}
+                       onChange={(e) => setFormData(prev => ({ ...prev, existingFollowers: e.target.value }))}
+                       placeholder="2500 FB, 3200 IG"
+                       className="mt-2 bg-transparent border-0 p-0 h-auto text-foreground font-semibold focus-visible:ring-0"
+                     />
+                   </div>
+                   <div className="p-4 rounded-xl bg-muted/30 border border-border/50 col-span-2">
+                     <Label className="text-muted-foreground text-xs">Główni konkurenci</Label>
+                     <Input
                        value={formData.competitors}
                        onChange={(e) => setFormData(prev => ({ ...prev, competitors: e.target.value }))}
-                       placeholder="np. Salon XYZ (niższe ceny), Studio ABC (większy zasięg)..."
-                       className="bg-background/50 border-border/50 resize-none focus:border-primary"
-                       rows={2}
+                       placeholder="np. Salon XYZ, Studio ABC..."
+                       className="mt-2 bg-transparent border-0 p-0 h-auto text-foreground font-semibold focus-visible:ring-0"
                      />
-                   </div>
- 
-                   {/* Price range & followers */}
-                   <div className="grid gap-4 sm:grid-cols-2">
-                     <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                       <Label className="text-muted-foreground text-xs mb-2 block">Przedział cenowy usług</Label>
-                       <Input
-                         value={formData.priceRange}
-                         onChange={(e) => setFormData(prev => ({ ...prev, priceRange: e.target.value }))}
-                         placeholder="np. 80-250 PLN"
-                         className="bg-background/50 border-border/50"
-                       />
-                     </div>
-                     <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                       <Label className="text-muted-foreground text-xs mb-2 block">Obserwatorzy FB/IG</Label>
-                       <Input
-                         value={formData.existingFollowers}
-                         onChange={(e) => setFormData(prev => ({ ...prev, existingFollowers: e.target.value }))}
-                         placeholder="np. 2500 FB, 3200 IG"
-                         className="bg-background/50 border-border/50"
-                       />
-                     </div>
                    </div>
                  </div>
  
-                 <div className="mt-8 flex justify-center gap-4">
-                   <Button variant="outline" onClick={goToPrevStep} className="h-12 px-6 border-border">
-                     <ArrowLeft className="w-4 h-4 mr-2" />
+                 {/* Navigation */}
+                 <div className="flex justify-center gap-4 pt-4">
+                   <Button onClick={goToPrevStep} variant="outline" size="lg" className="h-14 px-8">
+                     <ArrowLeft className="w-5 h-5 mr-2" />
                      Wstecz
                    </Button>
                    <Button
                      onClick={goToNextStep}
-                     className="h-12 px-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25"
+                     size="lg"
+                     className="h-14 px-10 bg-gradient-to-r from-primary to-accent hover:opacity-90 shadow-lg shadow-primary/25 text-base font-semibold group"
                    >
-                     <Wand2 className="w-4 h-4 mr-2" />
+                     <Wand2 className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
                      Generuj kampanię AI
+                     <Sparkles className="w-4 h-4 ml-2 animate-pulse" />
                    </Button>
                  </div>
                </div>
              )}
  
-             {/* Step 4: Generating */}
-             {currentStep === 4 && loading && (
+             {/* ============ LOADING STATE ============ */}
+             {loading && (
                <div className="animate-fade-in flex flex-col items-center justify-center py-20">
                  <div className="relative">
-                   <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-2xl shadow-primary/40">
-                     <Loader2 className="w-12 h-12 text-primary-foreground animate-spin" />
+                   <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-2xl shadow-primary/40">
+                     <Wand2 className="w-16 h-16 text-primary-foreground animate-pulse" />
                    </div>
-                   <div className="absolute inset-0 rounded-2xl bg-primary/30 animate-ping" />
+                   <div className="absolute inset-0 rounded-3xl bg-primary/20 animate-ping" style={{ animationDuration: '2s' }} />
+                   
+                   {/* Orbiting elements */}
+                   <div className="absolute -inset-8">
+                     <div className="w-6 h-6 rounded-full bg-primary absolute top-0 left-1/2 -translate-x-1/2 animate-bounce" style={{ animationDelay: '0s' }} />
+                     <div className="w-4 h-4 rounded-full bg-accent absolute bottom-0 left-0 animate-bounce" style={{ animationDelay: '0.2s' }} />
+                     <div className="w-5 h-5 rounded-full bg-primary absolute bottom-0 right-0 animate-bounce" style={{ animationDelay: '0.4s' }} />
+                   </div>
                  </div>
-                 <h3 className="text-xl font-bold text-foreground mt-8">AI generuje kampanię...</h3>
-                 <p className="text-muted-foreground mt-2">To może zająć do 30 sekund</p>
                  
-                 <div className="mt-8 flex flex-col items-center gap-3">
+                 <h3 className="text-2xl font-bold text-foreground mt-10">AI tworzy kampanię...</h3>
+                 <p className="text-muted-foreground mt-2">Analizuję dane i przygotowuję strategię</p>
+                 
+                 {/* Progress bar */}
+                 <div className="w-80 mt-8">
+                   <div className="h-2 bg-muted rounded-full overflow-hidden">
+                     <div 
+                       className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+                       style={{ width: `${loadingProgress}%` }}
+                     />
+                   </div>
+                   <p className="text-center text-muted-foreground text-sm mt-2">{Math.round(loadingProgress)}%</p>
+                 </div>
+                 
+                 <div className="mt-8 space-y-3">
                    {[
-                     'Analiza danych klienta...',
-                     'Budowanie strategii lejka...',
-                     'Tworzenie zestawów reklam...',
-                     'Generowanie tekstów i wariantów A/B...',
-                     'Przygotowanie mockupów...',
+                     'Analiza profilu klienta',
+                     'Budowanie strategii lejka',
+                     'Tworzenie zestawów reklam',
+                     'Generowanie tekstów A/B',
                    ].map((text, i) => (
-                     <div key={i} className="flex items-center gap-2 text-muted-foreground text-sm animate-pulse" style={{ animationDelay: `${i * 200}ms` }}>
-                       <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                     <div 
+                       key={i} 
+                       className={cn(
+                         "flex items-center gap-3 text-sm transition-all duration-500",
+                         loadingProgress > i * 25 ? "text-foreground" : "text-muted-foreground"
+                       )}
+                       style={{ animationDelay: `${i * 150}ms` }}
+                     >
+                       {loadingProgress > (i + 1) * 25 ? (
+                         <CheckCircle2 className="w-4 h-4 text-success" />
+                       ) : (
+                         <Loader2 className={cn(
+                           "w-4 h-4",
+                           loadingProgress > i * 25 && loadingProgress <= (i + 1) * 25 && "animate-spin text-primary"
+                         )} />
+                       )}
                        {text}
                      </div>
                    ))}
@@ -821,63 +886,60 @@
                </div>
              )}
  
-             {/* Step 5: Results */}
-             {currentStep === 5 && campaign && (
+             {/* ============ STEP 4: Results ============ */}
+             {currentStep === 4 && campaign && !loading && (
                <div className="animate-fade-in">
+                 {/* Success Header */}
                  <div className="text-center mb-8">
-                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 text-success text-sm font-medium mb-4">
-                     <CheckCircle2 className="w-4 h-4" />
-                     Kampania gotowa!
+                   <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-success/10 text-success border border-success/20 mb-4">
+                     <CheckCircle2 className="w-5 h-5" />
+                     <span className="font-semibold">Kampania wygenerowana!</span>
                    </div>
-                   <h2 className="text-2xl font-bold text-foreground">Kampania dla {formData.clientName}</h2>
-                   <p className="text-muted-foreground mt-2">Przeglądaj materiały i kopiuj do Ads Manager</p>
+                   <h2 className="text-3xl font-bold text-foreground">Kampania dla {formData.clientName}</h2>
+                   <p className="text-muted-foreground mt-2">Przeglądaj strategię, mockupy i materiały do wdrożenia</p>
                  </div>
  
+                 {/* Results Tabs */}
                  <Tabs defaultValue="strategy" className="w-full">
-                   <TabsList className="w-full justify-start mb-6 bg-muted/30 p-1 rounded-xl flex-wrap">
-                     <TabsTrigger value="strategy" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                       <Target className="w-4 h-4" />
-                       <span className="hidden sm:inline">Strategia</span>
-                     </TabsTrigger>
-                     <TabsTrigger value="adsmanager" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                       <Monitor className="w-4 h-4" />
-                       <span className="hidden sm:inline">Ads Manager</span>
-                     </TabsTrigger>
-                     <TabsTrigger value="mockups" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                       <Smartphone className="w-4 h-4" />
-                       <span className="hidden sm:inline">Mockupy</span>
-                     </TabsTrigger>
-                     <TabsTrigger value="copy" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                       <FlaskConical className="w-4 h-4" />
-                       <span className="hidden sm:inline">A/B Testy</span>
-                     </TabsTrigger>
-                     <TabsTrigger value="posts" className="gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                       <FileText className="w-4 h-4" />
-                       <span className="hidden sm:inline">Posty</span>
-                     </TabsTrigger>
+                   <TabsList className="w-full justify-start mb-8 bg-muted/30 p-1.5 rounded-xl gap-1 flex-wrap h-auto">
+                     {[
+                       { value: 'strategy', icon: Target, label: 'Strategia' },
+                       { value: 'adsmanager', icon: Monitor, label: 'Ads Manager' },
+                       { value: 'mockups', icon: Smartphone, label: 'Mockupy' },
+                       { value: 'copy', icon: FlaskConical, label: 'A/B Testy' },
+                       { value: 'posts', icon: FileText, label: 'Posty' },
+                     ].map(tab => (
+                       <TabsTrigger 
+                         key={tab.value}
+                         value={tab.value}
+                         className="gap-2 rounded-lg px-4 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/20 transition-all"
+                       >
+                         <tab.icon className="w-4 h-4" />
+                         <span className="hidden sm:inline">{tab.label}</span>
+                       </TabsTrigger>
+                     ))}
                    </TabsList>
  
-                   <ScrollArea className="h-[calc(100vh-480px)]">
+                   <div className="min-h-[500px]">
                      {/* Strategy Tab */}
                      <TabsContent value="strategy" className="mt-0">
                        {campaign.strategy && (
-                         <CampaignStrategyCard 
-                           strategy={campaign.strategy} 
-                           clientName={formData.clientName}
-                         />
+                         <CampaignStrategyCard strategy={campaign.strategy} clientName={formData.clientName} />
                        )}
                        
                        {campaign.recommendations && campaign.recommendations.length > 0 && (
-                         <div className="mt-6 p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-                           <div className="flex items-center gap-2 text-primary font-semibold mb-4">
-                             <Lightbulb className="w-5 h-5" />
-                             Rekomendacje AI
+                         <div className="mt-6 p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20">
+                           <div className="flex items-center gap-3 mb-4">
+                             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                               <Lightbulb className="w-5 h-5 text-primary" />
+                             </div>
+                             <h4 className="font-semibold text-foreground">Rekomendacje AI</h4>
                            </div>
                            <ul className="space-y-3">
                              {campaign.recommendations.map((rec, idx) => (
                                <li key={idx} className="flex items-start gap-3">
                                  <CheckCircle2 className="w-4 h-4 text-success mt-1 shrink-0" />
-                                 <span className="text-foreground/80 text-sm">{rec}</span>
+                                 <span className="text-foreground/80">{rec}</span>
                                </li>
                              ))}
                            </ul>
@@ -886,7 +948,7 @@
                      </TabsContent>
  
                      {/* Ads Manager Tab */}
-                     <TabsContent value="adsmanager" className="mt-0">
+                     <TabsContent value="adsmanager" className="mt-0 space-y-6">
                        {campaign.adSets && (
                          <AdsManagerMockup
                            campaign={{
@@ -895,27 +957,24 @@
                              status: 'draft',
                              budget: `${formData.budget} PLN/mies.`,
                              schedule: campaign.strategy?.campaign_duration || '30 dni',
-                             adSets: campaign.adSets.map(adSet => ({
-                               ...adSet,
-                               status: 'draft' as const,
-                             })),
+                             adSets: campaign.adSets.map(adSet => ({ ...adSet, status: 'draft' as const })),
                            }}
                          />
                        )}
                        
                        {campaign.adsManagerSettings && (
-                         <div className="mt-6 p-6 rounded-2xl bg-card border border-border shadow-lg">
+                         <div className="p-6 rounded-2xl bg-card border border-border shadow-lg">
                            <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                              <Settings2 className="w-5 h-5 text-primary" />
-                             Ustawienia do Ads Managera
+                             Szczegółowe ustawienia
                            </h4>
-                           <div className="grid gap-3 sm:grid-cols-2">
+                           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                              {Object.entries(campaign.adsManagerSettings).map(([key, value]) => (
-                               <div key={key} className="p-3 rounded-xl bg-muted/30 border border-border/50">
-                                 <span className="text-muted-foreground text-xs capitalize">
+                               <div key={key} className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                                 <span className="text-muted-foreground text-xs capitalize block mb-1">
                                    {key.replace(/([A-Z])/g, ' $1').trim()}
                                  </span>
-                                 <p className="text-foreground text-sm mt-1">{renderValue(value)}</p>
+                                 <p className="text-foreground font-medium">{renderValue(value)}</p>
                                </div>
                              ))}
                            </div>
@@ -924,88 +983,84 @@
                      </TabsContent>
  
                      {/* Mockups Tab */}
-                     <TabsContent value="mockups" className="mt-0">
-                       <div className="space-y-8">
-                         <div>
-                           <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                             <Smartphone className="w-5 h-5 text-primary" />
-                             Podgląd reklam w feedzie
-                           </h4>
-                           <div className="grid gap-6 lg:grid-cols-2">
-                             {campaign.posts?.slice(0, 2).map((post, idx) => (
-                               <div key={idx} className="space-y-4">
-                                 <Badge className="bg-muted text-muted-foreground">Post {idx + 1}: {post.type}</Badge>
-                                 <div className="flex gap-4 justify-center flex-wrap">
-                                   <FacebookAdMockup
-                                     salonName={formData.clientName}
-                                     headline={post.headline}
-                                     primaryText={post.primaryText}
-                                     cta={post.cta}
-                                     description={post.description}
-                                     imageIdea={post.imageIdea}
-                                     variant="feed"
-                                   />
-                                 </div>
+                     <TabsContent value="mockups" className="mt-0 space-y-10">
+                       <div>
+                         <h4 className="font-semibold text-foreground mb-6 flex items-center gap-2 text-lg">
+                           <Smartphone className="w-5 h-5 text-primary" />
+                           Podgląd reklam w feedzie
+                         </h4>
+                         <div className="grid gap-8 lg:grid-cols-2">
+                           {campaign.posts?.slice(0, 2).map((post, idx) => (
+                             <div key={idx} className="space-y-4">
+                               <Badge className="bg-muted text-muted-foreground">Post {idx + 1}: {post.type}</Badge>
+                               <div className="flex justify-center">
+                                 <FacebookAdMockup
+                                   salonName={formData.clientName}
+                                   headline={post.headline}
+                                   primaryText={post.primaryText}
+                                   cta={post.cta}
+                                   description={post.description}
+                                   imageIdea={post.imageIdea}
+                                   variant="feed"
+                                 />
                                </div>
-                             ))}
-                           </div>
+                             </div>
+                           ))}
                          </div>
+                       </div>
  
-                         <div>
-                           <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                             <ImageIcon className="w-5 h-5 text-primary" />
-                             Podgląd Stories / Reels
-                           </h4>
-                           <div className="flex gap-6 justify-center flex-wrap">
-                             {campaign.posts?.slice(0, 2).map((post, idx) => (
-                               <div key={idx} className="space-y-2">
-                                 <Badge className="bg-muted text-muted-foreground text-xs">
-                                   {idx === 0 ? 'FB Story' : 'IG Reels'}
-                                 </Badge>
-                                 {idx === 0 ? (
-                                   <FacebookAdMockup
-                                     salonName={formData.clientName}
-                                     headline={post.headline}
-                                     primaryText={post.primaryText}
-                                     cta={post.cta}
-                                     variant="story"
-                                   />
-                                 ) : (
-                                   <InstagramAdMockup
-                                     salonName={formData.clientName}
-                                     headline={post.headline}
-                                     primaryText={post.primaryText}
-                                     cta={post.cta}
-                                     variant="reels"
-                                   />
-                                 )}
-                               </div>
-                             ))}
-                           </div>
+                       <div>
+                         <h4 className="font-semibold text-foreground mb-6 flex items-center gap-2 text-lg">
+                           <ImageIcon className="w-5 h-5 text-primary" />
+                           Podgląd Stories / Reels
+                         </h4>
+                         <div className="flex gap-8 justify-center flex-wrap">
+                           {campaign.posts?.slice(0, 2).map((post, idx) => (
+                             <div key={idx} className="space-y-3">
+                               <Badge className="bg-muted text-muted-foreground text-xs">
+                                 {idx === 0 ? 'Facebook Story' : 'Instagram Reels'}
+                               </Badge>
+                               {idx === 0 ? (
+                                 <FacebookAdMockup
+                                   salonName={formData.clientName}
+                                   headline={post.headline}
+                                   primaryText={post.primaryText}
+                                   cta={post.cta}
+                                   variant="story"
+                                 />
+                               ) : (
+                                 <InstagramAdMockup
+                                   salonName={formData.clientName}
+                                   headline={post.headline}
+                                   primaryText={post.primaryText}
+                                   cta={post.cta}
+                                   variant="reels"
+                                 />
+                               )}
+                             </div>
+                           ))}
                          </div>
                        </div>
                      </TabsContent>
  
                      {/* A/B Testing Tab */}
                      <TabsContent value="copy" className="mt-0">
-                       {campaign.copyVariants && (
-                         <ABTestingCard variants={campaign.copyVariants} />
-                       )}
+                       {campaign.copyVariants && <ABTestingCard variants={campaign.copyVariants} />}
                      </TabsContent>
  
                      {/* Posts Tab */}
                      <TabsContent value="posts" className="mt-0">
                        <div className="space-y-4">
                          {campaign.posts?.map((post, idx) => (
-                           <div key={idx} className="p-5 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg">
-                             <div className="flex items-center justify-between mb-4">
-                               <div className="flex items-center gap-3">
-                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-foreground font-bold">
+                           <div key={idx} className="p-6 rounded-2xl bg-card border border-border shadow-lg hover:shadow-xl transition-shadow">
+                             <div className="flex items-center justify-between mb-5">
+                               <div className="flex items-center gap-4">
+                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-foreground font-bold text-lg">
                                    {idx + 1}
                                  </div>
                                  <div>
-                                   <h3 className="font-semibold text-foreground">Post {idx + 1}</h3>
-                                   {post.hook && <p className="text-xs text-muted-foreground">Hook: {post.hook}</p>}
+                                   <h3 className="font-semibold text-foreground text-lg">Post {idx + 1}</h3>
+                                   {post.hook && <p className="text-sm text-muted-foreground">Hook: {post.hook}</p>}
                                  </div>
                                </div>
                                <div className="flex gap-2">
@@ -1013,30 +1068,34 @@
                                  {post.platform && <Badge className="bg-muted text-muted-foreground">{post.platform}</Badge>}
                                </div>
                              </div>
+                             
                              <div className="space-y-4">
                                <div className="grid gap-4 sm:grid-cols-2">
-                                 <div className="p-3 rounded-xl bg-muted/30">
-                                   <span className="text-muted-foreground text-xs">Nagłówek</span>
-                                   <p className="text-foreground font-medium mt-1">{post.headline}</p>
+                                 <div className="p-4 rounded-xl bg-muted/30">
+                                   <span className="text-muted-foreground text-xs block mb-1">Nagłówek</span>
+                                   <p className="text-foreground font-semibold">{post.headline}</p>
                                  </div>
-                                 <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
-                                   <span className="text-muted-foreground text-xs">CTA</span>
-                                   <p className="text-primary font-medium mt-1">{post.cta}</p>
+                                 <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                                   <span className="text-muted-foreground text-xs block mb-1">Call to Action</span>
+                                   <p className="text-primary font-semibold">{post.cta}</p>
                                  </div>
                                </div>
-                               <div className="p-3 rounded-xl bg-muted/30">
-                                 <span className="text-muted-foreground text-xs">Tekst główny</span>
-                                 <p className="text-foreground/80 text-sm mt-1 whitespace-pre-line">{post.primaryText}</p>
+                               
+                               <div className="p-4 rounded-xl bg-muted/30">
+                                 <span className="text-muted-foreground text-xs block mb-2">Tekst główny</span>
+                                 <p className="text-foreground whitespace-pre-line">{post.primaryText}</p>
                                </div>
+                               
                                {post.imageIdea && (
-                                 <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                                   <span className="text-amber-500 text-xs flex items-center gap-1.5">
-                                     <ImageIcon className="w-3 h-3" />
+                                 <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                   <span className="text-amber-500 text-xs flex items-center gap-1.5 mb-2">
+                                     <ImageIcon className="w-3.5 h-3.5" />
                                      Pomysł na grafikę
                                    </span>
-                                   <p className="text-foreground/70 text-sm mt-1">{post.imageIdea}</p>
+                                   <p className="text-foreground/80">{post.imageIdea}</p>
                                  </div>
                                )}
+                               
                                <div className="flex justify-end pt-2">
                                  <Button
                                    variant="outline"
@@ -1044,7 +1103,7 @@
                                    onClick={() => copyToClipboard(`${post.headline}\n\n${post.primaryText}\n\nCTA: ${post.cta}`)}
                                    className="border-primary/30 text-primary hover:bg-primary/10"
                                  >
-                                   <Copy className="w-3.5 h-3.5 mr-1.5" />
+                                   <Copy className="w-4 h-4 mr-2" />
                                    Kopiuj post
                                  </Button>
                                </div>
@@ -1053,12 +1112,12 @@
                          ))}
                        </div>
                      </TabsContent>
-                   </ScrollArea>
+                   </div>
                  </Tabs>
                  
                  {/* Raw content fallback */}
                  {campaign.rawContent && !campaign.strategy && (
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-card to-card/80 border border-border/50 shadow-lg mt-6">
+                   <div className="p-6 rounded-2xl bg-card border border-border shadow-lg mt-8">
                      <div className="flex items-center justify-between mb-4">
                        <h3 className="font-semibold text-foreground">Wygenerowana treść</h3>
                        <Button
@@ -1067,7 +1126,7 @@
                          onClick={() => copyToClipboard(campaign.rawContent || '')}
                          className="border-primary/30 text-primary hover:bg-primary/10"
                        >
-                         <Copy className="w-3.5 h-3.5 mr-1.5" />
+                         <Copy className="w-4 h-4 mr-2" />
                          Kopiuj całość
                        </Button>
                      </div>
