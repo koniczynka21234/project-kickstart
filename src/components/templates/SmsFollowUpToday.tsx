@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { 
   MessageSquare, Phone, Copy, Check, User, MapPin, Loader2, 
-  RefreshCw, CheckCircle2, Download, Upload, FileText 
+  RefreshCw, CheckCircle2, Download, Upload, FileText, Calendar 
 } from 'lucide-react';
 import { declineCityToLocative, getOwnerFirstName, declineSalonNameToGenitive, formatPhoneNumber } from '@/lib/polishDeclension';
 import { format } from 'date-fns';
@@ -24,12 +24,6 @@ interface Lead {
   sms_follow_up_date: string | null;
 }
 
-interface SmsTemplate {
-  id: string;
-  template_name: string;
-  content: string;
-}
-
 interface GeneratedSms {
   leadId: string;
   salonName: string;
@@ -38,6 +32,13 @@ interface GeneratedSms {
   phone: string;
   message: string;
   selected: boolean;
+  smsDate: string | null;
+}
+
+interface SmsTemplate {
+  id: string;
+  template_name: string;
+  content: string;
 }
 
 export function SmsFollowUpToday() {
@@ -127,7 +128,8 @@ export function SmsFollowUpToday() {
       city: lead.city,
       phone: lead.phone || '',
       message: getFilledTemplate(lead),
-      selected: true
+      selected: true,
+      smsDate: lead.sms_follow_up_date
     }));
     setGeneratedSmsList(generated);
   };
@@ -412,6 +414,19 @@ export function SmsFollowUpToday() {
                       {sms.salonName}
                     </CardTitle>
                     <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                      {sms.smsDate && (
+                        <span className={`flex items-center gap-1 ${
+                          new Date(sms.smsDate + 'T00:00:00') < new Date(new Date().setHours(0,0,0,0)) 
+                            ? 'text-red-400' 
+                            : 'text-muted-foreground'
+                        }`}>
+                          <Calendar className="w-3 h-3" />
+                          {format(new Date(sms.smsDate + 'T00:00:00'), 'd MMM yyyy', { locale: pl })}
+                          {new Date(sms.smsDate + 'T00:00:00') < new Date(new Date().setHours(0,0,0,0)) && (
+                            <span className="text-[10px] ml-1">(zaległe)</span>
+                          )}
+                        </span>
+                      )}
                       {sms.ownerName && (
                         <span className="flex items-center gap-1">
                           <User className="w-3 h-3" />
