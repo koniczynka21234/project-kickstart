@@ -4,7 +4,8 @@ import {
   Settings, Camera, FileText, Clock,
   ArrowRight, Sparkles, Star, Zap, Target, TrendingUp,
   MessageCircle, Gift, Award, Crown, HelpCircle, Globe,
-  Briefcase, Shield, Palette, BarChart3, MessageSquare, Smartphone, Key
+  Briefcase, Shield, Palette, BarChart3, MessageSquare, Smartphone, Key,
+  Flower2
 } from "lucide-react";
 import agencyLogo from "@/assets/agency-logo.png";
 import { getDiminutiveName } from "@/lib/polishDiminutives";
@@ -107,13 +108,26 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
       <DotsPattern className="bottom-24 left-12" />
 
       <div className="relative h-full flex flex-col p-10">
-        {/* Logo with glow */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="absolute inset-0 bg-pink-500/40 blur-xl rounded-full" />
-            <img src={agencyLogo} alt="Aurine" className="relative w-12 h-12 object-contain" />
+        {/* Header - matching Presentation style */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <img src={agencyLogo} alt="Aurine" className="w-12 h-12 object-contain" />
+            <div>
+              <p className="text-pink-400 font-semibold text-sm">AURINE AGENCY</p>
+              <p className="text-zinc-500 text-xs">Welcome Pack</p>
+            </div>
           </div>
-          <span className="text-pink-400 font-bold text-xl tracking-wider">AURINE</span>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+              <Flower2 className="w-4 h-4 text-pink-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-fuchsia-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-rose-400/60" />
+            </div>
+          </div>
         </div>
 
         {/* Main content */}
@@ -184,10 +198,26 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
       <DotsPattern className="bottom-16 right-16" />
 
       <div className="relative h-full flex flex-col p-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <img src={agencyLogo} alt="Aurine" className="w-10 h-10 object-contain" />
-          <span className="text-pink-400 font-bold text-lg tracking-wider">AURINE</span>
+        {/* Header - matching Presentation style */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <img src={agencyLogo} alt="Aurine" className="w-12 h-12 object-contain" />
+            <div>
+              <p className="text-pink-400 font-semibold text-sm">AURINE AGENCY</p>
+              <p className="text-zinc-500 text-xs">Twój Opiekun</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+              <Flower2 className="w-4 h-4 text-pink-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-fuchsia-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-rose-400/60" />
+            </div>
+          </div>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center">
@@ -301,10 +331,26 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
       </div>
 
       <div className="relative h-full flex flex-col p-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <img src={agencyLogo} alt="Aurine" className="w-10 h-10 object-contain" />
-          <span className="text-pink-400 font-bold text-lg tracking-wider">AURINE</span>
+        {/* Header - matching Presentation style */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <img src={agencyLogo} alt="Aurine" className="w-12 h-12 object-contain" />
+            <div>
+              <p className="text-pink-400 font-semibold text-sm">AURINE AGENCY</p>
+              <p className="text-zinc-500 text-xs">Onboarding</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+              <Flower2 className="w-4 h-4 text-pink-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-fuchsia-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-rose-400/60" />
+            </div>
+          </div>
         </div>
 
         {/* Title */}
@@ -385,10 +431,26 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
       </div>
 
       <div className="relative h-full flex flex-col p-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <img src={agencyLogo} alt="Aurine" className="w-10 h-10 object-contain" />
-          <span className="text-pink-400 font-bold text-lg tracking-wider">AURINE</span>
+        {/* Header - matching Presentation style */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <img src={agencyLogo} alt="Aurine" className="w-12 h-12 object-contain" />
+            <div>
+              <p className="text-pink-400 font-semibold text-sm">AURINE AGENCY</p>
+              <p className="text-zinc-500 text-xs">Stała Współpraca</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+              <Flower2 className="w-4 h-4 text-pink-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-fuchsia-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-rose-400/60" />
+            </div>
+          </div>
         </div>
 
         {/* Title */}
@@ -463,10 +525,26 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
       </div>
 
       <div className="relative h-full flex flex-col p-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <img src={agencyLogo} alt="Aurine" className="w-10 h-10 object-contain" />
-          <span className="text-pink-400 font-bold text-lg tracking-wider">AURINE</span>
+        {/* Header - matching Presentation style */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <img src={agencyLogo} alt="Aurine" className="w-12 h-12 object-contain" />
+            <div>
+              <p className="text-pink-400 font-semibold text-sm">AURINE AGENCY</p>
+              <p className="text-zinc-500 text-xs">Checklista</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+              <Flower2 className="w-4 h-4 text-pink-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-fuchsia-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-rose-400/60" />
+            </div>
+          </div>
         </div>
 
         {/* Title */}
@@ -564,10 +642,26 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
       </div>
 
       <div className="relative h-full flex flex-col p-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <img src={agencyLogo} alt="Aurine" className="w-10 h-10 object-contain" />
-          <span className="text-pink-400 font-bold text-lg tracking-wider">AURINE</span>
+        {/* Header - matching Presentation style */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <img src={agencyLogo} alt="Aurine" className="w-12 h-12 object-contain" />
+            <div>
+              <p className="text-pink-400 font-semibold text-sm">AURINE AGENCY</p>
+              <p className="text-zinc-500 text-xs">Kontakt</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+              <Flower2 className="w-4 h-4 text-pink-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-fuchsia-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-rose-400/60" />
+            </div>
+          </div>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center text-center">
