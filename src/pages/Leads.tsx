@@ -133,7 +133,7 @@ const industryOptions = [
   'Inne',
 ];
 
-// Sequence: Cold Mail (Day 0) → SMS (Day 2) → Email 1 (Day 6) → Email 2 (Day 10)
+// Sequence: Cold Mail (Day 0) → SMS (Day 1) → Email 1 (Day 4) → Email 2 (Day 7)
 // Helper to check if a date is due (today or past) - timezone-safe
 const isDateDue = (dueDate: Date): boolean => {
   const today = new Date();
@@ -150,21 +150,21 @@ const getNextFollowUpInfo = (lead: Lead): { type: string; dueDate: Date | null; 
   // Parse date as local to avoid timezone issues
   const coldEmailDate = new Date(lead.cold_email_date + 'T00:00:00');
   
-  // Check SMS (Day 2)
+  // Check SMS (Day 1)
   if (!lead.sms_follow_up_sent) {
-    const smsDue = addDays(coldEmailDate, 2);
+    const smsDue = addDays(coldEmailDate, 1);
     return { type: 'sms', dueDate: smsDue, isDue: isDateDue(smsDue) };
   }
   
-  // Check Email Follow-up 1 (Day 6 = 4 days after SMS)
+  // Check Email Follow-up 1 (Day 4 = 3 days after SMS)
   if (!lead.email_follow_up_1_sent) {
-    const email1Due = addDays(coldEmailDate, 6);
+    const email1Due = addDays(coldEmailDate, 4);
     return { type: 'email1', dueDate: email1Due, isDue: isDateDue(email1Due) };
   }
   
-  // Check Email Follow-up 2 (Day 10 = 4 days after Email 1)
+  // Check Email Follow-up 2 (Day 7 = 3 days after Email 1)
   if (!lead.email_follow_up_2_sent) {
-    const email2Due = addDays(coldEmailDate, 10);
+    const email2Due = addDays(coldEmailDate, 7);
     return { type: 'email2', dueDate: email2Due, isDue: isDateDue(email2Due) };
   }
   
@@ -643,17 +643,17 @@ export default function Leads() {
 
   // Helper: get SMS due date from cold email date
   const getSmsDueDate = (coldEmailDate: string): Date => {
-    return addDays(new Date(coldEmailDate + 'T00:00:00'), 2);
+    return addDays(new Date(coldEmailDate + 'T00:00:00'), 1);
   };
 
   // Helper: get Email FU1 due date from cold email date  
   const getEmailFu1DueDate = (coldEmailDate: string): Date => {
-    return addDays(new Date(coldEmailDate + 'T00:00:00'), 6);
+    return addDays(new Date(coldEmailDate + 'T00:00:00'), 4);
   };
 
   // Helper: get Email FU2 due date from cold email date
   const getEmailFu2DueDate = (coldEmailDate: string): Date => {
-    return addDays(new Date(coldEmailDate + 'T00:00:00'), 10);
+    return addDays(new Date(coldEmailDate + 'T00:00:00'), 7);
   };
 
   // Filter leads based on tab and filters
@@ -842,7 +842,7 @@ export default function Leads() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-foreground">Leady</h1>
-              <p className="text-muted-foreground text-xs sm:text-sm hidden sm:block">Sekwencja: Cold Mail → SMS (2 dni) → Email #1 (4 dni) → Email #2 (4 dni)</p>
+              <p className="text-muted-foreground text-xs sm:text-sm hidden sm:block">Sekwencja: Cold Mail → SMS (1 dzień) → Email #1 (dzień 4) → Email #2 (dzień 7)</p>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <div className="flex items-center border border-zinc-700 rounded-lg overflow-hidden z-10">
@@ -1622,9 +1622,9 @@ export default function Leads() {
                             if (lead.cold_email_date) {
                               const baseDate = new Date(lead.cold_email_date + 'T00:00:00');
                               if (idx === 0) scheduledDate = baseDate;
-                              else if (idx === 1) scheduledDate = addDays(baseDate, 2);
-                              else if (idx === 2) scheduledDate = addDays(baseDate, 6);
-                              else if (idx === 3) scheduledDate = addDays(baseDate, 10);
+                              else if (idx === 1) scheduledDate = addDays(baseDate, 1);
+                              else if (idx === 2) scheduledDate = addDays(baseDate, 4);
+                              else if (idx === 3) scheduledDate = addDays(baseDate, 7);
                             }
                             
                             const isDueToday = scheduledDate && isDateToday(scheduledDate.toISOString().split('T')[0]);
