@@ -44,6 +44,7 @@ import WelcomePackGenerator from "./pages/WelcomePackGenerator";
 import SocialMediaLibrary from "./pages/SocialMediaLibrary";
 import AurineAcademy from "./pages/AurineAcademy";
 import Statistics from "./pages/Statistics";
+import AuditGenerator from "./pages/AuditGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -101,6 +102,7 @@ function AppContent() {
             <Route path="/social-media" element={<SocialMediaLibrary />} />
             <Route path="/aurine-academy" element={<AurineAcademy />} />
             <Route path="/statistics" element={<Statistics />} />
+            <Route path="/audit-generator" element={<AuditGenerator />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
