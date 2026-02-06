@@ -370,8 +370,100 @@ export function declineCityToLocative(city: string): string {
 }
 
 /**
- * Get owner's first name - keep in nominative case for SMS
- * In modern Polish SMS communication, using the nominative form of names is acceptable and common
+ * Decline first name to vocative case (wołacz)
+ * Used in greetings like "Dzień dobry Pani Marcjanno"
+ */
+export function declineFirstNameToVocative(name: string): string {
+  if (!name) return '';
+  
+  const firstName = name.trim().split(' ')[0];
+  const lower = firstName.toLowerCase();
+  
+  // Feminine names ending in -a
+  if (lower.endsWith('a')) {
+    // -ka, -ga -> -ko, -go (softening)
+    if (lower.endsWith('ka')) {
+      return firstName.slice(0, -2) + 'ko';
+    }
+    if (lower.endsWith('ga')) {
+      return firstName.slice(0, -2) + 'go';
+    }
+    // -ja -> -jo (Kasia -> Kasiu, Maja -> Majo - but more commonly -iu)
+    if (lower.endsWith('ja')) {
+      return firstName.slice(0, -1) + 'u';
+    }
+    // -cia, -sia, -zia, -nia -> -ciu, -siu, -ziu, -niu
+    if (lower.endsWith('cia') || lower.endsWith('sia') || lower.endsWith('zia') || lower.endsWith('nia')) {
+      return firstName.slice(0, -1) + 'u';
+    }
+    // -la -> -lu (Ola -> Olu)
+    if (lower.endsWith('la')) {
+      return firstName.slice(0, -1) + 'u';
+    }
+    // -na -> -no (Anna -> Anno, Hanna -> Hanno, Joanna -> Joanno)
+    if (lower.endsWith('nna')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    if (lower.endsWith('na')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -ta -> -to (Dorota -> Doroto, Beata -> Beato)
+    if (lower.endsWith('ta')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -da -> -do (Magda -> Magdo, Wanda -> Wando)
+    if (lower.endsWith('da')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -ra -> -ro (Barbara -> Barbaro)
+    if (lower.endsWith('ra')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -wa -> -wo (Ewa -> Ewo)
+    if (lower.endsWith('wa')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -ba -> -bo (Bożena commonly ends -a, handle general case)
+    if (lower.endsWith('ba')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -za -> -zo (Eliza -> Elizo, Luiza -> Luizo)
+    if (lower.endsWith('za') && !lower.endsWith('zia')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -sa -> -so (Teresa -> Tereso) - but not -sia
+    if (lower.endsWith('sa') && !lower.endsWith('sia')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -ca -> -co (Lucyna ends in -a, Gracja -> Graco)
+    if (lower.endsWith('ca') && !lower.endsWith('cia')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // -yna/-ina -> -yno/-ino (Lucyna -> Lucyno, Janina -> Janino)
+    if (lower.endsWith('yna') || lower.endsWith('ina')) {
+      return firstName.slice(0, -1) + 'o';
+    }
+    // Generic -a -> -o (most common)
+    return firstName.slice(0, -1) + 'o';
+  }
+  
+  // Masculine names (for completeness, but less common in this context)
+  // -ek -> -ku (Marek -> Marku)
+  if (lower.endsWith('ek')) {
+    return firstName.slice(0, -2) + 'ku';
+  }
+  // -eł -> -le (Paweł -> Pawle)
+  if (lower.endsWith('eł')) {
+    return firstName.slice(0, -2) + 'le';
+  }
+  
+  // Return unchanged for other cases
+  return firstName;
+}
+
+/**
+ * Get owner's first name in nominative case
+ * Use declineFirstNameToVocative for greetings
  */
 export function getOwnerFirstName(name: string): string {
   if (!name) return '';
@@ -382,6 +474,9 @@ export function getOwnerFirstName(name: string): string {
  * Decline salon name for genitive case
  * Only declines common nouns like "salon", "studio" - leaves business names unchanged
  * "Salon Beauty Kaja" -> "salonu Beauty Kaja" (not "salonu beauty kaji")
+ * 
+ * IMPORTANT: When used with template "{salon}" after "dla salonu", 
+ * we strip the common noun prefix to avoid duplication like "dla salonu Salonu Aurine"
  */
 export function declineSalonNameToGenitive(salonName: string): string {
   if (!salonName) return '';
@@ -391,32 +486,17 @@ export function declineSalonNameToGenitive(salonName: string): string {
   
   if (words.length === 0) return trimmed;
   
-  // Only decline the first word if it's a common noun
   const firstWord = words[0];
   const firstWordLower = firstWord.toLowerCase();
   
-  // Common nouns that should be declined
-  const commonNouns: Record<string, string> = {
-    'salon': 'salonu',
-    'studio': 'studia',
-    'centrum': 'centrum',
-    'gabinet': 'gabinetu',
-    'pracownia': 'pracowni',
-    'klinika': 'kliniki',
-    'akademia': 'akademii',
-    'instytut': 'instytutu',
-    'atelier': 'atelier',
-    'spa': 'spa',
-  };
+  // Common nouns that would be duplicated in templates like "dla salonu {salon}"
+  const commonNouns = ['salon', 'studio', 'centrum', 'gabinet', 'pracownia', 'klinika', 'akademia', 'instytut', 'atelier', 'spa'];
   
-  if (commonNouns[firstWordLower]) {
-    // Replace first word with declined version, keep the rest unchanged
-    const declinedFirst = commonNouns[firstWordLower];
-    // Preserve original casing pattern if capitalized
-    const finalFirst = firstWord[0] === firstWord[0].toUpperCase() 
-      ? declinedFirst.charAt(0).toUpperCase() + declinedFirst.slice(1)
-      : declinedFirst;
-    return [finalFirst, ...words.slice(1)].join(' ');
+  // If first word is a common noun, REMOVE it to avoid duplication
+  // Template says "dla salonu {salon}" - if salon="Salon Aurine", we want "Aurine" not "Salonu Aurine"
+  if (commonNouns.includes(firstWordLower)) {
+    // Return the rest without the common noun prefix
+    return words.slice(1).join(' ');
   }
   
   // If first word isn't a common noun, return unchanged
