@@ -9,7 +9,7 @@ import {
   History, Users, UserPlus, LogOut, User, Shield, Crown,
   Target, Mail, CheckSquare, TrendingDown, Bell, UsersRound, Calendar,
   Settings, Zap, X, MailCheck, Sparkles, Gift, Megaphone, Wand2, Share2,
-  Smartphone, BarChart3, PieChart, MessageSquare,
+  Smartphone, BarChart3, PieChart, MessageSquare, ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -194,6 +194,7 @@ export function SidebarNav({ onNavigate, showCloseButton, onClose }: SidebarNavP
     { title: "Faktury", url: "/invoice-generator", icon: Receipt },
     { title: "Umowy", url: "/contract-generator", icon: FileSignature },
     { title: "Prezentacje", url: "/presentation-generator", icon: Presentation },
+    { title: "Audyt", url: "/audit-generator", icon: ClipboardCheck },
     { title: "Welcome Pack", url: "/welcome-pack-generator", icon: Gift },
     { title: "Kampanie AI", url: "/campaign-generator", icon: Megaphone },
     { title: "Grafiki", url: "/graphics-creator", icon: Wand2 },
