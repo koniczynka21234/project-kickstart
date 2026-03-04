@@ -3,6 +3,7 @@ import {
   MessageSquare, Lightbulb, ShieldCheck, HelpCircle, ChevronDown,
   CheckCircle2, AlertTriangle, Mic, Target, Sparkles, Quote,
   ArrowRight, Zap, TrendingUp, BookOpen, GripVertical,
+  GraduationCap, Phone, Clock, Users, Star,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORY_LARGE_ICONS } from "@/components/audit/auditSections";
@@ -10,35 +11,27 @@ import type { ConversationSection, ConversationTalkingPoint } from "@/lib/conver
 import { cn } from "@/lib/utils";
 
 // Category accent colors matching audit style
-const ACCENT: Record<string, { gradient: string; bg: string; border: string; text: string; bgSubtle: string }> = {
-  facebook: { gradient: "from-blue-500 to-blue-600", bg: "bg-blue-500/15", border: "border-blue-500/25", text: "text-blue-400", bgSubtle: "bg-blue-500/5" },
-  instagram: { gradient: "from-purple-500 to-pink-500", bg: "bg-purple-500/15", border: "border-purple-500/25", text: "text-purple-400", bgSubtle: "bg-purple-500/5" },
-  content: { gradient: "from-teal-500 to-cyan-500", bg: "bg-teal-500/15", border: "border-teal-500/25", text: "text-teal-400", bgSubtle: "bg-teal-500/5" },
-  stories_reels: { gradient: "from-pink-500 to-rose-500", bg: "bg-pink-500/15", border: "border-pink-500/25", text: "text-pink-400", bgSubtle: "bg-pink-500/5" },
-  branding: { gradient: "from-amber-500 to-yellow-500", bg: "bg-amber-500/15", border: "border-amber-500/25", text: "text-amber-400", bgSubtle: "bg-amber-500/5" },
-  competition: { gradient: "from-teal-500 to-emerald-500", bg: "bg-teal-500/15", border: "border-teal-500/25", text: "text-teal-400", bgSubtle: "bg-teal-500/5" },
-  paid_ads: { gradient: "from-orange-500 to-red-500", bg: "bg-orange-500/15", border: "border-orange-500/25", text: "text-orange-400", bgSubtle: "bg-orange-500/5" },
-  google_gmb: { gradient: "from-green-500 to-emerald-500", bg: "bg-green-500/15", border: "border-green-500/25", text: "text-green-400", bgSubtle: "bg-green-500/5" },
-  website: { gradient: "from-indigo-500 to-violet-500", bg: "bg-indigo-500/15", border: "border-indigo-500/25", text: "text-indigo-400", bgSubtle: "bg-indigo-500/5" },
+const ACCENT: Record<string, { gradient: string; bg: string; border: string; text: string; bgSubtle: string; ring: string }> = {
+  facebook: { gradient: "from-blue-500 to-blue-600", bg: "bg-blue-500/15", border: "border-blue-500/25", text: "text-blue-400", bgSubtle: "bg-blue-500/5", ring: "ring-blue-500/20" },
+  instagram: { gradient: "from-purple-500 to-pink-500", bg: "bg-purple-500/15", border: "border-purple-500/25", text: "text-purple-400", bgSubtle: "bg-purple-500/5", ring: "ring-purple-500/20" },
+  content: { gradient: "from-teal-500 to-cyan-500", bg: "bg-teal-500/15", border: "border-teal-500/25", text: "text-teal-400", bgSubtle: "bg-teal-500/5", ring: "ring-teal-500/20" },
+  stories_reels: { gradient: "from-pink-500 to-rose-500", bg: "bg-pink-500/15", border: "border-pink-500/25", text: "text-pink-400", bgSubtle: "bg-pink-500/5", ring: "ring-pink-500/20" },
+  branding: { gradient: "from-amber-500 to-yellow-500", bg: "bg-amber-500/15", border: "border-amber-500/25", text: "text-amber-400", bgSubtle: "bg-amber-500/5", ring: "ring-amber-500/20" },
+  competition: { gradient: "from-teal-500 to-emerald-500", bg: "bg-teal-500/15", border: "border-teal-500/25", text: "text-teal-400", bgSubtle: "bg-teal-500/5", ring: "ring-teal-500/20" },
+  paid_ads: { gradient: "from-orange-500 to-red-500", bg: "bg-orange-500/15", border: "border-orange-500/25", text: "text-orange-400", bgSubtle: "bg-orange-500/5", ring: "ring-orange-500/20" },
+  google_gmb: { gradient: "from-green-500 to-emerald-500", bg: "bg-green-500/15", border: "border-green-500/25", text: "text-green-400", bgSubtle: "bg-green-500/5", ring: "ring-green-500/20" },
+  website: { gradient: "from-indigo-500 to-violet-500", bg: "bg-indigo-500/15", border: "border-indigo-500/25", text: "text-indigo-400", bgSubtle: "bg-indigo-500/5", ring: "ring-indigo-500/20" },
+  academy: { gradient: "from-fuchsia-500 to-purple-500", bg: "bg-fuchsia-500/15", border: "border-fuchsia-500/25", text: "text-fuchsia-400", bgSubtle: "bg-fuchsia-500/5", ring: "ring-fuchsia-500/20" },
 };
 
 const getAccent = (catId: string) => ACCENT[catId] || ACCENT.content;
 
 // ── Editable Text Block ──
 const EditableText = ({
-  value,
-  onChange,
-  isEditing,
-  className,
-  italic = false,
-  hint,
+  value, onChange, isEditing, className, italic = false, hint,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  isEditing: boolean;
-  className?: string;
-  italic?: boolean;
-  hint?: string;
+  value: string; onChange: (v: string) => void; isEditing: boolean;
+  className?: string; italic?: boolean; hint?: string;
 }) => {
   if (!isEditing) {
     return <p className={cn(className, italic && "italic")}>{italic ? `„${value}"` : value}</p>;
@@ -63,20 +56,12 @@ const EditableText = ({
   );
 };
 
-// ── Single Talking Point Card ──
+// ── Single Talking Point ──
 const TalkingPointCard = ({
-  point,
-  catId,
-  index,
-  isLast,
-  isEditing,
-  onUpdate,
+  point, catId, index, isLast, isEditing, onUpdate,
 }: {
-  point: ConversationTalkingPoint;
-  catId: string;
-  index: number;
-  isLast: boolean;
-  isEditing: boolean;
+  point: ConversationTalkingPoint; catId: string; index: number;
+  isLast: boolean; isEditing: boolean;
   onUpdate: (updated: ConversationTalkingPoint) => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -89,160 +74,117 @@ const TalkingPointCard = ({
 
   return (
     <div className={cn(
-      "rounded-2xl border overflow-hidden transition-all duration-200",
+      "rounded-xl border overflow-hidden transition-all duration-200",
       isPositive
-        ? "border-emerald-500/20 bg-emerald-500/[0.03]"
-        : "border-border/50 bg-card/50",
-      isEditing && "ring-1 ring-primary/10"
+        ? "border-emerald-500/20 bg-emerald-500/[0.02]"
+        : "border-border/40 bg-card/30",
     )}>
-      {/* Header - always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full text-left p-4 sm:p-5 flex items-start gap-3 sm:gap-4 hover:bg-muted/20 transition-colors"
+        className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/10 transition-colors"
       >
-        {isEditing && (
-          <GripVertical className="w-4 h-4 text-muted-foreground/40 mt-1 flex-shrink-0" />
-        )}
+        {isEditing && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/30 flex-shrink-0" />}
         <div className={cn(
-          "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold",
-          isPositive
-            ? "bg-emerald-500/15 text-emerald-400"
-            : `${a.bg} ${a.text}`
+          "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold",
+          isPositive ? "bg-emerald-500/15 text-emerald-400" : `${a.bg} ${a.text}`
         )}>
-          {isPositive ? <CheckCircle2 className="w-5 h-5" /> : <span>{index}</span>}
+          {isPositive ? <CheckCircle2 className="w-4 h-4" /> : <span>{index}</span>}
         </div>
-
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className={cn("text-sm font-semibold", isPositive ? "text-emerald-300" : "text-foreground")}>
+          <div className="flex items-center gap-2">
+            <p className={cn("text-sm font-medium", isPositive ? "text-emerald-300" : "text-foreground")}>
               {point.label}
             </p>
-            <Badge variant="outline" className={cn(
-              "text-[10px] px-2 py-0",
-              isPositive ? "border-emerald-500/30 text-emerald-400" : "border-border/50 text-muted-foreground"
-            )}>
+            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-border/40 text-muted-foreground/70">
               {point.subSectionName}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{point.introduction}</p>
         </div>
-
-        <ChevronDown className={cn(
-          "w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform mt-1",
-          expanded && "rotate-180"
-        )} />
+        <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground/50 transition-transform", expanded && "rotate-180")} />
       </button>
 
-      {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-border/30 px-4 sm:px-5 pb-5 space-y-4 pt-4">
-          {/* Intro */}
-          <div className="rounded-xl bg-muted/30 border border-border/30 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Mic className={cn("w-4 h-4", a.text)} />
-              <span className={cn("text-xs font-bold uppercase tracking-wider", a.text)}>Wprowadzenie — co powiedzieć</span>
+        <div className="border-t border-border/20 px-4 pb-4 space-y-3 pt-3">
+          {/* What to say */}
+          <div className="rounded-lg bg-muted/20 border border-border/20 p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Mic className={cn("w-3.5 h-3.5", a.text)} />
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider", a.text)}>Co powiedzieć</span>
             </div>
             <EditableText
               value={point.introduction}
               onChange={(v) => updateField("introduction", v)}
               isEditing={isEditing}
-              className="text-sm text-foreground/90 leading-relaxed"
+              className="text-xs text-foreground/80 leading-relaxed"
               italic
-              hint="Dostosuj do swojego stylu mówienia. Użyj imienia klientki."
             />
           </div>
 
-          {/* What to say */}
-          <div className="rounded-xl bg-muted/30 border border-border/30 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <MessageSquare className="w-4 h-4 text-foreground/70" />
-              <span className="text-xs font-bold uppercase tracking-wider text-foreground/70">Jak to wytłumaczyć klientce</span>
+          {/* How to explain */}
+          <div className="rounded-lg bg-muted/15 border border-border/20 p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <MessageSquare className="w-3.5 h-3.5 text-foreground/50" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Jak wytłumaczyć</span>
             </div>
             <EditableText
               value={point.whatToSay}
               onChange={(v) => updateField("whatToSay", v)}
               isEditing={isEditing}
-              className="text-sm text-foreground/80 leading-relaxed"
-              hint="Uprość język jeśli klientka nie zna się na marketingu. Używaj analogii."
+              className="text-xs text-foreground/70 leading-relaxed"
             />
           </div>
 
-          {/* How to sell */}
-          <div className={cn("rounded-xl border p-4", a.bgSubtle, a.border)}>
-            <div className="flex items-center gap-2 mb-2">
-              <Target className={cn("w-4 h-4", a.text)} />
-              <span className={cn("text-xs font-bold uppercase tracking-wider", a.text)}>Jak podświadomie sprzedać</span>
+          {/* Sales angle */}
+          <div className={cn("rounded-lg border p-3", a.bgSubtle, a.border)}>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Target className={cn("w-3.5 h-3.5", a.text)} />
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider", a.text)}>Jak sprzedać</span>
             </div>
             <EditableText
               value={point.howToSell}
               onChange={(v) => updateField("howToSell", v)}
               isEditing={isEditing}
-              className="text-sm text-foreground/80 leading-relaxed"
-              hint="Dodaj konkretne liczby i przykłady z Twojego doświadczenia."
+              className="text-xs text-foreground/70 leading-relaxed"
             />
           </div>
 
-          {/* Sales technique */}
-          <div className="rounded-xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/20 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">Technika sprzedażowa</span>
+          {/* Technique pill */}
+          <div className="rounded-lg bg-gradient-to-r from-primary/5 to-transparent border border-primary/15 p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Technika</span>
             </div>
             <EditableText
               value={point.salesTechnique}
               onChange={(v) => updateField("salesTechnique", v)}
               isEditing={isEditing}
-              className="text-sm text-foreground/80 leading-relaxed"
-              hint="Wybierz technikę, która pasuje do Twojego stylu. Możesz zmienić na własną."
+              className="text-xs text-foreground/70 leading-relaxed"
             />
           </div>
 
-          {/* Possible questions */}
+          {/* Q&A */}
           {point.possibleQuestions.length > 0 && (
-            <div className="rounded-xl bg-muted/20 border border-border/30 p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Możliwe pytania i obiekcje klientki</span>
+            <div className="rounded-lg bg-muted/10 border border-border/20 p-3 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Obiekcje</span>
               </div>
               {point.possibleQuestions.map((q, qi) => (
-                <div key={qi} className="space-y-1.5 rounded-lg bg-muted/20 p-3">
+                <div key={qi} className="rounded-md bg-muted/15 p-2 space-y-1">
                   {isEditing ? (
-                    <div className="space-y-2">
-                      <div>
-                        <label className="text-[10px] text-amber-400/60 font-medium">Pytanie:</label>
-                        <textarea
-                          value={q.question}
-                          onChange={(e) => {
-                            const updated = [...point.possibleQuestions];
-                            updated[qi] = { ...updated[qi], question: e.target.value };
-                            updateField("possibleQuestions", updated);
-                          }}
-                          className="w-full rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-xs resize-y min-h-[30px] focus:outline-none focus:ring-1 focus:ring-amber-500/20 text-foreground"
-                          rows={1}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-emerald-400/60 font-medium">Odpowiedź:</label>
-                        <textarea
-                          value={q.answer}
-                          onChange={(e) => {
-                            const updated = [...point.possibleQuestions];
-                            updated[qi] = { ...updated[qi], answer: e.target.value };
-                            updateField("possibleQuestions", updated);
-                          }}
-                          className="w-full rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5 text-xs resize-y min-h-[40px] focus:outline-none focus:ring-1 focus:ring-emerald-500/20 text-foreground"
-                          rows={2}
-                        />
-                      </div>
+                    <div className="space-y-1.5">
+                      <textarea value={q.question} onChange={(e) => { const u = [...point.possibleQuestions]; u[qi] = { ...u[qi], question: e.target.value }; updateField("possibleQuestions", u); }}
+                        className="w-full rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1 text-[11px] resize-y min-h-[24px] focus:outline-none text-foreground" rows={1} />
+                      <textarea value={q.answer} onChange={(e) => { const u = [...point.possibleQuestions]; u[qi] = { ...u[qi], answer: e.target.value }; updateField("possibleQuestions", u); }}
+                        className="w-full rounded border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-[11px] resize-y min-h-[24px] focus:outline-none text-foreground" rows={1} />
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-start gap-2">
-                        <Quote className="w-3 h-3 text-amber-400/60 mt-1 flex-shrink-0" />
-                        <p className="text-xs font-medium text-foreground/70 italic">„{q.question}"</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed pl-5">
-                        <span className="text-emerald-400 font-medium">→ Twoja odpowiedź:</span> {q.answer}
+                      <p className="text-[11px] font-medium text-foreground/60 italic flex items-start gap-1.5">
+                        <Quote className="w-2.5 h-2.5 text-amber-400/50 mt-0.5 flex-shrink-0" /> „{q.question}"
+                      </p>
+                      <p className="text-[11px] text-muted-foreground pl-4">
+                        <span className="text-emerald-400 font-medium">→</span> {q.answer}
                       </p>
                     </>
                   )}
@@ -251,21 +193,15 @@ const TalkingPointCard = ({
             </div>
           )}
 
-          {/* Transition to next point */}
+          {/* Transition */}
           {!isLast && (
-            <div className="rounded-xl bg-muted/10 border border-border/20 p-3 flex items-center gap-2">
-              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+            <div className="flex items-center gap-2 pt-1">
+              <ArrowRight className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
               {isEditing ? (
-                <textarea
-                  value={point.transitionToNext}
-                  onChange={(e) => updateField("transitionToNext", e.target.value)}
-                  className="w-full rounded border border-border/30 bg-muted/10 px-2 py-1 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-primary/20 text-muted-foreground italic"
-                  rows={1}
-                />
+                <textarea value={point.transitionToNext} onChange={(e) => updateField("transitionToNext", e.target.value)}
+                  className="w-full rounded border border-border/20 bg-muted/10 px-2 py-1 text-[11px] resize-none focus:outline-none text-muted-foreground italic" rows={1} />
               ) : (
-                <p className="text-xs text-muted-foreground italic">
-                  Przejście: „{point.transitionToNext}"
-                </p>
+                <p className="text-[11px] text-muted-foreground/60 italic">„{point.transitionToNext}"</p>
               )}
             </div>
           )}
@@ -275,25 +211,21 @@ const TalkingPointCard = ({
   );
 };
 
-// ── Section Component (one per audit category) ──
+// ── Section Card (one per audit category) ──
 const SectionBlock = ({
-  section,
-  sectionIndex,
-  totalSections,
-  isEditing,
-  onUpdate,
+  section, sectionIndex, totalSections, isEditing, onUpdate,
 }: {
-  section: ConversationSection;
-  sectionIndex: number;
-  totalSections: number;
-  isEditing: boolean;
-  onUpdate: (updated: ConversationSection) => void;
+  section: ConversationSection; sectionIndex: number; totalSections: number;
+  isEditing: boolean; onUpdate: (updated: ConversationSection) => void;
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const a = getAccent(section.categoryId);
-  const icon = CATEGORY_LARGE_ICONS[section.categoryId];
+  const icon = section.categoryId === "academy"
+    ? <GraduationCap className="w-7 h-7" />
+    : CATEGORY_LARGE_ICONS[section.categoryId];
   const positiveCount = section.talkingPoints.filter(t => t.type === "positive").length;
   const issueCount = section.talkingPoints.filter(t => t.type === "issue").length;
+  const estMinutes = Math.max(3, Math.round(section.talkingPoints.length * 2.5));
 
   let issueIndex = 0;
 
@@ -304,55 +236,51 @@ const SectionBlock = ({
   };
 
   return (
-    <div className={cn("rounded-2xl border border-border/50 bg-card overflow-hidden", isEditing && "ring-1 ring-primary/10")}>
-      {/* Category Header */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="w-full text-left"
-      >
-        <div className={cn("relative p-5 sm:p-6 overflow-hidden")}>
-          <div className={cn("absolute inset-0 bg-gradient-to-r opacity-[0.06]", a.gradient)} />
-          <div className="relative flex items-center gap-4">
-            <div className={cn("w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center border", a.bg, a.border)}>
+    <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+      {/* Header with gradient accent bar */}
+      <button onClick={() => setCollapsed(!collapsed)} className="w-full text-left">
+        <div className="relative">
+          {/* Top accent bar */}
+          <div className={cn("h-1 w-full bg-gradient-to-r", a.gradient)} />
+          <div className="p-5 flex items-center gap-4">
+            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center border", a.bg, a.border)}>
               <span className={a.text}>{icon}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg sm:text-xl font-bold text-foreground">{section.categoryName}</h2>
-                <div className={cn("h-1 w-12 sm:w-16 rounded-full bg-gradient-to-r opacity-60", a.gradient)} />
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                  Sekcja {sectionIndex + 1}/{totalSections}
+                </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">Sekcja {sectionIndex + 1} z {totalSections}</p>
-              <div className="flex items-center gap-2 mt-2">
+              <h2 className="text-base font-bold text-foreground">{section.categoryName}</h2>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Badge variant="outline" className="text-[10px] h-5 gap-1 border-border/40 text-muted-foreground">
+                  <Clock className="w-3 h-3" /> ~{estMinutes} min
+                </Badge>
                 {positiveCount > 0 && (
-                  <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400 gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> {positiveCount} OK
+                  <Badge variant="outline" className="text-[10px] h-5 gap-1 border-emerald-500/25 text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" /> {positiveCount}
                   </Badge>
                 )}
                 {issueCount > 0 && (
-                  <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400 gap-1">
-                    <AlertTriangle className="w-3 h-3" /> {issueCount} do omówienia
+                  <Badge variant="outline" className="text-[10px] h-5 gap-1 border-red-500/25 text-red-400">
+                    <AlertTriangle className="w-3 h-3" /> {issueCount}
                   </Badge>
                 )}
-                <Badge variant="outline" className="text-[10px] border-border/50 text-muted-foreground gap-1">
-                  {section.talkingPoints.length} punktów
-                </Badge>
               </div>
             </div>
-            <ChevronDown className={cn(
-              "w-5 h-5 text-muted-foreground transition-transform",
-              !collapsed && "rotate-180"
-            )} />
+            <ChevronDown className={cn("w-5 h-5 text-muted-foreground/50 transition-transform", !collapsed && "rotate-180")} />
           </div>
         </div>
       </button>
 
       {!collapsed && (
-        <div className="px-4 sm:px-6 pb-5 sm:pb-6 space-y-4">
+        <div className="px-5 pb-5 space-y-3">
           {/* Opening line */}
           <div className={cn("rounded-xl border p-4", a.bgSubtle, a.border)}>
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className={cn("w-4 h-4", a.text)} />
-              <span className={cn("text-xs font-bold uppercase tracking-wider", a.text)}>Otwierające zdanie</span>
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider", a.text)}>Otwierające zdanie</span>
             </div>
             <EditableText
               value={section.openingLine}
@@ -360,31 +288,25 @@ const SectionBlock = ({
               isEditing={isEditing}
               className="text-sm text-foreground/80 leading-relaxed"
               italic
-              hint="Personalizuj otwierające zdanie — dodaj szczegół z profilu klientki."
+              hint="Personalizuj — dodaj szczegół z profilu klientki."
             />
           </div>
 
-          {/* Opening technique tip */}
-          <div className="rounded-xl bg-muted/20 border border-border/30 p-3">
-            <div className="flex items-start gap-2">
-              <Lightbulb className="w-3.5 h-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
-              {isEditing ? (
-                <textarea
-                  value={section.openingTechnique}
-                  onChange={(e) => onUpdate({ ...section, openingTechnique: e.target.value })}
-                  className="w-full rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1 text-xs resize-y min-h-[30px] focus:outline-none focus:ring-1 focus:ring-amber-500/20 text-muted-foreground"
-                  rows={2}
-                />
-              ) : (
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  <span className="text-amber-400 font-medium">Wskazówka:</span> {section.openingTechnique}
-                </p>
-              )}
-            </div>
+          {/* Technique tip */}
+          <div className="rounded-lg bg-muted/15 border border-border/20 p-3 flex items-start gap-2">
+            <Lightbulb className="w-3.5 h-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+            {isEditing ? (
+              <textarea value={section.openingTechnique} onChange={(e) => onUpdate({ ...section, openingTechnique: e.target.value })}
+                className="w-full rounded border border-amber-500/20 bg-amber-500/5 px-2 py-1 text-xs resize-y min-h-[24px] focus:outline-none text-muted-foreground" rows={2} />
+            ) : (
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-amber-400 font-medium">Wskazówka:</span> {section.openingTechnique}
+              </p>
+            )}
           </div>
 
           {/* Talking points */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             {section.talkingPoints.map((point, i) => {
               if (point.type === "issue") issueIndex++;
               return (
@@ -401,35 +323,33 @@ const SectionBlock = ({
             })}
           </div>
 
-          {/* Closing line */}
-          <div className="rounded-xl bg-muted/20 border border-border/30 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Zamknięcie sekcji</span>
+          {/* Closing */}
+          <div className="rounded-lg bg-muted/15 border border-border/20 p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground/60" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Zamknięcie sekcji</span>
             </div>
             <EditableText
               value={section.closingLine}
               onChange={(v) => onUpdate({ ...section, closingLine: v })}
               isEditing={isEditing}
-              className="text-sm text-foreground/60 leading-relaxed"
+              className="text-xs text-foreground/60 leading-relaxed"
               italic
-              hint="Podsumuj sekcję jednym zdaniem i pokaż korzyść."
             />
           </div>
 
-          {/* Closing sell line */}
-          <div className="rounded-xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/15 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">Podświadoma sprzedaż — zamknięcie sekcji</span>
+          {/* Sell closing */}
+          <div className="rounded-lg bg-gradient-to-r from-primary/5 to-transparent border border-primary/15 p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <TrendingUp className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Sprzedaż</span>
             </div>
             <EditableText
               value={section.closingSellLine}
               onChange={(v) => onUpdate({ ...section, closingSellLine: v })}
               isEditing={isEditing}
-              className="text-sm text-foreground/70 leading-relaxed"
+              className="text-xs text-foreground/60 leading-relaxed"
               italic
-              hint="Wpleć ofertę naturalnie — nie sprzedawaj wprost."
             />
           </div>
         </div>
@@ -448,23 +368,20 @@ interface ConversationGuideViewProps {
 }
 
 export const ConversationGuideView = ({
-  sections,
-  salonName,
-  ownerName,
-  isEditing = false,
-  onSectionsChange,
+  sections, salonName, ownerName, isEditing = false, onSectionsChange,
 }: ConversationGuideViewProps) => {
   const [introText, setIntroText] = useState(
-    `Cześć ${ownerName}! Dzwonię w sprawie audytu, który Ci przygotowałam dla ${salonName}. Przeanalizowałam dokładnie Twoje profile w social mediach i mam kilka konkretnych obserwacji — zarówno rzeczy, które robisz naprawdę dobrze, jak i obszary, gdzie widzę spory potencjał. Czy masz teraz chwilę, żebyśmy to przeszły razem?`
+    `Cześć ${ownerName}! Dzwonię w sprawie audytu, który przygotowałam dla ${salonName}. Przeanalizowałam Twoje profile i mam kilka konkretnych obserwacji. Czy masz teraz chwilę, żebyśmy to przeszły razem?`
   );
   const [closingText, setClosingText] = useState(
-    `${ownerName}, jak widzisz — masz naprawdę fajny salon i sporo rzeczy robisz dobrze. Ale widzę też konkretne obszary, gdzie tracisz klientki — i to są rzeczy, które da się naprawić. Pytanie, czy chcesz to zrobić sama, czy wolisz, żebyśmy zajęli się tym za Ciebie w ramach współpracy?`
+    `${ownerName}, jak widzisz — masz naprawdę fajny salon i sporo rzeczy robisz dobrze. Ale widzę też konkretne obszary, gdzie tracisz klientki. Pytanie, czy chcesz to zrobić sama, czy wolisz, żebyśmy zajęli się tym za Ciebie?`
   );
 
   const totalIssues = sections.reduce((sum, s) => sum + s.talkingPoints.filter(t => t.type === "issue").length, 0);
   const totalPositive = sections.reduce((sum, s) => sum + s.talkingPoints.filter(t => t.type === "positive").length, 0);
   const totalPoints = sections.reduce((sum, s) => sum + s.talkingPoints.length, 0);
-  const estimatedMinutes = Math.max(15, Math.round(totalPoints * 2.5));
+  const estimatedMinutes = Math.max(10, Math.round(totalPoints * 2.5));
+  const hasAcademy = sections.some(s => s.categoryId === "academy");
 
   const handleSectionUpdate = (index: number, updated: ConversationSection) => {
     const newSections = [...sections];
@@ -473,86 +390,110 @@ export const ConversationGuideView = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Edit mode banner */}
       {isEditing && (
-        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 flex items-start gap-3">
-          <Lightbulb className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-foreground">Tryb edycji</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Kliknij w dowolny tekst, aby go zmienić. Rozwiń sekcje i punkty, żeby edytować szczegóły. 
-              Podpowiedzi pod polami pomogą Ci dostosować schemat do konkretnej klientki.
-            </p>
-          </div>
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-start gap-2">
+          <Lightbulb className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            <span className="text-foreground font-medium">Tryb edycji.</span> Kliknij tekst aby zmienić. Rozwiń punkty aby edytować szczegóły.
+          </p>
         </div>
       )}
 
-      {/* Guide intro card */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-5 sm:p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0">
-            <Mic className="w-6 h-6 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-base font-bold text-foreground">Schemat rozmowy z {ownerName}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Poniżej znajdziesz szczegółowy schemat rozmowy dla <span className="text-foreground font-medium">{salonName}</span>.
-              Każda sekcja zawiera gotowe zdania, techniki sprzedażowe, odpowiedzi na obiekcje i wskazówki.
-            </p>
-            <div className="flex items-center gap-3 mt-3 flex-wrap">
-              <Badge variant="outline" className="text-xs gap-1 border-primary/30 text-primary">
-                <BookOpen className="w-3 h-3" /> {sections.length} sekcji
-              </Badge>
-              <Badge variant="outline" className="text-xs gap-1 border-foreground/20 text-foreground/60">
-                {totalPoints} punktów
-              </Badge>
-              <Badge variant="outline" className="text-xs gap-1 border-emerald-500/30 text-emerald-400">
-                <CheckCircle2 className="w-3 h-3" /> {totalPositive} pozytywnych
-              </Badge>
-              <Badge variant="outline" className="text-xs gap-1 border-red-500/30 text-red-400">
-                <AlertTriangle className="w-3 h-3" /> {totalIssues} do omówienia
-              </Badge>
-              <Badge variant="outline" className="text-xs gap-1 border-amber-500/30 text-amber-400">
-                ~{estimatedMinutes} min rozmowy
-              </Badge>
+      {/* ── HEADER CARD ── */}
+      <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+        {/* Gradient top */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-primary via-pink-500 to-fuchsia-500" />
+        <div className="p-5 sm:p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+              <Phone className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-foreground">Schemat rozmowy</h3>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {salonName} — {ownerName}
+              </p>
+
+              {/* Stats row */}
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 rounded-lg px-2.5 py-1 border border-border/30">
+                  <BookOpen className="w-3 h-3" /> {sections.length} sekcji
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 rounded-lg px-2.5 py-1 border border-border/30">
+                  <Clock className="w-3 h-3" /> ~{estimatedMinutes} min
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-2.5 py-1 border border-emerald-500/20">
+                  <CheckCircle2 className="w-3 h-3" /> {totalPositive} OK
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-red-400 bg-red-500/10 rounded-lg px-2.5 py-1 border border-red-500/20">
+                  <AlertTriangle className="w-3 h-3" /> {totalIssues} do omówienia
+                </div>
+                {hasAcademy && (
+                  <div className="flex items-center gap-1.5 text-xs text-fuchsia-400 bg-fuchsia-500/10 rounded-lg px-2.5 py-1 border border-fuchsia-500/20">
+                    <GraduationCap className="w-3 h-3" /> Academy
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Call opening script */}
-        <div className="mt-4 rounded-xl bg-card/80 border border-border/30 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Otwarcie rozmowy</span>
+          {/* Section overview - mini nav */}
+          <div className="mt-4 flex items-center gap-1.5 flex-wrap">
+            {sections.map((s, i) => {
+              const ac = getAccent(s.categoryId);
+              return (
+                <div key={s.categoryId} className={cn(
+                  "flex items-center gap-1 text-[10px] font-medium rounded-md px-2 py-0.5 border",
+                  ac.bg, ac.border, ac.text
+                )}>
+                  <span>{i + 1}.</span> {s.categoryName}
+                </div>
+              );
+            })}
           </div>
+        </div>
+      </div>
+
+      {/* ── OPENING SCRIPT ── */}
+      <div className="rounded-2xl border border-border/40 bg-card p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Mic className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-primary">Otwarcie rozmowy</span>
+            <p className="text-[10px] text-muted-foreground">Pierwsze 30 sekund decyduje o tonie całej rozmowy</p>
+          </div>
+        </div>
+        <div className="rounded-xl bg-muted/20 border border-border/20 p-4">
           <EditableText
             value={introText}
             onChange={setIntroText}
             isEditing={isEditing}
             className="text-sm text-foreground/80 leading-relaxed"
             italic
-            hint="Personalizuj powitanie — dodaj szczegół o salonie lub ostatnim poście klientki."
+            hint="Personalizuj — dodaj szczegół o salonie lub ostatnim poście klientki."
           />
         </div>
 
-        {/* Pre-call tips */}
-        <div className="mt-3 rounded-xl bg-muted/30 border border-border/30 p-4 space-y-2">
-          <div className="flex items-center gap-2 mb-1">
-            <Lightbulb className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Przed rozmową — pamiętaj</span>
-          </div>
-          <ul className="text-xs text-muted-foreground space-y-1.5 list-none">
-            <li className="flex items-start gap-2"><span className="text-amber-400">•</span>Zacznij ZAWSZE od pozytywów — buduje zaufanie i otwartość na krytykę</li>
-            <li className="flex items-start gap-2"><span className="text-amber-400">•</span>Nie sprzedawaj wprost — pokaż problemy, klientka sama zapyta o rozwiązanie</li>
-            <li className="flex items-start gap-2"><span className="text-amber-400">•</span>Używaj imienia klientki — personalizacja buduje relację</li>
-            <li className="flex items-start gap-2"><span className="text-amber-400">•</span>Rób pauzy po ważnych zdaniach — daj klientce czas na przemyślenie</li>
-            <li className="flex items-start gap-2"><span className="text-amber-400">•</span>Nie omawiaj WSZYSTKIEGO — wybierz 2-3 najważniejsze punkty z każdej sekcji</li>
-          </ul>
+        {/* Quick tips */}
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {[
+            { icon: <Star className="w-3 h-3 text-amber-400" />, text: "Zacznij od pozytywów — buduje otwartość" },
+            { icon: <Users className="w-3 h-3 text-blue-400" />, text: "Używaj imienia — personalizacja buduje relację" },
+            { icon: <Target className="w-3 h-3 text-emerald-400" />, text: "Nie sprzedawaj wprost — pokaż problemy" },
+            { icon: <Clock className="w-3 h-3 text-purple-400" />, text: "Rób pauzy po ważnych zdaniach" },
+          ].map((tip, i) => (
+            <div key={i} className="flex items-center gap-2 text-[11px] text-muted-foreground/80 bg-muted/10 rounded-lg px-3 py-2 border border-border/15">
+              {tip.icon} {tip.text}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Sections */}
+      {/* ── SECTIONS ── */}
       {sections.map((section, i) => (
         <SectionBlock
           key={section.categoryId}
@@ -564,61 +505,67 @@ export const ConversationGuideView = ({
         />
       ))}
 
-      {/* Closing card */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-5 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2 mb-1">
-          <Target className="w-5 h-5 text-primary" />
-          <span className="text-sm font-bold text-primary uppercase tracking-wider">Zamknięcie rozmowy — sprzedaż</span>
-        </div>
-
-        <div className="rounded-xl bg-card/80 border border-border/30 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Mic className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Co powiedzieć</span>
-          </div>
-          <EditableText
-            value={closingText}
-            onChange={setClosingText}
-            isEditing={isEditing}
-            className="text-sm text-foreground/80 leading-relaxed"
-            italic
-            hint="Dostosuj zamknięcie do wyników rozmowy. Jeśli klientka była entuzjastyczna, bądź bardziej bezpośrednia."
-          />
-        </div>
-
-        <div className="rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Technika zamknięcia</span>
-          </div>
-          <p className="text-xs text-foreground/70 leading-relaxed">
-            Nie pytaj „czy chcesz współpracę?" — daj wybór między dwoma opcjami: „sama" vs „z nami".
-            Obie opcje zakładają działanie. Klientka podświadomie wybiera łatwiejszą opcję — współpracę.
-            Jeśli mówi „muszę się zastanowić" → „Jasne, rozumiem. Powiedz mi tylko, co Cię najbardziej zastanawia — może mogę rozwiać wątpliwości?"
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-muted/20 border border-border/30 p-4 space-y-3">
+      {/* ── CLOSING CARD ── */}
+      <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+        <div className="h-1.5 w-full bg-gradient-to-r from-primary via-emerald-500 to-teal-500" />
+        <div className="p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <HelpCircle className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Typowe obiekcje na końcu</span>
-          </div>
-          {[
-            { q: "Muszę się zastanowić", a: "Jasne — a powiedz mi, nad czym konkretnie się zastanawiasz? Może mogę pomóc podjąć decyzję." },
-            { q: "Nie mam na to budżetu", a: "Rozumiem. Ale pomyśl — ile klientek tracisz miesięcznie przez te rzeczy? Nawet 5 klientek × 150 zł = 750 zł/mies. Współpraca kosztuje mniej." },
-            { q: "Sama to zrobię", a: "Super! Jeśli potrzebujesz pomocy, jestem dostępna. A gdybyś za miesiąc zobaczyła, że brakuje czasu — odezwij się, pomożemy." },
-            { q: "Muszę porozmawiać z mężem/partnerem", a: "Oczywiście. Mogę przygotować krótkie podsumowanie, które możesz mu pokazać — z konkretnymi liczbami i efektami." },
-          ].map((item, i) => (
-            <div key={i} className="rounded-lg bg-muted/20 p-3 space-y-1.5">
-              <div className="flex items-start gap-2">
-                <Quote className="w-3 h-3 text-amber-400/60 mt-1 flex-shrink-0" />
-                <p className="text-xs font-medium text-foreground/70 italic">„{item.q}"</p>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed pl-5">
-                <span className="text-emerald-400 font-medium">→ Twoja odpowiedź:</span> {item.a}
-              </p>
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Target className="w-4 h-4 text-primary" />
             </div>
-          ))}
+            <div>
+              <span className="text-sm font-bold text-foreground">Zamknięcie rozmowy</span>
+              <p className="text-[10px] text-muted-foreground">Naturalne przejście do oferty współpracy</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-muted/20 border border-border/20 p-4">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Mic className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Co powiedzieć</span>
+            </div>
+            <EditableText
+              value={closingText}
+              onChange={setClosingText}
+              isEditing={isEditing}
+              className="text-sm text-foreground/80 leading-relaxed"
+              italic
+            />
+          </div>
+
+          <div className="rounded-xl bg-gradient-to-r from-primary/5 to-transparent border border-primary/15 p-4">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Technika zamknięcia</span>
+            </div>
+            <p className="text-xs text-foreground/70 leading-relaxed">
+              Daj wybór: „sama" vs „z nami" — obie opcje zakładają działanie. Klientka podświadomie wybiera łatwiejszą.
+              Jeśli mówi „muszę się zastanowić" → „Jasne, powiedz mi co Cię najbardziej zastanawia?"
+            </p>
+          </div>
+
+          {/* Common objections */}
+          <div className="rounded-xl bg-muted/10 border border-border/20 p-4 space-y-2">
+            <div className="flex items-center gap-1.5 mb-1">
+              <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Typowe obiekcje</span>
+            </div>
+            {[
+              { q: "Muszę się zastanowić", a: "Jasne — nad czym konkretnie się zastanawiasz? Może mogę pomóc." },
+              { q: "Nie mam budżetu", a: "Ile klientek tracisz miesięcznie? Nawet 5 × 150 zł = 750 zł. Współpraca kosztuje mniej." },
+              { q: "Sama to zrobię", a: "Super! A gdybyś za miesiąc zobaczyła, że brakuje czasu — odezwij się." },
+              { q: "Muszę porozmawiać z mężem", a: "Oczywiście. Mogę przygotować podsumowanie z konkretnymi liczbami." },
+            ].map((item, i) => (
+              <div key={i} className="rounded-md bg-muted/15 p-2.5 space-y-1">
+                <p className="text-[11px] font-medium text-foreground/60 italic flex items-start gap-1.5">
+                  <Quote className="w-2.5 h-2.5 text-amber-400/50 mt-0.5 flex-shrink-0" /> „{item.q}"
+                </p>
+                <p className="text-[11px] text-muted-foreground pl-4">
+                  <span className="text-emerald-400 font-medium">→</span> {item.a}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

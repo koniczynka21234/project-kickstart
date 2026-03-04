@@ -139,6 +139,8 @@ export default function ConversationScriptDetail() {
               : auditData.checkedFindings || {};
           } catch {}
 
+          const hasAcademyFlag = auditData.includeAcademy === true || auditData.includeAcademy === "true";
+
           // If enabledCategories is empty (no categories), use defaults
           const hasAnyEnabled = Object.values(enabledCategories).some(v => v === true);
           if (!hasAnyEnabled) {
@@ -146,27 +148,15 @@ export default function ConversationScriptDetail() {
             return;
           }
 
-          // If checkedFindings is empty but categories are enabled,
-          // include all findings from enabled categories (matches audit behavior)
+          // Only use findings that were actually checked in the audit
           const hasAnyChecked = Object.values(checkedFindings).some(v => v === true);
-          if (!hasAnyChecked) {
-            for (const cat of AUDIT_CATEGORIES) {
-              if (enabledCategories[cat.id]) {
-                for (const sub of cat.subSections) {
-                  for (const finding of sub.findings) {
-                    checkedFindings[finding.id] = true;
-                  }
-                }
-              }
-            }
-          }
 
           // Check for saved edits first
           const savedSections = id ? loadSavedSections(id) : null;
           if (savedSections && savedSections.length > 0) {
             setGuideSections(savedSections);
-          } else {
-            const sections = generateConversationGuide(enabledCategories, checkedFindings);
+          } else if (hasAnyChecked) {
+            const sections = generateConversationGuide(enabledCategories, checkedFindings, hasAcademyFlag);
             setGuideSections(sections);
           }
         }
