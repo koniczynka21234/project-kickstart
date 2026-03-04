@@ -59,17 +59,22 @@ export default function ConversationScriptDetail() {
   const [auditViewerOpen, setAuditViewerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Load saved edits from localStorage
-  const loadSavedSections = (scriptId: string): ConversationSection[] | null => {
+  // Load saved edits from localStorage - with version check
+  const loadSavedSections = (scriptId: string, expectedPointCount: number): ConversationSection[] | null => {
     try {
-      const raw = localStorage.getItem(`script_edits_${scriptId}`);
-      return raw ? JSON.parse(raw) : null;
+      const raw = localStorage.getItem(`script_edits_v2_${scriptId}`);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as ConversationSection[];
+      // Validate that saved data roughly matches expected audit findings count
+      const savedTotal = parsed.reduce((s, sec) => s + sec.talkingPoints.length, 0);
+      if (Math.abs(savedTotal - expectedPointCount) > 5) return null; // stale cache
+      return parsed;
     } catch { return null; }
   };
 
   const saveSections = (scriptId: string, sections: ConversationSection[]) => {
     try {
-      localStorage.setItem(`script_edits_${scriptId}`, JSON.stringify(sections));
+      localStorage.setItem(`script_edits_v2_${scriptId}`, JSON.stringify(sections));
     } catch {}
   };
 
@@ -151,13 +156,17 @@ export default function ConversationScriptDetail() {
           // Only use findings that were actually checked in the audit
           const hasAnyChecked = Object.values(checkedFindings).some(v => v === true);
 
-          // Check for saved edits first
-          const savedSections = id ? loadSavedSections(id) : null;
-          if (savedSections && savedSections.length > 0) {
-            setGuideSections(savedSections);
-          } else if (hasAnyChecked) {
-            const sections = generateConversationGuide(enabledCategories, checkedFindings, hasAcademyFlag);
-            setGuideSections(sections);
+          if (hasAnyChecked) {
+            const freshSections = generateConversationGuide(enabledCategories, checkedFindings, hasAcademyFlag);
+            const expectedCount = freshSections.reduce((s, sec) => s + sec.talkingPoints.length, 0);
+            
+            // Check for user-edited version (v2 cache with version check)
+            const savedSections = id ? loadSavedSections(id, expectedCount) : null;
+            if (savedSections && savedSections.length > 0) {
+              setGuideSections(savedSections);
+            } else {
+              setGuideSections(freshSections);
+            }
           }
         }
 
