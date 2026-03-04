@@ -62,6 +62,7 @@ const ContractGenerator = () => {
     signDate: new Date().toISOString().split("T")[0],
     signCity: "",
     contractValue: "",
+    contractDuration: "indefinite" as "indefinite" | "1" | "3" | "6" | "12",
     paymentType: "split50" as "split50" | "split30" | "full",
     agencyName: savedAgency.agencyName || "Agencja Marketingowa Aurine",
     agencyOwnerName: savedAgency.agencyOwnerName || "",
@@ -179,6 +180,16 @@ const ContractGenerator = () => {
     setCurrentDocId(docId);
     toast.success("Umowa zapisana!");
 
+    // Update client status from pending to active after saving contract
+    if (selectedClientId) {
+      const { error } = await supabase
+        .from('clients')
+        .update({ status: 'active' })
+        .eq('id', selectedClientId)
+        .eq('status', 'pending');
+      if (error) console.error('Failed to update client status:', error);
+    }
+
     if (docId) {
       const thumbnail = await genThumb({
         elementId: "contract-preview",
@@ -228,6 +239,15 @@ const ContractGenerator = () => {
           });
           if (thumbnail) await updateThumbnail(docId, thumbnail);
         }
+      }
+
+      // Always update client status from pending to active after contract generation
+      if (selectedClientId) {
+        await supabase
+          .from('clients')
+          .update({ status: 'active' })
+          .eq('id', selectedClientId)
+          .eq('status', 'pending');
       }
 
       // A4 format: 210mm x 297mm = 595.28 x 841.89 pt
@@ -414,6 +434,57 @@ const ContractGenerator = () => {
                   placeholder="1500"
                   className="h-9 mt-1"
                 />
+              </div>
+
+              <div>
+                <Label className="text-xs">Czas trwania umowy</Label>
+                <div className="flex gap-1.5 mt-1 flex-wrap">
+                  <Button
+                    type="button"
+                    variant={formData.contractDuration === "indefinite" ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1 text-[10px] px-2 min-w-[60px]"
+                    onClick={() => handleInputChange("contractDuration", "indefinite")}
+                  >
+                    Nieokreślony
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.contractDuration === "1" ? "default" : "outline"}
+                    size="sm"
+                    className="text-[10px] px-2"
+                    onClick={() => handleInputChange("contractDuration", "1")}
+                  >
+                    1 mies.
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.contractDuration === "3" ? "default" : "outline"}
+                    size="sm"
+                    className="text-[10px] px-2"
+                    onClick={() => handleInputChange("contractDuration", "3")}
+                  >
+                    3 mies.
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.contractDuration === "6" ? "default" : "outline"}
+                    size="sm"
+                    className="text-[10px] px-2"
+                    onClick={() => handleInputChange("contractDuration", "6")}
+                  >
+                    6 mies.
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.contractDuration === "12" ? "default" : "outline"}
+                    size="sm"
+                    className="text-[10px] px-2"
+                    onClick={() => handleInputChange("contractDuration", "12")}
+                  >
+                    12 mies.
+                  </Button>
+                </div>
               </div>
 
               <div>

@@ -10,6 +10,7 @@ interface ContractData {
   signDate: string;
   signCity: string;
   contractValue: string;
+  contractDuration?: "indefinite" | "1" | "3" | "6" | "12";
   paymentType: "split50" | "split30" | "full";
   agencyName: string;
   agencyOwnerName: string;
@@ -33,6 +34,14 @@ const formatAmount = (amount: string) => {
   if (!amount) return "0";
   const num = parseFloat(amount);
   return num.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+};
+
+const calculateEndDate = (startDate: string, duration: string | undefined) => {
+  if (!startDate || !duration || duration === "indefinite") return null;
+  const date = new Date(startDate);
+  const months = parseInt(duration);
+  date.setMonth(date.getMonth() + months);
+  return date.toLocaleDateString("pl-PL", { day: "2-digit", month: "long", year: "numeric" });
 };
 
 // Decorative components
@@ -131,7 +140,7 @@ export const ContractPreview = ({ data }: ContractPreviewProps) => {
         </div>
 
         {/* Date and City */}
-        <div className="flex gap-3 mb-3">
+        <div className="flex flex-wrap gap-2 mb-3">
           <div className="flex items-center gap-2 px-2 py-1.5 bg-zinc-800/40 border border-zinc-700/50 rounded-lg">
             <div className="w-5 h-5 rounded-md bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 flex items-center justify-center">
               <svg className="w-3 h-3 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,6 +153,20 @@ export const ContractPreview = ({ data }: ContractPreviewProps) => {
               <p className="text-white font-medium text-[10px]">{formatDate(data.signDate)}</p>
             </div>
           </div>
+          {data.contractDuration && data.contractDuration !== "indefinite" && (
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-zinc-800/40 border border-zinc-700/50 rounded-lg">
+              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 flex items-center justify-center">
+                <svg className="w-3 h-3 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2"/>
+                  <path d="M16 2v4M8 2v4M3 10h18" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-[8px] text-zinc-500 uppercase tracking-wider">Obowiązuje do</p>
+                <p className="text-white font-medium text-[10px]">{calculateEndDate(data.signDate, data.contractDuration)}</p>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2 px-2 py-1.5 bg-zinc-800/40 border border-zinc-700/50 rounded-lg">
             <div className="w-5 h-5 rounded-md bg-gradient-to-br from-pink-500/20 to-fuchsia-500/20 flex items-center justify-center">
               <svg className="w-3 h-3 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +215,7 @@ export const ContractPreview = ({ data }: ContractPreviewProps) => {
           <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-fuchsia-500 rounded-lg blur-sm opacity-40" />
           <div className="relative flex justify-between items-center py-2 px-3 bg-gradient-to-r from-pink-500/20 to-fuchsia-500/20 border border-pink-500/30 rounded-lg">
             <div>
-              <span className="text-[9px] text-pink-300 uppercase tracking-wider font-semibold">Wynagrodzenie miesięczne</span>
+              <span className="text-[9px] text-pink-300 uppercase tracking-wider font-semibold">Wynagrodzenie za wykonane usługi</span>
             </div>
             <div className="text-right">
               <span className="text-lg font-bold text-white">{formatAmount(data.contractValue)} zł</span>
@@ -219,6 +242,9 @@ export const ContractPreview = ({ data }: ContractPreviewProps) => {
           <p className="text-[7.5px] text-zinc-500 mt-1 italic">
             Usługi świadczone będą w oparciu o informacje, materiały i dostęp do kont reklamowych udostępnione przez Zleceniodawcę.
           </p>
+          <p className="text-[7.5px] text-zinc-400 mt-1.5 font-medium">
+            Wykonawca samodzielnie organizuje sposób oraz czas realizacji usług i nie podlega kierownictwu Zamawiającego.
+          </p>
         </Section>
 
         {/* §2 Obowiązki Wykonawcy */}
@@ -237,6 +263,9 @@ export const ContractPreview = ({ data }: ContractPreviewProps) => {
               <strong>Ważne:</strong> Wykonawca realizuje działania marketingowe z należytą starannością, zgodnie z aktualną wiedzą i praktyką rynkową, przy czym <strong>nie gwarantuje osiągnięcia określonych wyników finansowych, sprzedażowych czy frekwencyjnych</strong>, ponieważ zależą one od czynników zewnętrznych, niezależnych od Wykonawcy.
             </p>
           </div>
+          <p className="text-[7.5px] text-zinc-400 mt-1.5 font-medium">
+            Wykonawca ponosi pełną odpowiedzialność za sposób i rezultat wykonania usług objętych niniejszą umową.
+          </p>
         </Section>
 
         {/* §3 Obowiązki Zleceniodawcy */}
@@ -308,19 +337,36 @@ export const ContractPreview = ({ data }: ContractPreviewProps) => {
           ]} />
         </Section>
 
-        {/* §6 Okres obowiązywania */}
-        <Section title="§6 Okres obowiązywania">
-          <BulletList items={[
-            data.paymentType === "full" 
-              ? "Umowa zostaje zawarta i obowiązuje od dnia dokonania przez Zleceniodawcę wpłaty pełnego wynagrodzenia"
-              : "Umowa zostaje zawarta i obowiązuje od dnia dokonania przez Zleceniodawcę wpłaty zaliczki",
-            "Po upływie pierwszego miesiąca umowa może zostać przedłużona za zgodą obu stron (aneks lub potwierdzenie mailowe)",
-            "W przypadku rażącego naruszenia postanowień umowy przez drugą stronę, rozwiązanie może nastąpić ze skutkiem natychmiastowym"
-          ]} />
+        {/* §6 Niewyłączność współpracy */}
+        <Section title="§6 Niewyłączność współpracy">
+          <p className="text-[7.5px] text-zinc-400">
+            Umowa nie ma charakteru wyłącznego. Wykonawca ma prawo świadczyć usługi na rzecz innych podmiotów, w tym podmiotów konkurencyjnych wobec Zamawiającego, o ile nie narusza to postanowień dotyczących poufności.
+          </p>
         </Section>
 
-        {/* §7 Rozwiązanie umowy */}
-        <Section title="§7 Rozwiązanie umowy">
+        {/* §7 Okres obowiązywania */}
+        <Section title="§7 Czas trwania umowy">
+          {data.contractDuration === "indefinite" || !data.contractDuration ? (
+            <BulletList items={[
+              data.paymentType === "full" 
+                ? "Umowa zostaje zawarta i obowiązuje od dnia dokonania przez Zleceniodawcę wpłaty pełnego wynagrodzenia"
+                : "Umowa zostaje zawarta i obowiązuje od dnia dokonania przez Zleceniodawcę wpłaty zaliczki",
+              "Umowa zostaje zawarta na czas nieokreślony z możliwością jej wypowiedzenia przez każdą ze stron z zachowaniem 30-dniowego okresu wypowiedzenia",
+              "W przypadku rażącego naruszenia postanowień umowy przez drugą stronę, rozwiązanie może nastąpić ze skutkiem natychmiastowym"
+            ]} />
+          ) : (
+            <BulletList items={[
+              data.paymentType === "full" 
+                ? "Umowa zostaje zawarta i obowiązuje od dnia dokonania przez Zleceniodawcę wpłaty pełnego wynagrodzenia"
+                : "Umowa zostaje zawarta i obowiązuje od dnia dokonania przez Zleceniodawcę wpłaty zaliczki",
+              `Umowa zostaje zawarta na okres ${data.contractDuration} ${data.contractDuration === "1" ? "miesiąca" : "miesięcy"} z możliwością przedłużenia za zgodą obu stron`,
+              "W przypadku rażącego naruszenia postanowień umowy przez drugą stronę, rozwiązanie może nastąpić ze skutkiem natychmiastowym"
+            ]} />
+          )}
+        </Section>
+
+        {/* §8 Rozwiązanie umowy */}
+        <Section title="§8 Rozwiązanie umowy">
           <p className="text-[7.5px] text-zinc-400 mb-1">Wykonawca ma prawo rozwiązać umowę ze skutkiem natychmiastowym, jeżeli:</p>
           <BulletList items={[
             "Zleceniodawca opóźnia się z płatnością wynagrodzenia o więcej niż 14 dni",
@@ -333,8 +379,8 @@ export const ContractPreview = ({ data }: ContractPreviewProps) => {
           </p>
         </Section>
 
-        {/* §8 Dane osobowe */}
-        <Section title="§8 Ochrona danych osobowych">
+        {/* §9 Dane osobowe */}
+        <Section title="§9 Ochrona danych osobowych">
           <div className="bg-pink-500/10 border border-pink-500/20 rounded p-1.5 mb-1">
             <p className="text-[7.5px] text-pink-300">
               <strong>RODO:</strong> Strony zobowiązują się do przetwarzania danych osobowych zgodnie z przepisami Rozporządzenia Parlamentu Europejskiego i Rady (UE) 2016/679 (RODO). Dane osobowe będą przetwarzane wyłącznie w zakresie niezbędnym do realizacji niniejszej umowy.
@@ -342,9 +388,10 @@ export const ContractPreview = ({ data }: ContractPreviewProps) => {
           </div>
         </Section>
 
-        {/* §9 Postanowienia końcowe */}
-        <Section title="§9 Postanowienia końcowe">
+        {/* §10 Postanowienia końcowe */}
+        <Section title="§10 Postanowienia końcowe">
           <BulletList items={[
+            "Strony zgodnie oświadczają, że niniejsza umowa nie stanowi umowy o pracę ani umowy zlecenia",
             "W sprawach nieuregulowanych niniejszą umową zastosowanie mają przepisy Kodeksu cywilnego",
             "Umowa została sporządzona i przekazana w formie elektronicznej (plik PDF) drogą mailową",
             "Strony zgodnie przyjmują, że forma elektroniczna jest wystarczająca do ważności umowy",

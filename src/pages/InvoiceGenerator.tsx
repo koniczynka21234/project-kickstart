@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { DocumentFullscreenModal } from "@/components/document/DocumentFullscreenModal";
 import jsPDF from "jspdf";
-import { toPng, toJpeg } from "html-to-image";
+import { toPng, toJpeg, getFontEmbedCSS } from "html-to-image";
 
 type InvoiceType = "advance" | "final" | "full";
 
@@ -27,6 +27,7 @@ interface ClientOption {
   email?: string | null;
   phone?: string | null;
   contract_amount?: number | null;
+  nip?: string | null;
 }
 
 const AGENCY_STORAGE_KEY = "aurine_agency_data";
@@ -135,8 +136,9 @@ const InvoiceGenerator = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const clientsRes = await supabase.from('clients').select('id, salon_name, owner_name, city, email, phone, contract_amount').order('salon_name');
-      setClients(clientsRes.data || []);
+      const clientsRes = await supabase.from('clients').select('id, salon_name, owner_name, city, email, phone, contract_amount, nip' as any).order('salon_name');
+      setClients((clientsRes.data || []).map((c: any) => ({ ...c, nip: c.nip || null })) as ClientOption[]);
+      return;
     };
     fetchData();
   }, []);
@@ -166,6 +168,7 @@ const InvoiceGenerator = () => {
                   clientName: client.salon_name || loadedData.clientName || "",
                   clientOwnerName: client.owner_name || loadedData.clientOwnerName || "",
                   clientAddress: client.city || loadedData.clientAddress || "",
+                  clientNIP: (client as any).nip || loadedData.clientNIP || "",
                   clientPhone: client.phone || "",
                   clientEmail: client.email || "",
                   // Auto-fill contract amount for advance invoices
@@ -474,11 +477,13 @@ const InvoiceGenerator = () => {
       const A4_WIDTH = 595.28;
       const A4_HEIGHT = 841.89;
       
+      const fontEmbedCSS = await getFontEmbedCSS(element);
       const canvas = await toJpeg(element, { 
         cacheBust: true, 
         pixelRatio: 2, 
         backgroundColor: "#09090b", 
-        quality: 0.95 
+        quality: 0.95,
+        fontEmbedCSS,
       });
       const pdf = new jsPDF({ 
         orientation: "portrait", 
@@ -638,6 +643,7 @@ const InvoiceGenerator = () => {
                           clientName: client.salon_name,
                           clientOwnerName: client.owner_name || "",
                           clientAddress: client.city ? `${client.city}` : prev.clientAddress,
+                          clientNIP: (client as any).nip || "",
                           clientPhone: client.phone || "",
                           clientEmail: client.email || "",
                           // Auto-fill contract amount when selecting client

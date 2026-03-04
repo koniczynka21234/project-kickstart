@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
@@ -112,6 +112,8 @@ const COLORS = ['#ec4899', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#06b6d4'
 
 export default function Statistics() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'overview';
   const { isSzef, loading: roleLoading } = useUserRole();
   const { user } = useAuth();
   const [stats, setStats] = useState<OverviewStats | null>(null);
@@ -396,7 +398,7 @@ export default function Statistics() {
           </p>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList className={`grid w-full lg:w-auto lg:inline-grid ${isSzef ? 'grid-cols-5' : 'grid-cols-4'}`}>
             <TabsTrigger value="overview">Przegląd</TabsTrigger>
             <TabsTrigger value="invoices" className="flex items-center gap-1.5">
@@ -820,6 +822,7 @@ export default function Statistics() {
                           <TableHead>Nr faktury</TableHead>
                           <TableHead>Typ</TableHead>
                           <TableHead>Klient</TableHead>
+                          <TableHead>NIP</TableHead>
                           <TableHead>Data wystawienia</TableHead>
                           <TableHead>Termin płatności</TableHead>
                           <TableHead className="text-right">Kwota</TableHead>
@@ -866,6 +869,9 @@ export default function Statistics() {
                               </TableCell>
                               <TableCell>
                                 {invoice.client?.salon_name || "—"}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-xs font-mono">
+                                {(invoice.data as any)?.clientNIP || (invoice.client as any)?.nip || "—"}
                               </TableCell>
                               <TableCell>
                                 {invoice.data?.issueDate 

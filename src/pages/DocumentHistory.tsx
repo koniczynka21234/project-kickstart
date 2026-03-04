@@ -43,6 +43,7 @@ const typeLabels: Record<string, string> = {
   contract: "Umowa",
   presentation: "Prezentacja",
   welcomepack: "Welcome Pack",
+  audit: "Audyt",
 };
 
 const typeColors: Record<string, string> = {
@@ -51,6 +52,7 @@ const typeColors: Record<string, string> = {
   contract: "bg-blue-500/10 text-blue-400 border-blue-500/30",
   presentation: "bg-purple-500/10 text-purple-400 border-purple-500/30",
   welcomepack: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+  audit: "bg-orange-500/10 text-orange-400 border-orange-500/30",
 };
 
 const filterOptions = [
@@ -62,6 +64,7 @@ const filterOptions = [
   { value: "presentation-academy", label: "Prezentacje z Academy" },
   { value: "presentation-no-academy", label: "Prezentacje bez Academy" },
   { value: "welcomepack", label: "Welcome Pack" },
+  { value: "audit", label: "Audyty" },
 ];
 
 type SortOption = "date-desc" | "date-asc" | "name-asc" | "name-desc" | "type-asc" | "type-desc";
@@ -228,6 +231,18 @@ export default function DocumentHistory() {
 
     // Then sort
     return [...filtered].sort((a, b) => {
+      const getSentDate = (d: CloudDocumentItem) => {
+        const sd = (d.data as any)?.sentDate;
+        if (!sd) return null;
+        try {
+          return parseISO(sd);
+        } catch {
+          const parsed = new Date(sd);
+          return isNaN(parsed.getTime()) ? null : parsed;
+        }
+      };
+      const aSent = getSentDate(a);
+      const bSent = getSentDate(b);
       switch (sortBy) {
         case "date-desc":
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -246,6 +261,8 @@ export default function DocumentHistory() {
       }
     });
   }, [history, searchQuery, filterType, clientFilter, monthFilter, sortBy]);
+
+  const sortedHistoryWithSentDate = filteredAndSortedHistory;
 
   // Click on document -> show mini card
   const handleDocumentClick = (doc: CloudDocumentItem) => {
@@ -477,13 +494,14 @@ export default function DocumentHistory() {
           </div>
         </div>
 
+
         {/* Documents Grid */}
         {loading ? (
           <div className="bg-card border border-border/60 rounded-xl p-12 text-center">
             <Loader2 className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-spin" />
             <p className="text-lg text-muted-foreground">Ładowanie dokumentów...</p>
           </div>
-        ) : filteredAndSortedHistory.length === 0 ? (
+        ) : sortedHistoryWithSentDate.length === 0 ? (
           <div className="bg-card border border-border/60 rounded-xl p-12 text-center">
             <Filter className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-lg text-muted-foreground">Brak dokumentów</p>
@@ -496,7 +514,7 @@ export default function DocumentHistory() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filteredAndSortedHistory.map((doc) => (
+            {sortedHistoryWithSentDate.map((doc) => (
               <div
                 key={doc.id}
                 className="bg-card border border-border/60 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 group"

@@ -13,9 +13,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { checkDuplicate } from "@/lib/duplicateCheck";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ function QuickActionButton({ icon: Icon, label, color, onClick }: QuickActionPro
 
 export function QuickActions() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [showLeadDialog, setShowLeadDialog] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
@@ -77,9 +78,9 @@ export function QuickActions() {
     });
 
     if (error) {
-      toast({ title: "Błąd", description: "Nie udało się utworzyć zadania", variant: "destructive" });
+      toast.error("Nie udało się utworzyć zadania");
     } else {
-      toast({ title: "Zadanie utworzone", description: taskTitle });
+      toast.success(`Zadanie utworzone: ${taskTitle}`);
       setTaskTitle("");
       setTaskDesc("");
       setShowTaskDialog(false);
@@ -94,6 +95,17 @@ export function QuickActions() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const dup = await checkDuplicate({
+      table: 'leads',
+      salon_name: leadName,
+      phone: leadPhone || null,
+    });
+    if (dup.isDuplicate) {
+      toast.error(dup.matchReason || 'Ten lead już istnieje');
+      setIsSubmitting(false);
+      return;
+    }
+
     const { error } = await supabase.from("leads").insert({
       salon_name: leadName,
       phone: leadPhone || null,
@@ -102,9 +114,9 @@ export function QuickActions() {
     });
 
     if (error) {
-      toast({ title: "Błąd", description: "Nie udało się utworzyć leada", variant: "destructive" });
+      toast.error("Nie udało się utworzyć leada");
     } else {
-      toast({ title: "Lead dodany", description: leadName });
+      toast.success(`Lead dodany: ${leadName}`);
       setLeadName("");
       setLeadPhone("");
       setShowLeadDialog(false);

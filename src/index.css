@@ -292,18 +292,30 @@ html {
     100% { transform: translateX(100%); }
   }
 
-  /* Scrollbar styling */
-  .custom-scrollbar::-webkit-scrollbar {
+  /* Scrollbar styling - Aurine branded */
+  .custom-scrollbar::-webkit-scrollbar,
+  ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-transparent;
+  .custom-scrollbar::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
+  .custom-scrollbar::-webkit-scrollbar-thumb,
+  ::-webkit-scrollbar-thumb {
+    background: hsl(330 100% 60% / 0.25);
+    border-radius: 999px;
+    transition: background 0.2s;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary/50;
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(330 100% 60% / 0.5);
+  }
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(330 100% 60% / 0.25) transparent;
   }
 
   /* Mobile-optimized scrolling */

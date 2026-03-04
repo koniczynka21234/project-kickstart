@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { premiumToast } from '@/components/ui/premium-toast';
 import { Loader2, Sparkles } from 'lucide-react';
 import agencyLogo from '@/assets/agency-logo.png';
 
@@ -44,12 +45,12 @@ export default function Auth() {
     
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
-        toast.error('Nieprawidłowy email lub hasło');
+        premiumToast({ type: 'error', title: 'Nieprawidłowy email lub hasło', description: 'Sprawdź dane i spróbuj ponownie' });
       } else {
-        toast.error('Błąd logowania: ' + error.message);
+        premiumToast({ type: 'error', title: 'Błąd logowania', description: error.message });
       }
     } else {
-      toast.success('Zalogowano pomyślnie');
+      premiumToast({ type: 'success', title: 'Zalogowano pomyślnie', description: 'Witaj z powrotem!' });
       navigate('/');
     }
   };
@@ -73,12 +74,12 @@ export default function Auth() {
     
     if (error) {
       if (error.message.includes('User already registered')) {
-        toast.error('Użytkownik o tym emailu już istnieje');
+        premiumToast({ type: 'error', title: 'Użytkownik już istnieje', description: 'Konto z tym emailem jest już zarejestrowane' });
       } else {
-        toast.error('Błąd rejestracji: ' + error.message);
+        premiumToast({ type: 'error', title: 'Błąd rejestracji', description: error.message });
       }
     } else {
-      toast.success('Konto utworzone! Możesz się zalogować.');
+      premiumToast({ type: 'success', title: 'Konto utworzone!', description: 'Możesz się teraz zalogować' });
       navigate('/');
     }
   };

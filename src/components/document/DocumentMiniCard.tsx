@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { pl } from "date-fns/locale";
-import { X, Maximize2, FileText, Receipt, FileSignature, Presentation, GraduationCap, Calendar, User, Building2, Banknote, Clock, FileCheck, UserCircle, Trash2, Loader2, Link2, AlertCircle } from "lucide-react";
+import { X, Maximize2, FileText, Receipt, FileSignature, Presentation, GraduationCap, Calendar, User, Building2, Banknote, Clock, FileCheck, UserCircle, Trash2, Loader2, Link2, AlertCircle, FileSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -41,6 +41,7 @@ const typeLabels: Record<string, string> = {
   contract: "Umowa",
   presentation: "Prezentacja",
   welcomepack: "Welcome Pack",
+  audit: "Audyt",
 };
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -49,6 +50,7 @@ const typeIcons: Record<string, React.ElementType> = {
   contract: FileSignature,
   presentation: Presentation,
   welcomepack: GraduationCap,
+  audit: FileSearch,
 };
 
 const typeColors: Record<string, string> = {
@@ -57,6 +59,7 @@ const typeColors: Record<string, string> = {
   contract: "bg-blue-500/10 text-blue-400 border-blue-500/30",
   presentation: "bg-purple-500/10 text-purple-400 border-purple-500/30",
   welcomepack: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+  audit: "bg-orange-500/10 text-orange-400 border-orange-500/30",
 };
 
 const invoiceTypeLabels: Record<string, string> = {
@@ -75,6 +78,8 @@ export function DocumentMiniCard({ document, onClose, onViewFullscreen, onDelete
   const [isDeleting, setIsDeleting] = useState(false);
   const [linkedInvoice, setLinkedInvoice] = useState<LinkedInvoice | null>(null);
   const [loadingLinked, setLoadingLinked] = useState(false);
+  const [linkedAnnexes, setLinkedAnnexes] = useState<{ id: string; title: string; created_at: string }[]>([]);
+  const [loadingAnnexes, setLoadingAnnexes] = useState(false);
   const Icon = typeIcons[document.type] || FileText;
   const data = document.data as Record<string, any>;
 
@@ -153,6 +158,31 @@ export function DocumentMiniCard({ document, onClose, onViewFullscreen, onDelete
 
     fetchLinkedInvoice();
   }, [document.id, document.type, data?.invoiceType]);
+
+  // Fetch linked annexes for contracts
+  useEffect(() => {
+    if (document.type !== 'contract' || !document.clientId) return;
+    
+    const fetchAnnexes = async () => {
+      setLoadingAnnexes(true);
+      try {
+        const { data: annexes } = await supabase
+          .from('client_app_documents')
+          .select('id, title, created_at')
+          .eq('client_id', document.clientId!)
+          .eq('type', 'contract')
+          .order('created_at', { ascending: false });
+        
+        setLinkedAnnexes(annexes || []);
+      } catch (err) {
+        console.error('Error fetching annexes:', err);
+      } finally {
+        setLoadingAnnexes(false);
+      }
+    };
+
+    fetchAnnexes();
+  }, [document.id, document.type, document.clientId]);
 
   const handleDelete = async () => {
     if (!onDelete) return;
@@ -251,6 +281,23 @@ export function DocumentMiniCard({ document, onClose, onViewFullscreen, onDelete
           icon: GraduationCap,
           label: "Aurine Academy",
           value: data.includeAcademy === "true" || data.includeAcademy === true ? "Tak" : "Nie",
+        });
+      }
+    }
+
+    // Audit specific
+    if (document.type === "audit") {
+      if (data?.sentDate) {
+        details.push({
+          icon: Calendar,
+          label: "Data wysłania audytu",
+          value: (() => {
+            try {
+              return format(parseISO(data.sentDate), 'd.MM.yyyy', { locale: pl });
+            } catch {
+              return data.sentDate as string;
+            }
+          })(),
         });
       }
     }
@@ -355,6 +402,39 @@ export function DocumentMiniCard({ document, onClose, onViewFullscreen, onDelete
                 )}
               </div>
             ) : null}
+          </div>
+        )}
+
+        {/* Linked annexes section for contracts */}
+        {document.type === 'contract' && (
+          <div className="pt-2 border-t border-border/40">
+            {loadingAnnexes ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Ładowanie aneksów...</span>
+              </div>
+            ) : linkedAnnexes.length > 0 ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <Link2 className="w-4 h-4 shrink-0" />
+                  <span>Aneksy ({linkedAnnexes.length}):</span>
+                </div>
+                {linkedAnnexes.map((annex) => (
+                  <div key={annex.id} className="flex items-center gap-2 text-sm pl-6">
+                    <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-foreground font-medium truncate">{annex.title}</span>
+                    <span className="text-muted-foreground text-xs shrink-0">
+                      {format(parseISO(annex.created_at), 'd.MM.yyyy', { locale: pl })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Link2 className="w-4 h-4 shrink-0" />
+                <span>Brak aneksów</span>
+              </div>
+            )}
           </div>
         )}
 

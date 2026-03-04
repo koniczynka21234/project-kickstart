@@ -9,6 +9,7 @@ export interface AppSettings {
   showStatusIndicators: boolean;
   autoRefreshInterval: number;
   defaultLeadView: 'list' | 'kanban';
+  uiScale: number;
 }
 
 const defaultSettings: AppSettings = {
@@ -20,6 +21,7 @@ const defaultSettings: AppSettings = {
   showStatusIndicators: true,
   autoRefreshInterval: 30,
   defaultLeadView: 'list',
+  uiScale: 100,
 };
 
 export function useAppSettings() {
@@ -58,7 +60,10 @@ export function useAppSettings() {
 
     // Apply compact mode
     root.classList.toggle('compact', settings.compactMode);
-  }, [settings.theme, settings.compactMode, loaded]);
+
+    // Apply UI scale
+    root.style.fontSize = `${settings.uiScale}%`;
+  }, [settings.theme, settings.compactMode, settings.uiScale, loaded]);
 
   // Listen for system theme changes
   useEffect(() => {

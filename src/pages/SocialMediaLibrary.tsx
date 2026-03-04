@@ -594,7 +594,7 @@ function PostCard({ post }: { post: SocialPost }) {
       link.download = `aurine-${post.id}.png`;
       link.href = dataUrl;
       link.click();
-      toast.success("Pobrano!");
+      // Download starts automatically
     } catch {
       toast.error("Błąd pobierania");
     }

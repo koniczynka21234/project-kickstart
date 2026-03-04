@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { UserCheck, Users, Calendar as CalendarIcon, Clock, DollarSign, Target, Loader2 } from "lucide-react";
+import { UserCheck, Users, Calendar as CalendarIcon, Clock, DollarSign, Target, Loader2, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMonths } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -34,7 +34,7 @@ interface ConvertLeadDialogProps {
   lead: Lead | null;
   open: boolean;
   onClose: () => void;
-  onConvert: (lead: Lead, assignedTo: string, contractDurationMonths?: number, startDate?: string, endDate?: string, contractAmount?: number, monthlyBudget?: number) => Promise<void> | void;
+  onConvert: (lead: Lead, assignedTo: string, contractDurationMonths?: number, startDate?: string, endDate?: string, contractAmount?: number, monthlyBudget?: number, nip?: string) => Promise<void> | void;
 }
 
 export function ConvertLeadDialog({ lead, open, onClose, onConvert }: ConvertLeadDialogProps) {
@@ -46,6 +46,7 @@ export function ConvertLeadDialog({ lead, open, onClose, onConvert }: ConvertLea
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [contractAmount, setContractAmount] = useState<string>("");
   const [monthlyBudget, setMonthlyBudget] = useState<string>("");
+  const [nip, setNip] = useState<string>("");
   const [loading, setLoading] = useState(false);
   
   // Ref guard to prevent double conversion
@@ -70,6 +71,7 @@ export function ConvertLeadDialog({ lead, open, onClose, onConvert }: ConvertLea
       setEndDate(undefined);
       setContractAmount("");
       setMonthlyBudget("");
+      setNip("");
     }
   }, [open]);
 
@@ -96,7 +98,7 @@ export function ConvertLeadDialog({ lead, open, onClose, onConvert }: ConvertLea
       const amount = contractAmount ? parseFloat(contractAmount) : undefined;
       const budget = monthlyBudget ? parseFloat(monthlyBudget) : undefined;
       
-      await onConvert(lead, selectedGuardian, durationMonths, formattedStartDate, formattedEndDate, amount, budget);
+      await onConvert(lead, selectedGuardian, durationMonths, formattedStartDate, formattedEndDate, amount, budget, nip || undefined);
       onClose();
     } finally {
       setLoading(false);
@@ -183,7 +185,22 @@ export function ConvertLeadDialog({ lead, open, onClose, onConvert }: ConvertLea
           </div>
 
           {/* Financial fields */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* NIP */}
+          <div className="space-y-2">
+            <Label htmlFor="nip" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              NIP klientki
+            </Label>
+            <Input
+              id="nip"
+              placeholder="1234567890"
+              value={nip}
+              onChange={(e) => setNip(e.target.value)}
+              className="h-9"
+            />
+          </div>
+
+            <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="contractAmount" className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />

@@ -61,7 +61,7 @@ export default function GraphicsCreator() {
         a.download = `${selectedTemplateId}-${Date.now()}.png`;
         a.href = dataUrl;
         a.click();
-        toast.success('Pobrano!');
+        // Download starts automatically
       }
     } catch (error) {
       console.error('Export error:', error);

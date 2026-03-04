@@ -375,17 +375,22 @@ export function ClientPaymentsSection({ clientId, clientName, contractAmount }: 
       <CardContent className="space-y-4">
         {/* First invoice reminder after lead conversion */}
         {payments.length === 0 && pendingFinalInvoices.length === 0 && contractAmount && (
-          <div className="p-3 rounded-lg bg-secondary/30 border border-primary/20 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium">Brak pierwszej faktury</p>
-              <p className="text-xs text-muted-foreground">
-                Wystaw fakturę startową (kwota współpracy: {formatCurrency(contractAmount)} / miesiąc).
-              </p>
+          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-amber-400">Brak pierwszej faktury</p>
+                <p className="text-xs text-muted-foreground">
+                  Wystaw fakturę startową — {formatCurrency(contractAmount)} / miesiąc
+                </p>
+              </div>
             </div>
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-xs border-primary/30 text-primary hover:bg-primary/10 shrink-0"
+              className="h-7 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10 shrink-0"
               onClick={handleCreateFirstInvoice}
             >
               <FileText className="w-3 h-3 mr-1" />

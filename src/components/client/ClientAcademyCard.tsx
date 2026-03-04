@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Key, Copy, CheckCircle2, XCircle, Clock, ExternalLink, Smartphone } from "lucide-react";
-import { toast } from "sonner";
 import { format, isPast } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -49,7 +48,6 @@ export function ClientAcademyCard({ clientId }: ClientAcademyCardProps) {
   const copyCode = () => {
     if (subscriptionCode?.code) {
       navigator.clipboard.writeText(subscriptionCode.code);
-      toast.success("Skopiowano kod");
     }
   };
 

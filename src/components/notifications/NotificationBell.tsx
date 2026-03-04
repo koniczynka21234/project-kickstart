@@ -147,7 +147,7 @@ export function NotificationBell() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative hover:bg-pink-500/10">
-          <Bell className="w-5 h-5" />
+          <Bell className={cn("w-5 h-5", unreadCount > 0 && !open && "animate-[bell-ring_1s_ease-in-out_infinite]")} />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-pink-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
               {unreadCount > 99 ? "99+" : unreadCount}

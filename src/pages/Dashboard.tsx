@@ -22,6 +22,8 @@ import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { OverduePaymentsAlert } from "@/components/dashboard/OverduePaymentsAlert";
 import { PendingFinalInvoicesAlert } from "@/components/dashboard/PendingFinalInvoicesAlert";
 import { DatabaseSizeAlert } from "@/components/dashboard/DatabaseSizeAlert";
+import { PendingContractsAlert } from "@/components/dashboard/PendingContractsAlert";
+import { MissingFirstInvoiceAlert } from "@/components/dashboard/MissingFirstInvoiceAlert";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -188,8 +190,8 @@ export default function Dashboard() {
         {/* Announcements - TOP PRIORITY */}
         <AnnouncementBanner />
 
-        {/* Important Notifications - Contract alerts etc. */}
-        <ImportantNotifications />
+        {/* Alerty poziome - umowy */}
+        <PendingContractsAlert />
 
         {/* Follow-up Reminders - IMPORTANT */}
         {followUpReminders.length > 0 && (
@@ -396,16 +398,18 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right Column - Actions & Activity */}
+          {/* Right Column - Client alerts, Notifications, Actions & Activity */}
           <div className="lg:col-span-4 space-y-6">
+            {/* Alerty dot. faktur i płatności klienta */}
+            <MissingFirstInvoiceAlert />
+            <PendingFinalInvoicesAlert />
+            <OverduePaymentsAlert />
+
+            {/* Powiadomienia informacyjne */}
+            <ImportantNotifications />
+            
             {/* Database Size Alert - for szef only */}
             <DatabaseSizeAlert />
-            
-            {/* Pending Final Invoices Alert */}
-            <PendingFinalInvoicesAlert />
-            
-            {/* Overdue Payments Alert - for szef only */}
-            <OverduePaymentsAlert />
             
             {/* Quick Actions */}
             <Card className="border-border/50">

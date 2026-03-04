@@ -250,9 +250,9 @@ const PresentationGenerator = () => {
         const imgData = await toJpeg(slideElement, {
           width: 1600,
           height: 900,
-          pixelRatio: 2,
+          pixelRatio: 1.5,
           backgroundColor: "#000000",
-          quality: 0.92,
+          quality: 0.88,
         });
 
         if (i > 1) pdf.addPage([1600, 900], "landscape");

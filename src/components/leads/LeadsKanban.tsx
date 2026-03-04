@@ -69,7 +69,6 @@ export function LeadsKanban({ leads, onLeadClick, onRefresh }: LeadsKanbanProps)
     if (error) {
       toast.error('Błąd zmiany statusu');
     } else {
-      toast.success('Status zmieniony');
       onRefresh();
     }
     

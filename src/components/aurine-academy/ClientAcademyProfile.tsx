@@ -199,7 +199,6 @@ export function ClientAcademyProfile({ clientId, clientName, ownerName }: Client
   const copyCode = () => {
     if (subscriptionCode?.code) {
       navigator.clipboard.writeText(subscriptionCode.code);
-      toast.success("Skopiowano kod");
     }
   };
 

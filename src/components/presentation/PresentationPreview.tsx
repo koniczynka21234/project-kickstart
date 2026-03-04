@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import agencyLogo from "@/assets/agency-logo.png";
 import { declineSalonNameToGenitive, declineCityToGenitive, declineCityToLocative } from "@/lib/polishDeclension";
+import academyPhoneMockup from "@/assets/academy-phone-mockup.png";
+import academySlide from "@/assets/academy-slide.jpg";
 
 interface PresentationData {
   ownerName: string;
@@ -234,8 +236,8 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
     </div>
   );
 
-  // Phone mockup with Facebook Ads for slide 1
-  const PhoneFacebookAds = () => (
+  // Phone mockup with Meta Ads for slide 1
+  const PhoneMetaAds = () => (
     <div className="absolute top-1/2 right-[12%] -translate-y-1/2">
       {/* Phone frame */}
       <div className="relative w-[280px] h-[560px] bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-[40px] p-3 shadow-2xl shadow-pink-500/20 border border-zinc-700">
@@ -376,7 +378,7 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
       <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 flex gap-3">
         <div className="px-4 py-2 bg-gradient-to-r from-blue-600/20 to-blue-500/10 rounded-xl border border-blue-500/30 flex items-center gap-2 backdrop-blur-sm">
           <Facebook className="w-5 h-5 text-blue-400" />
-          <span className="text-blue-300 text-sm font-medium">Facebook Ads</span>
+          <span className="text-blue-300 text-sm font-medium">Meta Ads</span>
         </div>
         <div className="px-4 py-2 bg-gradient-to-r from-pink-600/20 to-fuchsia-500/10 rounded-xl border border-pink-500/30 flex items-center gap-2 backdrop-blur-sm">
           <Instagram className="w-5 h-5 text-pink-400" />
@@ -396,8 +398,8 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
         <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-blue-600/10 to-transparent rounded-full blur-3xl" />
       </div>
 
-      {/* Phone with Facebook Ads mockup */}
-      <PhoneFacebookAds />
+      {/* Phone with Meta Ads mockup */}
+      <PhoneMetaAds />
 
       <div className="relative z-10 h-full flex flex-col px-16 py-10">
         <Header subtitle="Prezentacja dla Twojego salonu" />
@@ -413,7 +415,7 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
 
           {/* Main headline - warm tone */}
           <h1 className="text-5xl font-black text-white leading-[1.2] mb-6">
-            Facebook Ads dla<br />
+            Meta Ads dla<br />
             <span className="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-rose-400 bg-clip-text text-transparent">
               Twojego salonu w {getCityInLocative(data.city)}
             </span>
@@ -517,10 +519,10 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
         {/* Title */}
         <div className="mb-6">
           <h2 className="text-4xl font-black text-white mb-3">
-            Czy to brzmi <span className="text-pink-400">znajomo</span>?
+            Dlaczego Twój salon <span className="text-pink-400">nie rośnie</span> mimo obecności w social media?
           </h2>
           <p className="text-lg text-zinc-300">
-            Wiele właścicielek salonów w mniejszych miastach zmaga się z tymi samymi problemami...
+            Wiele właścicielek salonów zmaga się z tymi samymi problemami...
           </p>
         </div>
 
@@ -547,9 +549,9 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
                 <TrendingUp className="w-6 h-6 text-pink-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white mb-1.5">Organiczne zasięgi to przeszłość</h3>
+                <h3 className="text-lg font-bold text-white mb-1.5">Organiczne zasięgi praktycznie zniknęły</h3>
                 <p className="text-zinc-300 text-sm leading-relaxed">
-                  Kiedyś wystarczyło regularnie postować. Dziś zasięgi organiczne <span className="text-pink-400 font-semibold">spadły o 80%</span>. 
+                  Kiedyś wystarczyło regularnie postować. Dziś zasięgi <span className="text-pink-400 font-semibold">spadły o 80%</span>. 
                   Bez płatnej promocji trudno dotrzeć do nowych osób.
                 </p>
               </div>
@@ -564,8 +566,8 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
               <div>
                 <h3 className="text-lg font-bold text-white mb-1.5">Brak czasu i wiedzy technicznej</h3>
                 <p className="text-zinc-300 text-sm leading-relaxed">
-                  Między zabiegami, zamówieniami i grafikiem nie ma czasu na naukę Menedżera reklam. 
-                  A kliknięcie <span className="text-pink-400 font-semibold">"Promuj post"</span> to często przepalone pieniądze.
+                  Między zabiegami i codzienną pracą trudno ogarnąć Menedżera reklam. 
+                  Kliknięcie <span className="text-pink-400 font-semibold">„Promuj post"</span> często kończy się przepalonym budżetem.
                 </p>
               </div>
             </div>
@@ -578,7 +580,7 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
             <Sparkles className="w-5 h-5 text-emerald-400 flex-shrink-0" />
             <span>
               W {getCityInLocative(data.city)} wciąż <span className="text-emerald-400 font-semibold">niewiele salonów</span> korzysta 
-              z reklam na Facebooku. To idealna okazja, żeby się wyróżnić i <span className="text-white font-semibold">przyciągnąć nowe klientki, zanim zrobi to konkurencja</span>.
+              z reklam na Facebooku i Instagramie. To idealna okazja, żeby się wyróżnić i <span className="text-white font-semibold">przyciągnąć nowe klientki, zanim zrobi to konkurencja</span>.
             </span>
           </p>
         </div>
@@ -604,7 +606,7 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
         {/* Title */}
         <div className="mb-5">
           <h2 className="text-4xl font-black text-white mb-2">
-            Reklamy, które <span className="text-pink-400">naprawdę działają</span>
+            Jak wspieramy <span className="text-pink-400">rozwój</span> Twojego salonu
           </h2>
           <p className="text-lg text-zinc-300">
             Zajmujemy się Twoimi reklamami od A do Z. Ty możesz skupić się na dbaniu o klientki
@@ -618,29 +620,29 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
             {[
               { 
                 icon: Target, 
-                title: "Precyzyjne dotarcie", 
-                desc: "Reklamy trafiają do kobiet 25-45 lat, zainteresowanych urodą, w promieniu 15 km od Ciebie",
+                title: "Docieramy do kobiet realnie zainteresowanych zabiegami", 
+                desc: "Kierujemy reklamy do osób w Twojej okolicy, które aktywnie interesują się usługami beauty. Skupiamy się na potencjalnych klientkach, nie przypadkowym zasięgu.",
                 color: "from-pink-500/30 to-rose-500/20",
                 borderColor: "border-pink-500/30"
               },
               { 
                 icon: Eye, 
-                title: "Tysiące wyświetleń", 
-                desc: "Zamiast 50 osób, Twoją reklamę zobaczy nawet kilka tysięcy potencjalnych klientek",
+                title: "Zwiększamy liczbę zapytań i rezerwacji", 
+                desc: "Twoją ofertę widzą tysiące lokalnych odbiorców miesięcznie, co przekłada się na więcej wiadomości i zapisów.",
                 color: "from-blue-500/30 to-indigo-500/20",
                 borderColor: "border-blue-500/30"
               },
               { 
                 icon: Sparkles, 
-                title: "Piękne kreacje", 
-                desc: "Projektujemy grafiki i teksty zgodne z estetyką Twojego salonu",
+                title: "Tworzymy kreacje, które budują zaufanie", 
+                desc: "Projektujemy reklamy dopasowane do estetyki i poziomu Twojego salonu, aby przyciągać właściwy typ klientki.",
                 color: "from-fuchsia-500/30 to-purple-500/20",
                 borderColor: "border-fuchsia-500/30"
               },
               { 
                 icon: BarChart3, 
-                title: "Przejrzyste raporty", 
-                desc: "Co miesiąc jasny raport: zasięgi, kliknięcia, koszty. Zero zagadek",
+                title: "Raportujemy wyniki w prosty sposób", 
+                desc: "Widzisz, ile kosztuje pozyskanie klientki i jakie efekty przynosi kampania.",
                 color: "from-emerald-500/30 to-teal-500/20",
                 borderColor: "border-emerald-500/30"
               },
@@ -744,24 +746,24 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
             
             {[
               {
-                name: "Magda",
-                salon: "Studio Urody Magda",
-                city: "Nowy Sącz",
-                text: "Po 2 miesiącach współpracy mam pełny grafik! Polecam każdej właścicielce salonu.",
-                avatar: "M"
-              },
-              {
                 name: "Karolina",
-                salon: "Beauty by Karo",
+                salon: "Salon fryzjerski",
                 city: "Tarnów",
-                text: "Wreszcie ktoś, kto rozumie branżę beauty. Reklamy są piękne i skuteczne!",
+                text: "Polecam z całego serca! Świetny kontakt, bardzo dobre podejście do klienta i skuteczne reklamy!",
                 avatar: "K"
               },
               {
+                name: "Magda",
+                salon: "Salon kosmetyczny",
+                city: "Nowy Sącz",
+                text: "Jestem bardzo zadowolona ze współpracy z całym zespołem Aurine, świetne wyniki, zawsze dostępni i pomocni. Polecam z ogromną pewnością że Twój biznes będzie cieszył się ogromnym sukcesem 😌 bardzo polecam😌",
+                avatar: "M"
+              },
+              {
                 name: "Anna",
-                salon: "Salon Piękności Anna",
+                salon: "Salon fryzjerski",
                 city: "Gorlice",
-                text: "Bałam się płatnych reklam, ale ekipa Aurine wszystko wytłumaczyła. Teraz co tydzień mam nowe klientki.",
+                text: "Z całego serca polecamy Agencję Aurine! Znakomita obsługa klienta i pełen profesjonalizm nawet w przypadku tych najmniejszych firm. Świetna współpraca ☺️",
                 avatar: "A"
               }
             ].map((testimonial, idx) => (
@@ -779,7 +781,7 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
                     <p className="text-zinc-300 text-xs leading-relaxed mb-2 italic">"{testimonial.text}"</p>
                     <div>
                       <p className="text-white text-xs font-semibold">{testimonial.name}</p>
-                      <p className="text-zinc-500 text-[10px]">{testimonial.salon}, {testimonial.city}</p>
+                      <p className="text-zinc-500 text-[10px]">{testimonial.salon}{testimonial.city ? `, ${testimonial.city}` : ''}</p>
                     </div>
                   </div>
                 </div>
@@ -904,226 +906,14 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
     </div>
   );
 
-  // Slide 5: Aurine Academy - styled like other slides with phone mockup
+  // Slide 5: Aurine Academy - full slide image from PDF
   const Slide5 = () => (
-    <div className="w-full h-full bg-gradient-to-br from-zinc-950 via-black to-zinc-950 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 right-1/4 w-[700px] h-[700px] bg-gradient-to-br from-fuchsia-500/10 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-[800px] h-[800px] bg-gradient-to-tl from-pink-500/15 to-transparent rounded-full blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
-      </div>
-
-      <div className="relative z-10 h-full flex flex-col px-16 py-10">
-        <Header subtitle="Bonus w cenie współpracy" />
-
-        {/* Title */}
-        <div className="mb-5">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-amber-500/20 to-amber-500/10 rounded-full border border-amber-500/30 mb-3">
-            <Award className="w-4 h-4 text-amber-400" />
-            <span className="text-amber-300 font-bold text-xs tracking-wide">JEDYNE TAKIE ROZWIĄZANIE W POLSCE</span>
-          </div>
-          <h2 className="text-4xl font-black text-white mb-2">
-            Aurine <span className="text-pink-400">Academy</span>
-          </h2>
-          <p className="text-lg text-zinc-300">
-            Autorska aplikacja mobilna dla właścicielek salonów — <span className="text-white font-semibold">tylko dla naszych klientek</span>
-          </p>
-        </div>
-
-        {/* Main content - 3 columns like Slide 3 */}
-        <div className="flex-1 grid grid-cols-3 gap-5">
-          {/* Column 1: Features */}
-          <div className="space-y-3">
-            {[
-              { 
-                icon: GraduationCap, 
-                title: "13 kursów video", 
-                desc: "Marketing organiczny, content, sprzedaż, budowanie relacji z klientkami — od podstaw do eksperta",
-                color: "from-pink-500/30 to-rose-500/20",
-                borderColor: "border-pink-500/30"
-              },
-              { 
-                icon: Wand2, 
-                title: "Narzędzia AI", 
-                desc: "Generator strategii, kalendarz postów, szablony grafik — AI pracuje za Ciebie",
-                color: "from-fuchsia-500/30 to-purple-500/20",
-                borderColor: "border-fuchsia-500/30"
-              },
-              { 
-                icon: FileText, 
-                title: "Dokumenty online", 
-                desc: "Faktury, raporty, umowa — wszystko w jednym miejscu, dostępne 24/7",
-                color: "from-blue-500/30 to-indigo-500/20",
-                borderColor: "border-blue-500/30"
-              },
-              { 
-                icon: Eye, 
-                title: "Status kampanii", 
-                desc: "Podgląd na żywo czy kampania działa, kto jest Twoim opiekunem, jakie są wyniki",
-                color: "from-emerald-500/30 to-teal-500/20",
-                borderColor: "border-emerald-500/30"
-              },
-            ].map((item, idx) => (
-              <div key={idx} className={`bg-gradient-to-br from-zinc-900/90 to-zinc-900/70 rounded-xl p-4 border ${item.borderColor}`}>
-                <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center border border-white/10 flex-shrink-0`}>
-                    <item.icon className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-white font-bold mb-0.5">{item.title}</p>
-                    <p className="text-zinc-400 text-xs leading-relaxed">{item.desc}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Column 2: Phone mockup */}
-          <div className="flex items-center justify-center">
-            <div className="relative">
-              <div className="w-56 h-[380px] bg-zinc-900 rounded-[36px] p-1.5 shadow-2xl shadow-fuchsia-500/20 border border-zinc-700">
-                <div className="w-full h-full bg-black rounded-[30px] overflow-hidden relative">
-                  {/* App header */}
-                  <div className="bg-gradient-to-r from-pink-600/30 to-fuchsia-600/20 px-3 py-2.5 flex items-center justify-between border-b border-pink-500/20">
-                    <div className="flex items-center gap-2">
-                      <img src={agencyLogo} alt="Aurine" className="w-5 h-5 object-contain" />
-                      <span className="text-xs font-bold text-white">Aurine Academy</span>
-                    </div>
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white text-[8px] font-bold">
-                      {data.ownerName?.charAt(0) || "A"}
-                    </div>
-                  </div>
-                  
-                  {/* Dashboard content */}
-                  <div className="p-3 space-y-2.5">
-                    {/* Campaign status */}
-                    <div className="bg-gradient-to-r from-emerald-500/15 to-teal-500/10 rounded-xl p-2.5 border border-emerald-500/25">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          <span className="text-emerald-400 text-[10px] font-semibold">Kampania aktywna</span>
-                        </div>
-                        <span className="text-zinc-500 text-[9px]">od 12.01</span>
-                      </div>
-                    </div>
-
-                    {/* Courses section */}
-                    <div>
-                      <p className="text-zinc-500 text-[9px] mb-1.5 px-1">Twoje kursy</p>
-                      <div className="space-y-1.5">
-                        {[
-                          { name: "Marketing organiczny", progress: 75 },
-                          { name: "Tworzenie contentu", progress: 45 },
-                          { name: "Sprzedaż usług", progress: 20 },
-                        ].map((course, idx) => (
-                          <div key={idx} className="bg-zinc-900/80 rounded-lg px-2.5 py-2 border border-zinc-800">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-white text-[9px] font-medium">{course.name}</span>
-                              <span className="text-pink-400 text-[8px]">{course.progress}%</span>
-                            </div>
-                            <div className="w-full h-1 bg-zinc-800 rounded-full">
-                              <div className="h-full bg-gradient-to-r from-pink-500 to-rose-500 rounded-full" style={{ width: `${course.progress}%` }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* AI Tools section */}
-                    <div className="bg-gradient-to-br from-fuchsia-500/15 to-purple-500/10 rounded-xl p-2.5 border border-fuchsia-500/25">
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <Wand2 className="w-3 h-3 text-fuchsia-400" />
-                        <span className="text-white text-[9px] font-semibold">Narzędzia AI</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {[
-                          { icon: Sparkles, label: "Strategia" },
-                          { icon: Calendar, label: "Kalendarz" },
-                          { icon: Image, label: "Grafiki" },
-                        ].map((tool, idx) => (
-                          <div key={idx} className="bg-black/40 rounded-lg p-1.5 text-center border border-fuchsia-500/20">
-                            <tool.icon className="w-3.5 h-3.5 text-fuchsia-300 mx-auto mb-0.5" />
-                            <span className="text-zinc-400 text-[7px]">{tool.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Floating badges around phone */}
-              <div className="absolute -top-4 -left-6 px-3 py-1.5 bg-gradient-to-r from-pink-500/30 to-rose-500/20 rounded-xl border border-pink-500/40 flex items-center gap-1.5 shadow-lg">
-                <Play className="w-4 h-4 text-pink-400" />
-                <span className="text-pink-300 text-xs font-medium">75 lekcji HD</span>
-              </div>
-              <div className="absolute -bottom-3 -left-8 px-3 py-1.5 bg-gradient-to-r from-fuchsia-500/30 to-purple-500/20 rounded-xl border border-fuchsia-500/40 flex items-center gap-1.5 shadow-lg">
-                <Layout className="w-4 h-4 text-fuchsia-400" />
-                <span className="text-fuchsia-300 text-xs font-medium">Szablony</span>
-              </div>
-              <div className="absolute top-16 -right-6 px-3 py-1.5 bg-gradient-to-r from-emerald-500/30 to-teal-500/20 rounded-xl border border-emerald-500/40 flex items-center gap-1.5 shadow-lg">
-                <Shield className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-300 text-xs font-medium">24/7</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Column 3: Why unique */}
-          <div className="flex flex-col justify-center space-y-4">
-            <div className="bg-gradient-to-br from-zinc-900/90 to-zinc-900/70 rounded-2xl p-5 border border-pink-500/25">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500/30 to-rose-500/20 border border-pink-500/40 flex items-center justify-center">
-                  <Zap className="w-6 h-6 text-pink-400" />
-                </div>
-                <h3 className="text-lg font-bold text-white">Dlaczego to unikalne?</h3>
-              </div>
-              <p className="text-zinc-300 text-sm leading-relaxed mb-4">
-                Przeszukaj cały rynek agencji marketingowych dla branży beauty w Polsce. 
-                <span className="text-pink-400 font-semibold"> Żadna inna nie oferuje własnej aplikacji</span> z kursami, 
-                narzędziami AI i dostępem do dokumentów.
-              </p>
-              <p className="text-zinc-400 text-sm">
-                To nasza autorska platforma — pracowaliśmy nad nią ponad rok. 
-                <span className="text-white font-medium"> Teraz jest Twoja, w cenie współpracy.</span>
-              </p>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gradient-to-br from-pink-500/15 to-rose-500/10 rounded-xl p-3 border border-pink-500/20 text-center">
-                <p className="text-2xl font-black text-pink-400">13</p>
-                <p className="text-zinc-400 text-xs">kursów video</p>
-              </div>
-              <div className="bg-gradient-to-br from-fuchsia-500/15 to-purple-500/10 rounded-xl p-3 border border-fuchsia-500/20 text-center">
-                <p className="text-2xl font-black text-fuchsia-400">75</p>
-                <p className="text-zinc-400 text-xs">lekcji HD</p>
-              </div>
-              <div className="bg-gradient-to-br from-blue-500/15 to-indigo-500/10 rounded-xl p-3 border border-blue-500/20 text-center">
-                <p className="text-2xl font-black text-blue-400">4</p>
-                <p className="text-zinc-400 text-xs">narzędzia AI</p>
-              </div>
-              <div className="bg-gradient-to-br from-emerald-500/15 to-teal-500/10 rounded-xl p-3 border border-emerald-500/20 text-center">
-                <p className="text-2xl font-black text-emerald-400">∞</p>
-                <p className="text-zinc-400 text-xs">szablonów</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom - included message */}
-        <div className="mt-4 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10 rounded-2xl p-4 border border-emerald-500/25">
-          <p className="text-base text-center text-zinc-200 flex items-center justify-center gap-3">
-            <Gift className="w-5 h-5 text-emerald-400" />
-            <span>
-              <span className="text-emerald-400 font-bold">W cenie współpracy.</span> Bez dodatkowych opłat. 
-              <span className="text-white font-medium"> Dostajesz dostęp od pierwszego dnia.</span>
-            </span>
-          </p>
-        </div>
-
-        <Footer activeSlide={4} />
-      </div>
+    <div className="w-full h-full relative overflow-hidden">
+      <img 
+        src={academySlide} 
+        alt="Aurine Academy" 
+        className="w-full h-full object-cover"
+      />
     </div>
   );
 
@@ -1156,7 +946,7 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
             <Sparkles className="w-4 h-4 text-amber-400" />
           </div>
           <h2 className="text-4xl font-black text-white mb-2">
-            Specjalnie dla <span className="bg-gradient-to-r from-pink-400 to-fuchsia-400 bg-clip-text text-transparent">{data.salonName ? declineSalonNameToGenitive(data.salonName) : "Twojego salonu"}</span>
+            Specjalnie dla salonu <span className="bg-gradient-to-r from-pink-400 to-fuchsia-400 bg-clip-text text-transparent">{data.salonName ? declineSalonNameToGenitive(data.salonName) : "Twojego"}</span>
           </h2>
           <p className="text-lg text-zinc-300">
             Chcemy, żebyś mogła sprawdzić jak działamy. <span className="text-pink-300">Bez żadnego ryzyka</span>
@@ -1213,7 +1003,7 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
               
               <h3 className="text-lg font-bold text-white mb-2">Darmowy tydzień próbny</h3>
               <p className="text-zinc-300 text-xs leading-relaxed mb-3">
-                Dla <span className="text-amber-400 font-semibold">2 pierwszych salonów z {data.city ? declineCityToGenitive(data.city) : "miasta"}</span> - kampania za darmo.
+                Dla <span className="text-amber-400 font-semibold">2 pierwszych salonów z {data.city ? declineCityToGenitive(data.city) : "miasta"}</span> - konfiguracja kampanii za darmo.
               </p>
               
               <div className="space-y-1.5">
@@ -1314,12 +1104,15 @@ export const PresentationPreview = ({ data, currentSlide, includeAcademy = true 
         <img src={agencyLogo} alt="Aurine" className="w-20 h-20 object-contain mb-4" />
         
         {/* Main headline - warm */}
-        <h2 className="text-4xl font-black text-white text-center mb-3">
-          Porozmawiajmy o <span className="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-rose-400 bg-clip-text text-transparent">Twoim salonie</span>
+        <h2 className="text-4xl font-black text-center mb-3" style={{ letterSpacing: '-0.02em', whiteSpace: 'nowrap', color: 'white' }}>
+          Porozmawiajmy o{" "}
+          <span style={{ backgroundImage: 'linear-gradient(to right, #f472b6, #e879f9, #fb7185)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            Twoim salonie
+          </span>
         </h2>
         
         <p className="text-lg text-zinc-300 text-center max-w-2xl mb-8">
-          Chętnie opowiemy więcej o tym, jak możemy pomóc {data.salonName || "Twojemu salonowi"}. 
+          Chętnie opowiemy więcej o tym, jak możemy pomóc salonowi {data.salonName || "Twojemu"}. 
           Napisz lub zadzwoń. <span className="text-pink-300">Odpowiemy na wszystkie pytania!</span>
         </p>
 

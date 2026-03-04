@@ -178,6 +178,43 @@ export async function notifyFinalInvoiceDue(
   }
 }
 
+// Transfer ALL client notifications from old guardian to new guardian
+export async function transferClientNotifications(
+  clientId: string,
+  oldGuardianId: string | null,
+  newGuardianId: string
+) {
+  if (!oldGuardianId || oldGuardianId === newGuardianId) return;
+
+  try {
+    // Transfer all notifications (read and unread)
+    const { error: notifError } = await supabase
+      .from('notifications')
+      .update({ user_id: newGuardianId })
+      .eq('user_id', oldGuardianId)
+      .eq('reference_id', clientId)
+      .eq('reference_type', 'client');
+
+    if (notifError) {
+      console.error('Error transferring notifications:', notifError);
+    }
+
+    // Transfer tasks related to this client
+    const { error: taskError } = await supabase
+      .from('tasks')
+      .update({ assigned_to: newGuardianId })
+      .eq('assigned_to', oldGuardianId)
+      .eq('client_id', clientId)
+      .neq('status', 'done');
+
+    if (taskError) {
+      console.error('Error transferring tasks:', taskError);
+    }
+  } catch (err) {
+    console.error('Unexpected error transferring notifications/tasks:', err);
+  }
+}
+
 // Lead source options
 export const leadSourceOptions = [
   'Instagram',

@@ -19,28 +19,42 @@ serve(async (req) => {
     const today = new Date().toISOString().split('T')[0];
     console.log(`Checking contract expirations and payment dues for date: ${today}`);
 
-    // Get all team members (users with roles) to send notifications to everyone
-    const { data: teamMembers, error: teamError } = await supabase
+    // Get all szef (admin) user IDs
+    const { data: szefRoles, error: szefError } = await supabase
       .from('user_roles')
-      .select('user_id');
+      .select('user_id')
+      .eq('role', 'szef');
 
-    if (teamError) {
-      console.error('Error fetching team members:', teamError);
-      throw teamError;
+    if (szefError) {
+      console.error('Error fetching szef roles:', szefError);
+      throw szefError;
     }
 
-    const teamUserIds = [...new Set((teamMembers || []).map(m => m.user_id))];
-    console.log(`Found ${teamUserIds.length} team members to notify`);
+    const szefUserIds = new Set((szefRoles || []).map(r => r.user_id));
+    console.log(`Found ${szefUserIds.size} szef users`);
 
-    // Helper function to create notifications for all team members
-    const createNotificationForTeam = async (payload: {
-      title: string;
-      content?: string | null;
-      type: string;
-      reference_type?: string | null;
-      reference_id?: string | null;
-    }) => {
-      const notifications = teamUserIds.map(userId => ({
+    // Helper: get notification recipients for a client (guardian + all szefs)
+    const getRecipientsForClient = (assignedTo: string | null): string[] => {
+      const recipients = new Set<string>(szefUserIds);
+      if (assignedTo) {
+        recipients.add(assignedTo);
+      }
+      return [...recipients];
+    };
+
+    // Helper function to create notifications for specific users
+    const createNotificationForUsers = async (
+      userIds: string[],
+      payload: {
+        title: string;
+        content?: string | null;
+        type: string;
+        reference_type?: string | null;
+        reference_id?: string | null;
+      }
+    ) => {
+      if (userIds.length === 0) return false;
+      const notifications = userIds.map(userId => ({
         user_id: userId,
         ...payload,
       }));
@@ -50,15 +64,15 @@ serve(async (req) => {
         console.error("Failed to insert notifications", { error, payload });
         return false;
       }
-      console.log("Inserted notifications for team", {
+      console.log("Inserted notifications", {
         type: payload.type,
         reference_id: payload.reference_id,
-        users_count: teamUserIds.length,
+        users_count: userIds.length,
       });
       return true;
     };
 
-    // Helper to check if notification already exists for any team member today
+    // Helper to check if notification already exists today
     const notificationExistsToday = async (referenceId: string, type: string): Promise<boolean> => {
       const { data } = await supabase
         .from('notifications')
@@ -95,16 +109,15 @@ serve(async (req) => {
       
       const now = new Date();
       const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const recipients = getRecipientsForClient(client.assigned_to);
 
-      // Check if contract is expired
       if (daysRemaining < 0) {
         expiredClients.push(client.id);
         console.log(`Contract expired for client: ${client.salon_name} (${Math.abs(daysRemaining)} days ago)`);
         
-        // Create notification for whole team about expired contract
         const exists = await notificationExistsToday(client.id, 'contract_expired');
         if (!exists) {
-          await createNotificationForTeam({
+          await createNotificationForUsers(recipients, {
             title: 'Umowa wygasła',
             content: `Umowa z klientem "${client.salon_name}" wygasła. Skontaktuj się w sprawie przedłużenia.`,
             type: 'contract_expired',
@@ -113,18 +126,13 @@ serve(async (req) => {
           });
         }
       }
-      // Check if contract expires TODAY (last day!)
       else if (daysRemaining === 0) {
-        expiringSoonClients.push({
-          id: client.id,
-          salon_name: client.salon_name,
-          days_remaining: 0,
-        });
+        expiringSoonClients.push({ id: client.id, salon_name: client.salon_name, days_remaining: 0 });
         console.log(`Contract expires TODAY for client: ${client.salon_name}`);
         
         const exists = await notificationExistsToday(client.id, 'contract_expiring');
         if (!exists) {
-          await createNotificationForTeam({
+          await createNotificationForUsers(recipients, {
             title: 'Umowa wygasa DZIŚ!',
             content: `Umowa z klientem "${client.salon_name}" wygasa dzisiaj! Pilnie skontaktuj się w sprawie przedłużenia.`,
             type: 'contract_expiring',
@@ -133,18 +141,13 @@ serve(async (req) => {
           });
         }
       }
-      // Check if contract expires in 3 days (create notification once at 3 days)
       else if (daysRemaining === 3) {
-        expiringSoonClients.push({
-          id: client.id,
-          salon_name: client.salon_name,
-          days_remaining: daysRemaining,
-        });
+        expiringSoonClients.push({ id: client.id, salon_name: client.salon_name, days_remaining: daysRemaining });
         console.log(`Contract expiring in 3 days for client: ${client.salon_name}`);
         
         const exists = await notificationExistsToday(client.id, 'contract_expiring');
         if (!exists) {
-          await createNotificationForTeam({
+          await createNotificationForUsers(recipients, {
             title: 'Umowa wygasa za 3 dni',
             content: `Umowa z klientem "${client.salon_name}" wygasa za 3 dni. Rozważ przedłużenie współpracy.`,
             type: 'contract_expiring',
@@ -153,13 +156,8 @@ serve(async (req) => {
           });
         }
       }
-      // Track clients expiring within 3 days (for reporting only)
       else if (daysRemaining <= 3 && daysRemaining > 0) {
-        expiringSoonClients.push({
-          id: client.id,
-          salon_name: client.salon_name,
-          days_remaining: daysRemaining,
-        });
+        expiringSoonClients.push({ id: client.id, salon_name: client.salon_name, days_remaining: daysRemaining });
         console.log(`Contract expiring soon for client: ${client.salon_name} (${daysRemaining} days remaining)`);
       }
     }
@@ -183,7 +181,6 @@ serve(async (req) => {
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
     const threeDaysFromNowStr = threeDaysFromNow.toISOString().split('T')[0];
 
-    // Get pending payments due in 3 days
     const { data: upcomingPayments, error: paymentsError } = await supabase
       .from('payments')
       .select(`
@@ -192,7 +189,7 @@ serve(async (req) => {
         due_date, 
         client_id,
         document_id,
-        clients(salon_name)
+        clients(salon_name, assigned_to)
       `)
       .eq('status', 'pending')
       .eq('due_date', threeDaysFromNowStr);
@@ -204,11 +201,12 @@ serve(async (req) => {
       
       for (const payment of upcomingPayments || []) {
         const clientData = payment.clients as unknown;
-        const client = Array.isArray(clientData) ? clientData[0] : clientData as { salon_name: string } | null;
+        const client = Array.isArray(clientData) ? clientData[0] : clientData as { salon_name: string; assigned_to: string | null } | null;
         if (client) {
           const exists = await notificationExistsToday(payment.id, 'payment_due');
           if (!exists) {
-            await createNotificationForTeam({
+            const recipients = getRecipientsForClient(client.assigned_to);
+            await createNotificationForUsers(recipients, {
               title: 'Termin płatności za 3 dni',
               content: `Faktura dla "${client.salon_name}" (${payment.amount} PLN) ma termin płatności za 3 dni.`,
               type: 'payment_due',
@@ -222,7 +220,6 @@ serve(async (req) => {
     }
 
     // ===== CHECK PENDING FINAL INVOICES =====
-    // Check for invoices due in 3 days
     const { data: pendingInvoices3d, error: pending3dError } = await supabase
       .from('pending_final_invoices')
       .select(`
@@ -230,7 +227,7 @@ serve(async (req) => {
         remaining_amount,
         expected_date,
         client_id,
-        clients(salon_name)
+        clients(salon_name, assigned_to)
       `)
       .eq('status', 'pending')
       .eq('expected_date', threeDaysFromNowStr);
@@ -242,11 +239,12 @@ serve(async (req) => {
       
       for (const invoice of pendingInvoices3d || []) {
         const clientData = invoice.clients as unknown;
-        const client = Array.isArray(clientData) ? clientData[0] : clientData as { salon_name: string } | null;
+        const client = Array.isArray(clientData) ? clientData[0] : clientData as { salon_name: string; assigned_to: string | null } | null;
         if (client) {
           const exists = await notificationExistsToday(invoice.id, 'final_invoice_due');
           if (!exists) {
-            await createNotificationForTeam({
+            const recipients = getRecipientsForClient(client.assigned_to);
+            await createNotificationForUsers(recipients, {
               title: 'Faktura końcowa za 3 dni',
               content: `Faktura końcowa dla "${client.salon_name}" (${invoice.remaining_amount} PLN) powinna zostać wystawiona za 3 dni.`,
               type: 'final_invoice_due',
@@ -267,7 +265,7 @@ serve(async (req) => {
         remaining_amount,
         expected_date,
         client_id,
-        clients(salon_name)
+        clients(salon_name, assigned_to)
       `)
       .eq('status', 'pending')
       .eq('expected_date', today);
@@ -279,11 +277,12 @@ serve(async (req) => {
       
       for (const invoice of pendingInvoicesToday || []) {
         const clientData = invoice.clients as unknown;
-        const client = Array.isArray(clientData) ? clientData[0] : clientData as { salon_name: string } | null;
+        const client = Array.isArray(clientData) ? clientData[0] : clientData as { salon_name: string; assigned_to: string | null } | null;
         if (client) {
           const exists = await notificationExistsToday(invoice.id, 'final_invoice_due');
           if (!exists) {
-            await createNotificationForTeam({
+            const recipients = getRecipientsForClient(client.assigned_to);
+            await createNotificationForUsers(recipients, {
               title: 'Faktura końcowa - termin DZIŚ!',
               content: `Faktura końcowa dla "${client.salon_name}" (${invoice.remaining_amount} PLN) powinna zostać wystawiona DZISIAJ!`,
               type: 'final_invoice_due',
@@ -304,7 +303,7 @@ serve(async (req) => {
         payments_notified: upcomingPayments?.length || 0,
         pending_invoices_3d: pendingInvoices3d?.length || 0,
         pending_invoices_today: pendingInvoicesToday?.length || 0,
-        team_members: teamUserIds.length,
+        szef_users: szefUserIds.size,
         message: `Processed ${clients?.length || 0} clients. Updated ${expiredClients.length} to churned, ${expiringSoonClients.length} expiring soon.`
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

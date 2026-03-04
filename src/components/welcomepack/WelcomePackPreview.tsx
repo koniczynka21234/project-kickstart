@@ -78,7 +78,7 @@ const DecorativeLines = () => (
 );
 
 export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: WelcomePackPreviewProps) => {
-  const totalSlides = 6;
+  const totalSlides = 7;
 
   // Footer component
   const Footer = ({ slideNumber }: { slideNumber: number }) => (
@@ -717,25 +717,6 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
             </div>
           </div>
 
-          {/* Subscription Code - App Access */}
-          {subscriptionCode && (
-            <div className="group relative w-full max-w-md mb-6">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity" />
-              <div className="relative flex items-center gap-4 p-5 bg-zinc-900 border border-amber-500/30 rounded-xl">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                  <Smartphone className="w-7 h-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-amber-400/80 text-xs uppercase tracking-wider font-medium mb-1">Dostęp do Aurine Academy</p>
-                  <div className="flex items-center gap-2">
-                    <Key className="w-4 h-4 text-amber-300" />
-                    <span className="text-white font-bold text-xl tracking-widest">{subscriptionCode}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Website */}
           <div className="flex items-center gap-4 px-8 py-4 bg-gradient-to-r from-pink-500/15 to-fuchsia-500/15 border border-pink-500/30 rounded-xl backdrop-blur-sm">
             <Globe className="w-6 h-6 text-pink-400" />
@@ -746,6 +727,123 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
           <div className="mt-6 flex items-center gap-3 px-5 py-3 bg-zinc-800/50 rounded-xl border border-zinc-700/50">
             <Users className="w-5 h-5 text-pink-400" />
             <span className="text-zinc-400">Twój opiekun <span className="text-white font-medium">{getDiminutiveName(data.managerName) || "Opiekun"}</span> skontaktuje się z Tobą wkrótce!</span>
+          </div>
+        </div>
+
+        <Footer slideNumber={7} />
+      </div>
+    </div>
+  );
+
+  // ==================== SLAJD 6: AURINE ACADEMY ====================
+  const AcademySlide = () => (
+    <div className="w-full h-full relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
+      <GradientOrbs />
+      <FloatingShapes />
+      <DecorativeLines />
+      
+      {/* Decorative */}
+      <div className="absolute top-16 right-16 w-44 h-44 border-2 border-dashed border-amber-500/15 rounded-full" />
+      <div className="absolute bottom-20 left-20 w-32 h-32 border-2 border-fuchsia-500/15 rounded-xl rotate-12" />
+      <DotsPattern className="top-20 left-8" />
+      <DotsPattern className="bottom-16 right-16" />
+      <div className="absolute top-24 right-24">
+        <Award className="w-10 h-10 text-amber-400/30" />
+      </div>
+      <div className="absolute bottom-1/3 left-16">
+        <Sparkles className="w-8 h-8 text-pink-500/20" />
+      </div>
+
+      <div className="relative h-full flex flex-col p-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <img src={agencyLogo} alt="Aurine" className="w-12 h-12 object-contain" />
+            <div>
+              <p className="text-pink-400 font-semibold text-sm">AURINE AGENCY</p>
+              <p className="text-zinc-500 text-xs">Aurine Academy</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+              <Flower2 className="w-4 h-4 text-pink-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-fuchsia-500/10 border border-fuchsia-500/20 flex items-center justify-center">
+              <Heart className="w-4 h-4 text-fuchsia-400/60" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-rose-400/60" />
+            </div>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-5 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-4">
+            <Award className="w-5 h-5 text-amber-400" />
+            <span className="text-amber-300 text-sm font-medium">AURINE ACADEMY</span>
+          </div>
+          <h2 className="text-5xl font-black text-white">
+            Twoja <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">aplikacja</span>
+          </h2>
+          <p className="text-zinc-400 text-lg mt-2 max-w-lg mx-auto">
+            Pobierz aplikację Aurine Academy i aktywuj dostęp swoim kodem
+          </p>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-3xl">
+            {/* Feature cards */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {[
+                { title: "Generator strategii AI", desc: "Spersonalizowana strategia marketingowa dla Twojego salonu", icon: Zap, color: "from-purple-500 to-pink-500" },
+                { title: "Szablony grafik", desc: "Gotowe szablony do postów i stories", icon: Palette, color: "from-pink-500 to-fuchsia-500" },
+                { title: "Materiały marketingowe", desc: "Sprawdzone strategie promocji salonów beauty", icon: TrendingUp, color: "from-blue-500 to-cyan-500" },
+                { title: "Wsparcie eksperta", desc: "Dostęp do konsultacji z Twoim opiekunem", icon: MessageCircle, color: "from-green-500 to-emerald-500" },
+              ].map((item, i) => (
+                <div key={i} className="group relative">
+                  <div className={`absolute -inset-0.5 bg-gradient-to-r ${item.color} rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity`} />
+                  <div className="relative flex items-center gap-4 p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-lg shrink-0`}>
+                      <item.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-sm">{item.title}</h3>
+                      <p className="text-zinc-500 text-xs">{item.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Code + download link */}
+            <div className="grid grid-cols-2 gap-5">
+              {/* Code */}
+              <div className="group relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl blur opacity-40 group-hover:opacity-60 transition-opacity" />
+                <div className="relative bg-zinc-900 border border-amber-500/30 rounded-2xl p-5 flex flex-col items-center justify-center text-center">
+                  <Key className="w-8 h-8 text-amber-400 mb-3" />
+                  <p className="text-amber-400/80 text-xs uppercase tracking-wider font-medium mb-2">Twój kod dostępu</p>
+                  {subscriptionCode ? (
+                    <p className="text-white font-black text-3xl tracking-[0.25em] font-mono">{subscriptionCode}</p>
+                  ) : (
+                    <p className="text-zinc-500 text-sm">Kod zostanie wygenerowany</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Download link */}
+              <div className="group relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-fuchsia-500 rounded-2xl blur opacity-40 group-hover:opacity-60 transition-opacity" />
+                <div className="relative bg-zinc-900 border border-pink-500/30 rounded-2xl p-5 flex flex-col items-center justify-center text-center">
+                  <Smartphone className="w-8 h-8 text-pink-400 mb-3" />
+                  <p className="text-pink-400/80 text-xs uppercase tracking-wider font-medium mb-2">Pobierz aplikację</p>
+                  <p className="text-white font-bold text-xl">aurine-academy.pl</p>
+                  <p className="text-zinc-500 text-xs mt-1">Otwórz link na telefonie</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -762,7 +860,8 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
       case 3: return <OnboardingSlide />;
       case 4: return <OngoingSlide />;
       case 5: return <RequirementsSlide />;
-      case 6: return <ContactSlide />;
+      case 6: return <AcademySlide />;
+      case 7: return <ContactSlide />;
       default: return <WelcomeSlide />;
     }
   };
@@ -779,7 +878,7 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
 
       {/* Hidden slides for PDF capture */}
       <div className="hidden">
-        {[1, 2, 3, 4, 5, 6].filter(num => num !== currentSlide).map(slideNum => (
+        {[1, 2, 3, 4, 5, 6, 7].filter(num => num !== currentSlide).map(slideNum => (
           <div 
             key={slideNum}
             id={`capture-welcomepack-slide-${slideNum}`}
@@ -791,7 +890,8 @@ export const WelcomePackPreview = ({ data, currentSlide, subscriptionCode }: Wel
             {slideNum === 3 && <OnboardingSlide />}
             {slideNum === 4 && <OngoingSlide />}
             {slideNum === 5 && <RequirementsSlide />}
-            {slideNum === 6 && <ContactSlide />}
+            {slideNum === 6 && <AcademySlide />}
+            {slideNum === 7 && <ContactSlide />}
           </div>
         ))}
       </div>

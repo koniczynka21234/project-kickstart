@@ -41,12 +41,13 @@ export function useSidebarBadges(userId: string | undefined) {
     fetchingRef.current = true;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       
       // Calculate date for upcoming payments (3 days from now)
       const threeDaysFromNow = new Date();
       threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-      const threeDaysDate = threeDaysFromNow.toISOString().split('T')[0];
+      const threeDaysDate = `${threeDaysFromNow.getFullYear()}-${String(threeDaysFromNow.getMonth() + 1).padStart(2, '0')}-${String(threeDaysFromNow.getDate()).padStart(2, '0')}`;
 
       // Parallel fetch all data
       const [
@@ -70,7 +71,7 @@ export function useSidebarBadges(userId: string | undefined) {
         supabase.from('campaigns').select('id, campaign_metrics!inner(id, period_start)').eq('status', 'active'),
         supabase.from('campaigns').select('id').eq('status', 'active'),
         supabase.from('monthly_reports').select('id').eq('month', new Date().getMonth() + 1).eq('year', new Date().getFullYear()).maybeSingle(),
-        supabase.from('payments').select('id, client_id').eq('status', 'pending').lte('due_date', threeDaysDate).gte('due_date', today),
+        supabase.from('payments').select('id, client_id, status').or('status.eq.overdue,and(status.eq.pending,due_date.lte.' + threeDaysDate + ')').lte('due_date', threeDaysDate),
         supabase.from('documents').select('id, client_id').eq('type', 'invoice'),
         supabase.from('pending_final_invoices').select('id, client_id').eq('status', 'pending').lte('expected_date', threeDaysDate)
       ]);
@@ -90,30 +91,55 @@ export function useSidebarBadges(userId: string | undefined) {
       }
 
       // Calculate leads needing action (cold mail, SMS, or email follow-ups)
+      // Follow-up schedule: Cold Mail (Day 0) → SMS (Day 1) → Email FU1 (Day 4) → Email FU2 (Day 7)
       let leadsNeedingAction = 0;
       let pendingFollowUps = 0;
       let pendingSmsFollowUps = 0;
       
       if (leadsResult.data) {
         leadsResult.data.forEach(lead => {
-          // Cold mail needs sending
+          // Cold mail needs sending (only if scheduled and not yet sent)
           if (!lead.cold_email_sent && lead.cold_email_date && lead.cold_email_date <= today) {
             leadsNeedingAction++;
           }
-          // SMS needs sending (only if cold mail already sent)
-          if (lead.cold_email_sent && !lead.sms_follow_up_sent && lead.sms_follow_up_date && lead.sms_follow_up_date <= today) {
-            leadsNeedingAction++;
-            pendingSmsFollowUps++;
-          }
-          // Email follow-up 1 needs sending (only if cold mail AND SMS already sent)
-          if (lead.cold_email_sent && lead.sms_follow_up_sent && !lead.email_follow_up_1_sent && lead.email_follow_up_1_date && lead.email_follow_up_1_date <= today) {
-            leadsNeedingAction++;
-            pendingFollowUps++;
-          }
-          // Email follow-up 2 needs sending (only if FU1 already sent)
-          if (lead.cold_email_sent && lead.sms_follow_up_sent && lead.email_follow_up_1_sent && !lead.email_follow_up_2_sent && lead.email_follow_up_2_date && lead.email_follow_up_2_date <= today) {
-            leadsNeedingAction++;
-            pendingFollowUps++;
+          
+          // Only calculate follow-ups if cold email was sent and we have the cold email date
+          if (lead.cold_email_sent && lead.cold_email_date) {
+            const coldEmailDate = new Date(lead.cold_email_date + 'T00:00:00');
+            
+            // SMS (Day 1) - needs sending if not sent and due date reached
+            if (!lead.sms_follow_up_sent) {
+              const smsDueDate = new Date(coldEmailDate);
+              smsDueDate.setDate(smsDueDate.getDate() + 1);
+              const smsDueDateStr = `${smsDueDate.getFullYear()}-${String(smsDueDate.getMonth() + 1).padStart(2, '0')}-${String(smsDueDate.getDate()).padStart(2, '0')}`;
+              
+              if (smsDueDateStr <= today) {
+                leadsNeedingAction++;
+                pendingSmsFollowUps++;
+              }
+            }
+            // Email FU1 (Day 4) - only if SMS already sent
+            else if (lead.sms_follow_up_sent && !lead.email_follow_up_1_sent) {
+              const fu1DueDate = new Date(coldEmailDate);
+              fu1DueDate.setDate(fu1DueDate.getDate() + 4);
+              const fu1DueDateStr = `${fu1DueDate.getFullYear()}-${String(fu1DueDate.getMonth() + 1).padStart(2, '0')}-${String(fu1DueDate.getDate()).padStart(2, '0')}`;
+              
+              if (fu1DueDateStr <= today) {
+                leadsNeedingAction++;
+                pendingFollowUps++;
+              }
+            }
+            // Email FU2 (Day 7) - only if FU1 already sent
+            else if (lead.sms_follow_up_sent && lead.email_follow_up_1_sent && !lead.email_follow_up_2_sent) {
+              const fu2DueDate = new Date(coldEmailDate);
+              fu2DueDate.setDate(fu2DueDate.getDate() + 7);
+              const fu2DueDateStr = `${fu2DueDate.getFullYear()}-${String(fu2DueDate.getMonth() + 1).padStart(2, '0')}-${String(fu2DueDate.getDate()).padStart(2, '0')}`;
+              
+              if (fu2DueDateStr <= today) {
+                leadsNeedingAction++;
+                pendingFollowUps++;
+              }
+            }
           }
         });
       }

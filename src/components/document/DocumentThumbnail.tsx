@@ -65,12 +65,23 @@ export const DocumentThumbnail = memo(({ doc, typeColors, onClick }: DocumentThu
   const thumbnailUrl = doc.thumbnail;
 
   useEffect(() => {
+    console.log('[DocThumbnail]', doc.title, 'thumbnail:', thumbnailUrl ? thumbnailUrl.substring(0, 80) + '...' : 'null');
     setRetryKey(0);
     setImageState(thumbnailUrl ? "loading" : "error");
-  }, [thumbnailUrl]);
+  }, [thumbnailUrl, doc.title]);
+
+  useEffect(() => {
+    if (imageState !== "loading") return;
+    const t = setTimeout(() => {
+      setImageState((prev) => prev === "loading" ? "error" : prev);
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [imageState]);
 
   const resolvedSrc = useMemo(() => {
     if (!thumbnailUrl) return null;
+    // Don't append cache-busting params to data URLs
+    if (thumbnailUrl.startsWith('data:')) return thumbnailUrl;
     const sep = thumbnailUrl.includes("?") ? "&" : "?";
     return `${thumbnailUrl}${sep}r=${retryKey}`;
   }, [thumbnailUrl, retryKey]);

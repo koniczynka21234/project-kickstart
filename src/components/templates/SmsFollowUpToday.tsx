@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { 
   MessageSquare, Phone, Copy, Check, User, MapPin, Loader2, 
   RefreshCw, CheckCircle2, Download, Upload, FileText, Calendar 
@@ -42,7 +42,7 @@ interface SmsTemplate {
 }
 
 export function SmsFollowUpToday() {
-  const { toast } = useToast();
+  
   const [leads, setLeads] = useState<Lead[]>([]);
   const [templates, setTemplates] = useState<SmsTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
@@ -155,7 +155,7 @@ export function SmsFollowUpToday() {
   const markSelectedAsSent = async () => {
     const selectedIds = generatedSmsList.filter(sms => sms.selected).map(sms => sms.leadId);
     if (selectedIds.length === 0) {
-      toast({ title: "Błąd", description: "Nie wybrano żadnych SMS-ów", variant: "destructive" });
+      toast.error("Nie wybrano żadnych SMS-ów");
       return;
     }
 
@@ -168,16 +168,13 @@ export function SmsFollowUpToday() {
 
       if (error) throw error;
 
-      toast({ 
-        title: "Sukces", 
-        description: `Oznaczono ${selectedIds.length} SMS-ów jako wysłane` 
-      });
+      toast.success(`Oznaczono ${selectedIds.length} SMS-ów jako wysłane`);
       
       // Refresh data
       fetchData();
     } catch (error) {
       console.error('Error marking as sent:', error);
-      toast({ title: "Błąd", description: "Nie udało się oznaczyć jako wysłane", variant: "destructive" });
+      toast.error("Nie udało się oznaczyć jako wysłane");
     } finally {
       setMarkingAsSent(false);
     }
@@ -192,11 +189,11 @@ export function SmsFollowUpToday() {
 
       if (error) throw error;
 
-      toast({ title: "Sukces", description: "SMS oznaczony jako wysłany" });
+      toast.success("SMS oznaczony jako wysłany");
       fetchData();
     } catch (error) {
       console.error('Error marking as sent:', error);
-      toast({ title: "Błąd", description: "Nie udało się oznaczyć jako wysłany", variant: "destructive" });
+      toast.error("Nie udało się oznaczyć jako wysłany");
     }
   };
 
@@ -204,7 +201,6 @@ export function SmsFollowUpToday() {
     await navigator.clipboard.writeText(sms.message);
     setCopiedId(sms.leadId);
     setTimeout(() => setCopiedId(null), 2000);
-    toast({ title: "Skopiowano", description: "Wiadomość skopiowana do schowka" });
   };
 
   const copyPhone = async (sms: GeneratedSms) => {
@@ -213,14 +209,13 @@ export function SmsFollowUpToday() {
     await navigator.clipboard.writeText(formatted.replace(/\s/g, ''));
     setCopiedPhoneId(sms.leadId);
     setTimeout(() => setCopiedPhoneId(null), 2000);
-    toast({ title: "Skopiowano", description: "Numer telefonu skopiowany" });
   };
 
   const exportData = () => {
     const selectedSms = generatedSmsList.filter(sms => sms.selected && sms.phone);
     
     if (selectedSms.length === 0) {
-      toast({ title: "Błąd", description: "Brak wybranych SMS-ów do eksportu", variant: "destructive" });
+      toast.error("Brak wybranych SMS-ów do eksportu");
       return;
     }
 
@@ -247,17 +242,14 @@ export function SmsFollowUpToday() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast({ 
-      title: "Wyeksportowano", 
-      description: `Pobrano ${selectedSms.length} SMS-ów do pliku` 
-    });
+    toast.success(`Pobrano ${selectedSms.length} SMS-ów do pliku`);
   };
 
   const copyAllToClipboard = async () => {
     const selectedSms = generatedSmsList.filter(sms => sms.selected && sms.phone);
     
     if (selectedSms.length === 0) {
-      toast({ title: "Błąd", description: "Brak wybranych SMS-ów", variant: "destructive" });
+      toast.error("Brak wybranych SMS-ów");
       return;
     }
 
@@ -267,10 +259,7 @@ export function SmsFollowUpToday() {
     }).join('\n\n' + '─'.repeat(40) + '\n\n');
 
     await navigator.clipboard.writeText(content);
-    toast({ 
-      title: "Skopiowano", 
-      description: `Skopiowano ${selectedSms.length} SMS-ów do schowka` 
-    });
+    toast.success(`Skopiowano ${selectedSms.length} SMS-ów`);
   };
 
   const selectedCount = generatedSmsList.filter(sms => sms.selected).length;

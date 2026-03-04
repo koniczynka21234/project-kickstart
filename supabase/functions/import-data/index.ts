@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 interface ImportData {
@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Verify user is szef
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
@@ -63,12 +62,9 @@ Deno.serve(async (req) => {
     console.log('Export date:', importData.exportedAt);
     console.log('Version:', importData.version);
 
-    // Import tables in correct order (parent tables first)
     const importOrder = [
-      // Main entities first
       'leads',
       'clients',
-      // Then related tables
       'campaigns',
       'documents',
       'tasks',
@@ -80,7 +76,6 @@ Deno.serve(async (req) => {
       'social_media_posts',
       'client_app_content',
       'monthly_reports',
-      // Then child tables
       'campaign_metrics',
       'task_comments',
       'lead_interactions',
@@ -98,6 +93,7 @@ Deno.serve(async (req) => {
     ];
 
     const results: Record<string, { imported: number; error?: string }> = {};
+    const importedIds: Record<string, string[]> = {};
 
     for (const table of importOrder) {
       const data = importData.tables[table];
@@ -107,7 +103,6 @@ Deno.serve(async (req) => {
       }
 
       try {
-        // Use upsert to handle both new and existing records
         const { error } = await supabase.from(table).upsert(data, {
           onConflict: 'id',
           ignoreDuplicates: false,
@@ -118,6 +113,7 @@ Deno.serve(async (req) => {
           console.error(`Error importing ${table}:`, error.message);
         } else {
           results[table] = { imported: data.length };
+          importedIds[table] = data.map((row: any) => row.id).filter(Boolean);
           console.log(`Imported ${data.length} records to ${table}`);
         }
       } catch (err) {
@@ -129,6 +125,27 @@ Deno.serve(async (req) => {
 
     const totalImported = Object.values(results).reduce((sum, r) => sum + r.imported, 0);
     console.log(`Import complete. Total imported: ${totalImported}`);
+
+    // Save import history
+    const tableDetails: Record<string, number> = {};
+    for (const [table, result] of Object.entries(results)) {
+      if (result.imported > 0) {
+        tableDetails[table] = result.imported;
+      }
+    }
+
+    const { error: historyError } = await supabase.from('import_history').insert({
+      user_id: user.id,
+      total_records: totalImported,
+      table_details: tableDetails,
+      imported_ids: importedIds,
+    });
+
+    if (historyError) {
+      console.error('Error saving import history:', historyError.message);
+    } else {
+      console.log('Import history saved successfully');
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 

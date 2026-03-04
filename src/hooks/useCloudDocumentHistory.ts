@@ -4,47 +4,22 @@ import { useAuth } from "./useAuth";
 import { useUserRole } from "./useUserRole";
 import { Json } from "@/integrations/supabase/types";
 
-// Helper to upload thumbnail to Storage and return public URL
-const uploadThumbnailToStorage = async (
-  base64Thumbnail: string,
-  documentId: string,
-  userId: string
-): Promise<string | null> => {
-  try {
-    // Convert base64 to blob
-    const base64Data = base64Thumbnail.replace(/^data:image\/\w+;base64,/, '');
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'image/jpeg' });
-
-    // Upload to storage
-    const filePath = `${userId}/${documentId}.jpg`;
-    const { error: uploadError } = await supabase.storage
-      .from('document-thumbnails')
-      .upload(filePath, blob, { 
-        upsert: true,
-        contentType: 'image/jpeg'
-      });
-
-    if (uploadError) {
-      console.error('Error uploading thumbnail:', uploadError);
-      return null;
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('document-thumbnails')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
-  } catch (err) {
-    console.error('Error processing thumbnail:', err);
-    return null;
-  }
+// Compress base64 thumbnail to reduce size for DB storage
+const compressThumbnail = (base64: string, maxWidth = 400, quality = 0.5): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ratio = Math.min(maxWidth / img.width, 1);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(base64);
+    img.src = base64;
+  });
 };
 
 export type DocumentType = "report" | "invoice" | "contract" | "presentation" | "welcomepack" | "audit";
@@ -172,6 +147,13 @@ export const useCloudDocumentHistory = (filterUserId?: string | null) => {
 
   useEffect(() => {
     fetchDocuments();
+    // Delayed refetches to catch async thumbnail updates (compression + DB update race condition)
+    const timer1 = setTimeout(() => fetchDocuments(), 1500);
+    const timer2 = setTimeout(() => fetchDocuments(), 4000);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [fetchDocuments]);
 
   useEffect(() => {
@@ -236,15 +218,13 @@ export const useCloudDocumentHistory = (filterUserId?: string | null) => {
 
     const docId = newDoc?.id;
     
-    // Upload thumbnail to storage if provided
+    // Save compressed thumbnail directly in DB
     if (docId && thumbnail && thumbnail.startsWith('data:')) {
-      const thumbnailUrl = await uploadThumbnailToStorage(thumbnail, docId, user.id);
-      if (thumbnailUrl) {
-        await supabase
-          .from('documents')
-          .update({ thumbnail: thumbnailUrl })
-          .eq('id', docId);
-      }
+      const compressed = await compressThumbnail(thumbnail);
+      await supabase
+        .from('documents')
+        .update({ thumbnail: compressed })
+        .eq('id', docId);
     }
 
     await fetchDocuments();
@@ -268,18 +248,10 @@ export const useCloudDocumentHistory = (filterUserId?: string | null) => {
   const updateThumbnail = useCallback(async (id: string, thumbnail: string) => {
     if (!user) return;
     
-    let thumbnailUrl = thumbnail;
-    
-    // If it's base64, upload to storage first
-    if (thumbnail.startsWith('data:')) {
-      const uploadedUrl = await uploadThumbnailToStorage(thumbnail, id, user.id);
-      if (uploadedUrl) {
-        thumbnailUrl = uploadedUrl;
-      } else {
-        console.error('Failed to upload thumbnail');
-        return;
-      }
-    }
+    // Compress if base64
+    const thumbnailUrl = thumbnail.startsWith('data:') 
+      ? await compressThumbnail(thumbnail) 
+      : thumbnail;
     
     const { error } = await supabase
       .from('documents')

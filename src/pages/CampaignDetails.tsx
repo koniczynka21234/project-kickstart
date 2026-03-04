@@ -220,7 +220,6 @@ export default function CampaignDetails() {
   const copyId = () => {
     if (campaign) {
       navigator.clipboard.writeText(campaign.id);
-      toast.success('ID skopiowane');
     }
   };
 

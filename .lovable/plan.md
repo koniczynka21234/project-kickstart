@@ -42,3 +42,30 @@ Masz dwie opcje:
 3. Skopiuj **Project URL** i **anon public key**
 4. Daj mi te dane, a zaktualizuję plik `.env`
 
+---
+
+## Przedłużenie umowy — plan funkcjonalności
+
+### Przepływ
+1. **RenewContractDialog** — dialog z nowymi datami, okresem, kwotą
+2. **Generowanie PDF aneksu** — na podstawie szablonu (dane klienta + nowe warunki)
+3. **Zapis PDF do Storage** — bucket `documents` (lub istniejący)
+4. **Widoczność w Aurine Academy** — zakładka "Moje dokumenty" — klientka widzi i pobiera aneks
+5. **Pobieranie PDF** — przycisk w systemie (profil klienta / lista dokumentów)
+6. **Wysyłka mailem** — PDF jako załącznik do klientki (edge function + Zoho)
+
+### Elementy do zbudowania
+- [ ] Rozbudowa `RenewContractDialog` o opcję generowania aneksu
+- [ ] Szablon PDF aneksu (jsPDF)
+- [ ] Storage bucket na dokumenty klientów
+- [ ] Tabela `client_documents` (id, client_id, type, title, file_url, created_at)
+- [ ] Wyświetlanie dokumentów w Aurine Academy → "Moje dokumenty"
+- [ ] Przycisk "Pobierz" i "Wyślij mailem" w profilu klienta
+- [ ] Edge function do wysyłki maila z załącznikiem PDF
+
+### Zależności
+- Istniejący `RenewContractDialog.tsx`
+- Istniejący generator umów (`ContractGenerator`)
+- Istniejąca edge function `send-zoho-email`
+- Aurine Academy — zakładka "Moje dokumenty"
+

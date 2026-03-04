@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,7 @@ const smsPlaceholders = [
 
 export function SmsTemplatesManager() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
 
   const [templates, setTemplates] = useState<SmsTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,17 +77,16 @@ export function SmsTemplatesManager() {
     try {
       const { error } = await supabase.from("sms_templates").delete().eq("id", id);
       if (error) throw error;
-      toast({ title: "Sukces", description: "Szablon SMS usunięty" });
+      toast.success("Szablon SMS usunięty");
       fetchTemplates();
     } catch (error) {
       console.error("Error deleting SMS template:", error);
-      toast({ title: "Błąd", description: "Nie udało się usunąć szablonu", variant: "destructive" });
+      toast.error("Nie udało się usunąć szablonu");
     }
   };
 
   const handleCopy = async (content: string) => {
     await navigator.clipboard.writeText(content);
-    toast({ title: "Skopiowano", description: "Treść skopiowana do schowka" });
   };
 
   const insertPlaceholder = (placeholder: string) => {
@@ -101,7 +100,7 @@ export function SmsTemplatesManager() {
 
   const handleSubmit = async () => {
     if (!formData.template_name || !formData.content) {
-      toast({ title: "Błąd", description: "Wypełnij wszystkie pola", variant: "destructive" });
+      toast.error("Wypełnij wszystkie pola");
       return;
     }
 
@@ -112,7 +111,7 @@ export function SmsTemplatesManager() {
           .update({ template_name: formData.template_name, content: formData.content })
           .eq("id", editingTemplate.id);
         if (error) throw error;
-        toast({ title: "Sukces", description: "Szablon SMS zaktualizowany" });
+        toast.success("Szablon SMS zaktualizowany");
       } else {
         const { error } = await supabase.from("sms_templates").insert({
           template_name: formData.template_name,
@@ -120,7 +119,7 @@ export function SmsTemplatesManager() {
           created_by: user?.id,
         });
         if (error) throw error;
-        toast({ title: "Sukces", description: "Szablon SMS dodany" });
+        toast.success("Szablon SMS dodany");
       }
 
       setIsDialogOpen(false);
@@ -129,7 +128,7 @@ export function SmsTemplatesManager() {
       fetchTemplates();
     } catch (error) {
       console.error("Error saving SMS template:", error);
-      toast({ title: "Błąd", description: "Nie udało się zapisać szablonu SMS", variant: "destructive" });
+      toast.error("Nie udało się zapisać szablonu SMS");
     }
   };
 

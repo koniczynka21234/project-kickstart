@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { leadSchema } from '@/lib/validationSchemas';
+import { checkDuplicate, checkLeadExistsAsClient } from '@/lib/duplicateCheck';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -176,9 +177,11 @@ export default function Leads() {
   const { settings } = useAppSettings();
   const { createOnboardingTasks } = useOnboardingTasks();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const cityFromUrl = searchParams.get('city');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(cityFromUrl || '');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [industryFilter, setIndustryFilter] = useState<string>('all');
@@ -287,6 +290,28 @@ export default function Leads() {
     };
 
     console.log('Submitting lead:', { ...dataToSave, created_by: user.id });
+
+    // Duplicate check
+    if (!editingLead) {
+      const dupLead = await checkDuplicate({
+        table: 'leads',
+        salon_name: dataToSave.salon_name,
+        phone: dataToSave.phone,
+        email: dataToSave.email,
+      });
+      if (dupLead.isDuplicate) {
+        toast.error(dupLead.matchReason || 'Ten lead już istnieje');
+        return;
+      }
+      const dupClient = await checkLeadExistsAsClient(
+        dataToSave.salon_name,
+        dataToSave.phone,
+        dataToSave.email,
+      );
+      if (dupClient.isDuplicate) {
+        toast.warning(dupClient.matchReason || 'Ten salon jest już klientem');
+      }
+    }
 
     if (editingLead) {
       const { error } = await supabase
@@ -459,7 +484,7 @@ export default function Leads() {
   };
 
   // Actually perform the conversion with assigned guardian
-  const performConversion = async (lead: Lead, assignedTo: string, contractDurationMonths?: number, startDate?: string, endDate?: string, contractAmount?: number, monthlyBudget?: number) => {
+  const performConversion = async (lead: Lead, assignedTo: string, contractDurationMonths?: number, startDate?: string, endDate?: string, contractAmount?: number, monthlyBudget?: number, nip?: string) => {
     // VALIDATION 1: Check if lead is already converted (fresh check from DB)
     const { data: freshLead, error: leadCheckError } = await supabase
       .from('leads')
@@ -496,9 +521,7 @@ export default function Leads() {
       ? new Date(new Date().setMonth(new Date().getMonth() + contractDurationMonths)).toISOString().split('T')[0]
       : null);
 
-    const { data: newClient, error: insertError } = await supabase
-      .from('clients')
-      .insert({
+    const insertData: any = {
         salon_name: lead.salon_name,
         owner_name: lead.owner_name,
         city: lead.city,
@@ -510,13 +533,18 @@ export default function Leads() {
         lead_id: lead.id,
         created_by: user?.id,
         assigned_to: assignedTo,
-        status: 'active',
+        status: 'pending',
         contract_start_date: contractStartDate,
         contract_end_date: contractEndDate,
         contract_duration_months: contractDurationMonths || null,
         monthly_budget: monthlyBudget || null,
-        contract_amount: contractAmount || null
-      })
+        contract_amount: contractAmount || null,
+      };
+    if (nip) insertData.nip = nip;
+
+    const { data: newClient, error: insertError } = await supabase
+      .from('clients')
+      .insert(insertData as any)
       .select('id')
       .single();
 
@@ -558,14 +586,14 @@ export default function Leads() {
         user.id
       );
       
-      // Create notification about invoice requirement with contract amount
+      // Create notification about invoice requirement for guardian only
       const invoiceContent = contractAmount 
         ? `Wystawić fakturę dla nowego klienta "${lead.salon_name}" na kwotę ${contractAmount} PLN`
         : `Wystawić fakturę dla nowego klienta "${lead.salon_name}"`;
       
       await createNotification({
         userId: assignedTo,
-        title: 'Wymagana faktura',
+        title: 'Wymagana faktura — nowy klient',
         content: invoiceContent,
         type: 'invoice_required',
         referenceType: 'client',
@@ -772,6 +800,7 @@ export default function Leads() {
     responded: leads.filter(l => !!l.response || !!l.response_date).length,
   };
 
+
   const getSequenceStatus = (lead: Lead) => {
     const steps = [
       { done: lead.cold_email_sent, label: 'CM', date: lead.cold_email_date },
@@ -845,6 +874,15 @@ export default function Leads() {
               <p className="text-muted-foreground text-xs sm:text-sm hidden sm:block">Sekwencja: Cold Mail → SMS (1 dzień) → Email #1 (dzień 4) → Email #2 (dzień 7)</p>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button 
+                size="sm"
+                onClick={() => navigate('/leads/cities')}
+                className="gap-2 bg-primary/10 text-primary border border-primary/40 hover:bg-primary/20 hover:border-primary/60 hover:shadow-[0_0_12px_hsl(330_100%_60%/0.3)] transition-all duration-200"
+              >
+                <MapPin className="w-4 h-4" />
+                <span className="hidden sm:inline">Analiza miast</span>
+                <ArrowUpRight className="w-3.5 h-3.5 hidden sm:inline" />
+              </Button>
               <div className="flex items-center border border-zinc-700 rounded-lg overflow-hidden z-10">
                 <Button
                   size="sm"

@@ -327,6 +327,39 @@ Deno.serve(async (req) => {
     const totalDeleted = Object.values(results).reduce((sum, r) => sum + r.deleted, 0);
     console.log(`Reset complete. Total deleted: ${totalDeleted}`);
 
+    // Save reset history
+    const tableDetails: Record<string, number> = {};
+    for (const [table, result] of Object.entries(results)) {
+      if (result.deleted > 0) {
+        tableDetails[table] = result.deleted;
+      }
+    }
+
+    // Get excluded client names for history
+    let excludedClientNames: string[] = [];
+    if (excludeClientIds.length > 0) {
+      const { data: excludedClients } = await supabase
+        .from('clients')
+        .select('salon_name')
+        .in('id', excludeClientIds);
+      excludedClientNames = (excludedClients || []).map(c => c.salon_name);
+    }
+
+    const { error: historyError } = await supabase.from('reset_history').insert({
+      user_id: user.id,
+      total_deleted: totalDeleted,
+      preserved_clients: excludeClientIds.length,
+      include_files: includeFiles,
+      table_details: tableDetails,
+      excluded_client_names: excludedClientNames,
+    });
+
+    if (historyError) {
+      console.error('Error saving reset history:', historyError.message);
+    } else {
+      console.log('Reset history saved successfully');
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       totalDeleted,

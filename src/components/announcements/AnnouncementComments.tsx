@@ -113,7 +113,7 @@ export function AnnouncementComments({ announcementId }: AnnouncementCommentsPro
     );
 
     setNewComment("");
-    toast.success("Komentarz dodany");
+    // Comment appears in the UI immediately
   };
 
   const handleEdit = async () => {
@@ -131,7 +131,7 @@ export function AnnouncementComments({ announcementId }: AnnouncementCommentsPro
 
     setEditingId(null);
     setEditContent("");
-    toast.success("Komentarz zaktualizowany");
+    // Comment updates in the UI immediately
   };
 
   const handleDelete = async (id: string) => {
@@ -147,7 +147,7 @@ export function AnnouncementComments({ announcementId }: AnnouncementCommentsPro
       return;
     }
 
-    toast.success("Komentarz usunięty");
+    // Comment removed from UI via optimistic update
   };
 
   if (loading) {

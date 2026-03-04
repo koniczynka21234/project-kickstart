@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { Plus, Edit, Trash2, Mail, MailOpen, MoreVertical, Copy, Loader2, AlertCircle } from 'lucide-react';
 import { emailTemplateSchema } from '@/lib/validationSchemas';
 
@@ -41,7 +41,7 @@ const FOLLOW_UP_TEMPLATES = [
 
 export default function Templates() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  
   const [activeTab, setActiveTab] = useState('cold-email');
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,11 +140,7 @@ export default function Templates() {
 
     const validationResult = emailTemplateSchema.safeParse(dataToValidate);
     if (!validationResult.success) {
-      toast({
-        title: "Błąd walidacji",
-        description: validationResult.error.errors[0].message,
-        variant: "destructive"
-      });
+      toast.error(validationResult.error.errors[0].message);
       return;
     }
 
@@ -154,11 +150,7 @@ export default function Templates() {
         t.template_name.toLowerCase() === selectedFollowUpSlot.toLowerCase()
       );
       if (exists) {
-        toast({
-          title: "Szablon już istnieje",
-          description: `Szablon ${selectedFollowUpSlot} już istnieje. Edytuj istniejący zamiast tworzyć nowy.`,
-          variant: "destructive"
-        });
+        toast.error(`Szablon ${selectedFollowUpSlot} już istnieje. Edytuj istniejący.`);
         return;
       }
     }
@@ -175,7 +167,7 @@ export default function Templates() {
           .eq('id', editingEmailTemplate.id);
 
         if (error) throw error;
-        toast({ title: "Sukces", description: "Szablon został zaktualizowany" });
+        toast.success("Szablon zaktualizowany");
       } else {
         const { error } = await supabase
           .from('email_templates')
@@ -187,7 +179,7 @@ export default function Templates() {
           });
 
         if (error) throw error;
-        toast({ title: "Sukces", description: "Szablon został utworzony" });
+        toast.success("Szablon utworzony");
       }
 
       setIsDialogOpen(false);
@@ -197,11 +189,7 @@ export default function Templates() {
       fetchAllTemplates();
     } catch (error) {
       console.error('Error saving email template:', error);
-      toast({
-        title: "Błąd",
-        description: "Nie udało się zapisać szablonu",
-        variant: "destructive"
-      });
+      toast.error("Nie udało się zapisać szablonu");
     }
   };
 
@@ -212,17 +200,16 @@ export default function Templates() {
     try {
       const { error } = await supabase.from('email_templates').delete().eq('id', id);
       if (error) throw error;
-      toast({ title: "Sukces", description: "Szablon usunięty" });
+      toast.success("Szablon usunięty");
       fetchAllTemplates();
     } catch (error) {
-      toast({ title: "Błąd", description: "Nie udało się usunąć szablonu", variant: "destructive" });
+      toast.error("Nie udało się usunąć szablonu");
     }
   };
 
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
-    toast({ title: "Skopiowano", description: "Treść skopiowana do schowka" });
   };
 
   const insertEmailPlaceholder = (placeholder: string) => {

@@ -9,10 +9,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { useAuth } from '@/hooks/useAuth';
-import { notifyGuardianAssigned } from '@/lib/notifications';
+import { notifyGuardianAssigned, transferClientNotifications } from '@/lib/notifications';
 import { ClientAcademyCard } from '@/components/client/ClientAcademyCard';
 import { ClientPaymentsSection } from '@/components/client/ClientPaymentsSection';
 import { RenewContractDialog } from '@/components/client/RenewContractDialog';
+import { AnnexMiniCardDialog } from '@/components/client/AnnexMiniCardDialog';
+import { AnnexPreview } from '@/components/contract/AnnexPreview';
 import { DocumentMiniCard } from '@/components/document/DocumentMiniCard';
 import { DocumentViewer } from '@/components/document/DocumentViewer';
 import { CloudDocumentItem } from '@/hooks/useCloudDocumentHistory';
@@ -40,7 +42,10 @@ import {
   Plus,
   Save,
   X,
-  RefreshCw
+  RefreshCw,
+  Download,
+  ScrollText,
+  Eye
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -65,6 +70,7 @@ interface Client {
   contract_duration_months: number | null;
   monthly_budget: number | null;
   contract_amount: number | null;
+  nip: string | null;
   notes: string | null;
   created_at: string;
   assigned_to: string | null;
@@ -111,12 +117,14 @@ interface Task {
 }
 
 const statusColors: Record<string, string> = {
+  pending: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   active: 'bg-green-500/20 text-green-400 border-green-500/30',
   paused: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   churned: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
 const statusLabels: Record<string, string> = {
+  pending: 'Oczekujący',
   active: 'Aktywny',
   paused: 'Wstrzymany',
   churned: 'Zakończony',
@@ -153,6 +161,7 @@ export default function ClientProfile() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [annexes, setAnnexes] = useState<{ id: string; title: string; file_url: string | null; storage_path: string | null; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
@@ -169,6 +178,8 @@ export default function ClientProfile() {
   
   // Contract renewal dialog
   const [renewDialogOpen, setRenewDialogOpen] = useState(false);
+  const [annexPreviewData, setAnnexPreviewData] = useState<any>(null);
+  const [selectedAnnex, setSelectedAnnex] = useState<{ id: string; title: string; created_at: string; storage_path: string | null } | null>(null);
   const [savingCampaign, setSavingCampaign] = useState(false);
   const [campaignForm, setCampaignForm] = useState({
     name: '',
@@ -193,12 +204,14 @@ export default function ClientProfile() {
     email: '',
     instagram: '',
     facebook_page: '',
-    business_manager_url: '',
+      business_manager_url: '',
+    nip: '',
     status: 'active',
     contract_start_date: '',
     contract_end_date: '',
     contract_duration_months: '1',
     monthly_budget: '',
+    contract_amount: '',
     notes: '',
     assigned_to: '',
     industry: '',
@@ -227,8 +240,8 @@ export default function ClientProfile() {
     }
   };
 
-  const fetchClientData = async () => {
-    setLoading(true);
+  const fetchClientData = async (silent = false) => {
+    if (!silent) setLoading(true);
     
     // Fetch client
     const { data: clientData, error: clientError } = await supabase
@@ -242,7 +255,7 @@ export default function ClientProfile() {
       navigate('/clients');
       return;
     }
-    setClient(clientData);
+    setClient({ ...clientData, nip: (clientData as any).nip || null } as Client);
 
     // Fetch assigned employee if exists
     if (clientData.assigned_to) {
@@ -322,6 +335,16 @@ export default function ClientProfile() {
       .order('created_at', { ascending: false });
     
     setTasks(tasksData || []);
+
+    // Fetch annexes (client_app_documents with type 'contract')
+    const { data: annexData } = await supabase
+      .from('client_app_documents')
+      .select('id, title, file_url, storage_path, created_at')
+      .eq('client_id', id)
+      .eq('type', 'contract')
+      .order('created_at', { ascending: false });
+
+    setAnnexes(annexData || []);
     
     setLoading(false);
   };
@@ -335,6 +358,8 @@ export default function ClientProfile() {
     if (!id || !client) return;
     setSavingAssignment(true);
     
+    const oldGuardianId = client.assigned_to;
+    
     const { error } = await supabase
       .from('clients')
       .update({ assigned_to: employeeId })
@@ -344,6 +369,11 @@ export default function ClientProfile() {
       toast.error('Błąd podczas przypisywania opiekuna');
     } else {
       toast.success('Opiekun został przypisany');
+      
+      // Transfer unread notifications to new guardian
+      if (employeeId && oldGuardianId && oldGuardianId !== employeeId) {
+        await transferClientNotifications(client.id, oldGuardianId, employeeId);
+      }
       
       // Send notification to the assigned employee
       if (employeeId && user) {
@@ -392,11 +422,13 @@ export default function ClientProfile() {
       instagram: client.instagram || '',
       facebook_page: client.facebook_page || '',
       business_manager_url: client.business_manager_url || '',
+      nip: (client as any).nip || '',
       status: client.status,
       contract_start_date: client.contract_start_date || '',
       contract_end_date: client.contract_end_date || '',
       contract_duration_months: client.contract_duration_months?.toString() || '1',
       monthly_budget: client.monthly_budget?.toString() || '',
+      contract_amount: client.contract_amount?.toString() || '',
       notes: client.notes || '',
       assigned_to: client.assigned_to || '',
       industry: client.industry || '',
@@ -408,7 +440,7 @@ export default function ClientProfile() {
     e.preventDefault();
     if (!id) return;
     
-    const submitData = {
+    const submitData: any = {
       salon_name: formData.salon_name,
       owner_name: formData.owner_name || null,
       city: formData.city || null,
@@ -417,11 +449,13 @@ export default function ClientProfile() {
       instagram: formData.instagram || null,
       facebook_page: formData.facebook_page || null,
       business_manager_url: formData.business_manager_url || null,
+      nip: formData.nip || null,
       status: formData.status,
       contract_start_date: formData.contract_start_date || null,
       contract_end_date: formData.contract_end_date || null,
       contract_duration_months: formData.contract_duration_months ? parseInt(formData.contract_duration_months) : 1,
       monthly_budget: formData.monthly_budget ? parseFloat(formData.monthly_budget) : null,
+      contract_amount: formData.contract_amount ? parseFloat(formData.contract_amount) : null,
       notes: formData.notes || null,
       assigned_to: formData.assigned_to || null,
       industry: formData.industry || null,
@@ -429,7 +463,7 @@ export default function ClientProfile() {
     
     const { error } = await supabase
       .from('clients')
-      .update(submitData)
+      .update(submitData as any)
       .eq('id', id);
     
     if (error) {
@@ -517,7 +551,7 @@ export default function ClientProfile() {
   ];
 
   const statusLabelsEdit: Record<string, string> = {
-    active: 'Aktywny', paused: 'Wstrzymany', churned: 'Zakończony'
+    pending: 'Oczekujący', active: 'Aktywny', paused: 'Wstrzymany', churned: 'Zakończony'
   };
 
   // Convert Document to CloudDocumentItem for preview components
@@ -835,14 +869,21 @@ export default function ClientProfile() {
                     }`}>{format(contractStatus.endDate, 'd MMMM yyyy', { locale: pl })}</p>
                   </div>
                   <div className={`p-3 rounded-lg ${
-                    contractStatus.isExpired 
-                      ? 'bg-red-500/10 border border-red-500/30' 
-                      : contractStatus.isExpiringSoon 
-                        ? 'bg-yellow-500/10 border border-yellow-500/30'
-                        : 'bg-green-500/10 border border-green-500/30'
+                    client.status === 'pending'
+                      ? 'bg-blue-500/10 border border-blue-500/30'
+                      : contractStatus.isExpired 
+                        ? 'bg-red-500/10 border border-red-500/30' 
+                        : contractStatus.isExpiringSoon 
+                          ? 'bg-yellow-500/10 border border-yellow-500/30'
+                          : 'bg-green-500/10 border border-green-500/30'
                   }`}>
                     <p className="text-xs text-muted-foreground mb-1">Status umowy</p>
-                    {contractStatus.isExpired ? (
+                    {client.status === 'pending' ? (
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-blue-400" />
+                        <p className="font-medium text-blue-400">Oczekuje na wygenerowanie umowy</p>
+                      </div>
+                    ) : contractStatus.isExpired ? (
                       <div className="flex items-center gap-2">
                         <AlertCircle className="w-4 h-4 text-red-400" />
                         <p className="font-medium text-red-400">Umowa wygasła {Math.abs(contractStatus.daysRemaining)} dni temu</p>
@@ -860,17 +901,103 @@ export default function ClientProfile() {
                     <p className="text-xs text-muted-foreground mb-1">Długość umowy</p>
                     <p className="font-medium">{client.contract_duration_months || 1} {(client.contract_duration_months || 1) === 1 ? 'miesiąc' : 'miesiące'}</p>
                   </div>
-                  
-                  
+
+
                   {/* Renew Contract Button */}
-                  <Button 
-                    onClick={() => setRenewDialogOpen(true)} 
-                    variant="outline" 
-                    className="w-full mt-2"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Przedłuż umowę
-                  </Button>
+                  {client.status === 'pending' ? (
+                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-center">
+                      <p className="text-xs text-blue-400 font-medium">
+                        Najpierw wygeneruj umowę, aby móc ją przedłużyć
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="mt-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                        onClick={() => navigate('/contract-generator')}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Wygeneruj umowę
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={() => setRenewDialogOpen(true)} 
+                      variant="outline" 
+                      className="w-full mt-2"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Przedłuż umowę
+                    </Button>
+                  )}
+
+                  {/* Annex History — always visible */}
+                  <div className="mt-4 space-y-2 border-t border-border/50 pt-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <ScrollText className="w-4 h-4 text-purple-400" />
+                        Aneksy do umowy
+                      </p>
+                      <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
+                        {annexes.length}
+                      </Badge>
+                    </div>
+                    
+                    {annexes.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {annexes.map((annex, index) => (
+                          <div
+                            key={annex.id}
+                            className="flex items-center gap-2 p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/15 transition-colors"
+                          >
+                            <FileText className="w-4 h-4 text-purple-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">Aneks #{index + 1}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {format(new Date(annex.created_at), 'd MMM yyyy, HH:mm', { locale: pl })}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {annex.storage_path && (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedAnnex(annex);
+                                    }}
+                                    className="p-1 rounded hover:bg-purple-500/20 transition-colors"
+                                    title="Podgląd aneksu"
+                                  >
+                                    <Eye className="w-3.5 h-3.5 text-purple-400 hover:text-purple-300" />
+                                  </button>
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      const { data } = await supabase.storage
+                                        .from('client_documents')
+                                        .createSignedUrl(annex.storage_path!, 60 * 5);
+                                      if (data?.signedUrl) {
+                                        window.open(data.signedUrl, '_blank');
+                                      } else {
+                                        toast.error('Nie udało się pobrać aneksu');
+                                      }
+                                    }}
+                                    className="p-1 rounded hover:bg-purple-500/20 transition-colors"
+                                    title="Pobierz PDF"
+                                  >
+                                    <Download className="w-3.5 h-3.5 text-purple-400 hover:text-purple-300" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">
+                        Brak aneksów — kliknij "Przedłuż umowę" aby wygenerować aneks
+                      </p>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="p-4 rounded-lg bg-secondary/20 border border-dashed border-border text-center">
@@ -974,7 +1101,18 @@ export default function ClientProfile() {
                   <ExternalLink className="w-4 h-4 text-muted-foreground" />
                 </a>
               )}
-              {!client.phone && !client.email && !client.instagram && !client.facebook_page && !client.business_manager_url && (
+              {(client as any).nip && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">NIP</p>
+                    <p className="font-medium font-mono">{(client as any).nip}</p>
+                  </div>
+                </div>
+              )}
+              {!client.phone && !client.email && !client.instagram && !client.facebook_page && !client.business_manager_url && !(client as any).nip && (
                 <p className="text-muted-foreground text-sm text-center py-4">Brak danych kontaktowych</p>
               )}
             </CardContent>
@@ -1346,6 +1484,14 @@ export default function ClientProfile() {
                   placeholder="Link do Business Manager"
                 />
               </div>
+              <div className="col-span-2">
+                <Label>NIP</Label>
+                <Input
+                  value={formData.nip}
+                  onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
+                  placeholder="1234567890"
+                />
+              </div>
               <div className="col-span-2 p-3 rounded-lg bg-secondary/30 space-y-3">
                 <p className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Clock className="w-4 h-4 text-primary" />
@@ -1386,7 +1532,16 @@ export default function ClientProfile() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs">Budżet miesięczny (PLN)</Label>
+                    <Label className="text-xs">Kwota współpracy (PLN/mies.)</Label>
+                    <Input
+                      type="number"
+                      value={formData.contract_amount}
+                      onChange={(e) => setFormData({ ...formData, contract_amount: e.target.value })}
+                      placeholder="np. 3000"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Budżet kampanii (PLN)</Label>
                     <Input
                       type="number"
                       value={formData.monthly_budget}
@@ -1562,7 +1717,7 @@ export default function ClientProfile() {
         clientId={client.id}
         clientName={client.salon_name}
         currentEndDate={contractStatus?.endDate || null}
-        onSuccess={fetchClientData}
+        onSuccess={() => fetchClientData(true)}
       />
 
       {/* Document Mini Card Preview - Centered Modal */}
@@ -1585,6 +1740,16 @@ export default function ClientProfile() {
           document={selectedDocument}
           open={viewerOpen}
           onClose={() => setViewerOpen(false)}
+        />
+      )}
+
+      {/* Annex Mini Card Dialog */}
+      {selectedAnnex && (
+        <AnnexMiniCardDialog
+          annex={selectedAnnex}
+          clientName={client?.salon_name || ''}
+          contractStartDate={client?.contract_start_date || null}
+          onClose={() => setSelectedAnnex(null)}
         />
       )}
 

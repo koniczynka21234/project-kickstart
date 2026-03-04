@@ -9,7 +9,7 @@ import {
   History, Users, UserPlus, LogOut, User, Shield, Crown,
   Target, Mail, CheckSquare, TrendingDown, Bell, UsersRound, Calendar,
   Settings, Zap, X, MailCheck, Sparkles, Gift, Megaphone, Wand2, Share2,
-  Smartphone, BarChart3, PieChart, MessageSquare, ClipboardCheck,
+  Smartphone, BarChart3, PieChart, MessageSquare, ClipboardCheck, Mic,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -170,6 +170,7 @@ export function SidebarNav({ onNavigate, showCloseButton, onClose }: SidebarNavP
     { title: "Zadania", url: "/tasks", icon: CheckSquare, badge: badges.incompleteTasks || undefined },
     { title: "Zespół", url: "/team", icon: UsersRound },
     { title: "Powiadomienia", url: "/notifications", icon: Bell },
+    { title: "Historia", url: "/history", icon: History },
   ];
 
   // Calculate total client issues (expiring contracts + missing invoices + upcoming payments + pending final invoices)
@@ -185,6 +186,7 @@ export function SidebarNav({ onNavigate, showCloseButton, onClose }: SidebarNavP
     { title: "Follow-up SMS", url: "/followup-sms", icon: MessageSquare, badge: badges.pendingSmsFollowUps || undefined },
     { title: "Aurine Academy", url: "/aurine-academy", icon: Smartphone },
     { title: "Obsługa klienta", url: "/client-service", icon: Sparkles },
+    { title: "Schematy rozmowy", url: "/conversation-scripts", icon: Mic },
     { title: "Social Media", url: "/social-media", icon: Share2 },
     { title: "Szablony", url: "/templates", icon: Mail },
   ];
@@ -198,7 +200,6 @@ export function SidebarNav({ onNavigate, showCloseButton, onClose }: SidebarNavP
     { title: "Welcome Pack", url: "/welcome-pack-generator", icon: Gift },
     { title: "Kampanie AI", url: "/campaign-generator", icon: Megaphone },
     { title: "Grafiki", url: "/graphics-creator", icon: Wand2 },
-    { title: "Historia", url: "/history", icon: History },
   ];
 
   const sections: NavSection[] = [

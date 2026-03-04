@@ -83,7 +83,16 @@ interface ReferenceItem {
   name: string;
 }
 
-const EMOJI_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "👏", "🎉"];
+const EMOJI_OPTIONS = [
+  { emoji: "❤️", label: "Love" },
+  { emoji: "🔥", label: "Fire" },
+  { emoji: "👍", label: "Like" },
+  { emoji: "😂", label: "Haha" },
+  { emoji: "💯", label: "100" },
+  { emoji: "🚀", label: "Go!" },
+  { emoji: "👀", label: "Eyes" },
+  { emoji: "✨", label: "Magic" },
+];
 
 const getInitials = (name: string | null | undefined, email: string | null | undefined) => {
   if (name) {
@@ -152,6 +161,7 @@ export function TeamChatPanel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const skipScrollUntilRef = useRef(0);
 
   useEffect(() => {
     if (user) {
@@ -271,11 +281,22 @@ export function TeamChatPanel() {
     calculateUnread(enrichedMessages);
     setLoading(false);
 
-    setTimeout(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
-    }, 100);
+    // Don't scroll if we recently sent a message (optimistic update already scrolled)
+    if (Date.now() < skipScrollUntilRef.current) {
+      return;
+    }
+
+    const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    const wasAtBottom = viewport 
+      ? viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 80 
+      : true;
+
+    if (wasAtBottom) {
+      setTimeout(() => {
+        const vp = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+        if (vp) vp.scrollTop = vp.scrollHeight;
+      }, 50);
+    }
   };
 
   useEffect(() => {
@@ -328,6 +349,11 @@ export function TeamChatPanel() {
       fetchMessages();
       fetchReferences();
 
+      // Polling fallback every 3 seconds
+      const pollInterval = setInterval(() => {
+        fetchMessages();
+      }, 3000);
+
       const channel = supabase
         .channel("team-chat")
         .on(
@@ -343,29 +369,62 @@ export function TeamChatPanel() {
         .subscribe();
 
       return () => {
+        clearInterval(pollInterval);
         supabase.removeChannel(channel);
       };
     }
   }, [open]);
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !user || sending) return;
 
     setSending(true);
     const messageContent = newMessage.trim();
+    const refType = selectedReference?.type || null;
+    const refId = selectedReference?.id || null;
+    const replyId = replyTo?.id || null;
+    
+    // Clear input immediately for responsiveness
+    setNewMessage("");
+    setSelectedReference(null);
+    setReplyTo(null);
+
+    // Optimistic update - show message instantly, suppress scroll for 3s
+    skipScrollUntilRef.current = Date.now() + 3000;
+    const optimisticMsg: TeamMessage = {
+      id: `temp-${Date.now()}`,
+      content: messageContent,
+      user_id: user.id,
+      profile: { full_name: user.email?.split("@")[0] || "Ty", email: user.email || null },
+      created_at: new Date().toISOString(),
+      reference_type: refType,
+      reference_id: refId,
+      referenceName: undefined,
+      reply_to_id: replyId,
+      reactions: [],
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    
+    // Scroll to bottom immediately (only once)
+    setTimeout(() => {
+      const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
+    }, 10);
     
     const { data: messageData, error } = await supabase.from("team_messages").insert({
       user_id: user.id,
       content: messageContent,
-      reference_type: selectedReference?.type || null,
-      reference_id: selectedReference?.id || null,
-      reply_to_id: replyTo?.id || null,
-    }).select().single();
+      reference_type: refType,
+      reference_id: refId,
+      reply_to_id: replyId,
+    }).select().maybeSingle();
 
     if (error) {
+      console.error('[CHAT] send error:', error);
       toast.error("Błąd wysyłania wiadomości");
+      setNewMessage(messageContent); // restore message on error
     } else {
-      // Check for mentions and create notifications
+      // Handle mentions
       const mentionRegex = /@(\w+)/g;
       let match;
       const mentionedNames: string[] = [];
@@ -375,7 +434,6 @@ export function TeamChatPanel() {
       }
       
       if (mentionedNames.length > 0) {
-        // Find user IDs for mentioned names
         const mentionedUsers = teamMembers.filter(m => 
           mentionedNames.some(name => 
             m.name.toLowerCase().replace(/\s/g, "").includes(name) ||
@@ -383,7 +441,6 @@ export function TeamChatPanel() {
           )
         );
         
-        // Create notifications for each mentioned user
         for (const mentionedUser of mentionedUsers) {
           if (mentionedUser.id !== user.id) {
             await supabase.from("notifications").insert({
@@ -399,9 +456,12 @@ export function TeamChatPanel() {
         }
       }
       
-      setNewMessage("");
-      setSelectedReference(null);
-      setReplyTo(null);
+      // Replace optimistic message with real one (polling will fully sync)
+      if (messageData) {
+        setMessages(prev => prev.map(m => 
+          m.id === optimisticMsg.id ? { ...optimisticMsg, id: messageData.id } : m
+        ));
+      }
     }
     setSending(false);
   };
@@ -416,16 +476,28 @@ export function TeamChatPanel() {
   const handleReaction = async (messageId: string, emoji: string) => {
     if (!user) return;
 
-    // Check if user already reacted with this emoji
-    const existingReaction = messages
-      .find(m => m.id === messageId)
-      ?.reactions?.find(r => r.user_id === user.id && r.emoji === emoji);
+    // Optimistic update
+    setMessages(prev => prev.map(msg => {
+      if (msg.id !== messageId) return msg;
+      const reactions = msg.reactions || [];
+      const existingIdx = reactions.findIndex(r => r.user_id === user.id && r.emoji === emoji);
+      if (existingIdx >= 0) {
+        return { ...msg, reactions: reactions.filter((_, i) => i !== existingIdx) };
+      }
+      return { ...msg, reactions: [...reactions, { id: `temp-${Date.now()}`, message_id: messageId, user_id: user.id, emoji, profile: { full_name: user.email?.split("@")[0] || null } }] };
+    }));
 
-    if (existingReaction) {
-      // Remove reaction
-      await supabase.from("message_reactions").delete().eq("id", existingReaction.id);
+    // DB sync
+    const { data: existing } = await supabase
+      .from("message_reactions")
+      .select("id")
+      .eq("message_id", messageId)
+      .eq("user_id", user.id)
+      .eq("emoji", emoji);
+
+    if (existing && existing.length > 0) {
+      await supabase.from("message_reactions").delete().eq("id", existing[0].id);
     } else {
-      // Add reaction
       await supabase.from("message_reactions").insert({
         message_id: messageId,
         user_id: user.id,
@@ -727,7 +799,7 @@ export function TeamChatPanel() {
                       const groupedReactions = groupReactions(msg.reactions || []);
 
                       return (
-                        <div key={msg.id} className="group">
+                        <div key={msg.id} className="group animate-fade-in">
                           {/* Author */}
                           {!isOwn && (
                             <div className="flex items-center gap-2 mb-1.5 ml-11">
@@ -841,15 +913,16 @@ export function TeamChatPanel() {
                                       <Smile className="w-3.5 h-3.5" />
                                     </Button>
                                   </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-2 bg-zinc-900 border-zinc-800" align={isOwn ? "end" : "start"}>
-                                    <div className="flex gap-1">
-                                      {EMOJI_OPTIONS.map((emoji) => (
+                                  <PopoverContent className="w-auto p-1.5 bg-zinc-900/95 backdrop-blur-xl border-pink-500/20 shadow-2xl shadow-pink-500/10 rounded-2xl" align={isOwn ? "end" : "start"} sideOffset={4}>
+                                    <div className="flex gap-0.5">
+                                      {EMOJI_OPTIONS.map((opt) => (
                                         <button
-                                          key={emoji}
-                                          onClick={() => handleReaction(msg.id, emoji)}
-                                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800 transition-colors text-lg"
+                                          key={opt.emoji}
+                                          onClick={() => handleReaction(msg.id, opt.emoji)}
+                                          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-pink-500/20 hover:scale-110 active:scale-90 transition-all text-xl"
+                                          title={opt.label}
                                         >
-                                          {emoji}
+                                          {opt.emoji}
                                         </button>
                                       ))}
                                     </div>

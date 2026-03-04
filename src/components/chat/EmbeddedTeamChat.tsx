@@ -71,7 +71,16 @@ interface ReferenceItem {
   name: string;
 }
 
-const EMOJI_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "👏", "🎉"];
+const EMOJI_OPTIONS = [
+  { emoji: "❤️", label: "Love" },
+  { emoji: "🔥", label: "Fire" },
+  { emoji: "👍", label: "Like" },
+  { emoji: "😂", label: "Haha" },
+  { emoji: "💯", label: "100" },
+  { emoji: "🚀", label: "Go!" },
+  { emoji: "👀", label: "Eyes" },
+  { emoji: "✨", label: "Magic" },
+];
 
 const getInitials = (name: string | null | undefined, email: string | null | undefined) => {
   if (name) {
@@ -133,6 +142,7 @@ export function EmbeddedTeamChat() {
   const { isSzef } = useUserRole();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const skipScrollUntilRef = useRef(0);
 
   const fetchMessages = useCallback(async () => {
     const { data: messagesData, error } = await supabase
@@ -219,11 +229,21 @@ export function EmbeddedTeamChat() {
     setMessages(enrichedMessages);
     setLoading(false);
 
-    setTimeout(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
-    }, 100);
+    if (Date.now() < skipScrollUntilRef.current) {
+      return;
+    }
+
+    const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    const wasAtBottom = viewport 
+      ? viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 80 
+      : true;
+
+    if (wasAtBottom) {
+      setTimeout(() => {
+        const vp = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+        if (vp) vp.scrollTop = vp.scrollHeight;
+      }, 50);
+    }
   }, []);
 
   const fetchReferences = async () => {
@@ -256,6 +276,11 @@ export function EmbeddedTeamChat() {
     fetchMessages();
     fetchReferences();
 
+    // Polling fallback every 3 seconds
+    const pollInterval = setInterval(() => {
+      fetchMessages();
+    }, 3000);
+
     const channel = supabase
       .channel("embedded-team-chat")
       .on(
@@ -271,28 +296,57 @@ export function EmbeddedTeamChat() {
       .subscribe();
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [fetchMessages]);
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !user || sending) return;
 
     setSending(true);
     const messageContent = newMessage.trim();
+    const refType = selectedReference?.type || null;
+    const refId = selectedReference?.id || null;
+    const replyId = replyTo?.id || null;
+    
+    setNewMessage("");
+    setSelectedReference(null);
+    setReplyTo(null);
+
+    skipScrollUntilRef.current = Date.now() + 3000;
+    const optimisticMsg: TeamMessage = {
+      id: `temp-${Date.now()}`,
+      content: messageContent,
+      user_id: user.id,
+      profile: { full_name: user.email?.split("@")[0] || "Ty", email: user.email || null },
+      created_at: new Date().toISOString(),
+      reference_type: refType,
+      reference_id: refId,
+      referenceName: undefined,
+      reply_to_id: replyId,
+      reactions: [],
+    };
+    setMessages(prev => [...prev, optimisticMsg]);
+    
+    setTimeout(() => {
+      const viewport = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
+    }, 10);
     
     const { data: messageData, error } = await supabase.from("team_messages").insert({
       user_id: user.id,
       content: messageContent,
-      reference_type: selectedReference?.type || null,
-      reference_id: selectedReference?.id || null,
-      reply_to_id: replyTo?.id || null,
-    }).select().single();
+      reference_type: refType,
+      reference_id: refId,
+      reply_to_id: replyId,
+    }).select().maybeSingle();
 
     if (error) {
+      console.error('[CHAT] send error:', error);
       toast.error("Błąd wysyłania wiadomości");
+      setNewMessage(messageContent);
     } else {
-      // Check for mentions and create notifications
       const mentionRegex = /@(\w+)/g;
       let match;
       const mentionedNames: string[] = [];
@@ -323,10 +377,11 @@ export function EmbeddedTeamChat() {
           }
         }
       }
-      
-      setNewMessage("");
-      setSelectedReference(null);
-      setReplyTo(null);
+      if (messageData) {
+        setMessages(prev => prev.map(m => 
+          m.id === optimisticMsg.id ? { ...optimisticMsg, id: messageData.id } : m
+        ));
+      }
     }
     setSending(false);
   };
@@ -345,12 +400,27 @@ export function EmbeddedTeamChat() {
   const handleReaction = async (messageId: string, emoji: string) => {
     if (!user) return;
 
-    const existingReaction = messages
-      .find(m => m.id === messageId)
-      ?.reactions?.find(r => r.user_id === user.id && r.emoji === emoji);
+    // Optimistic update
+    setMessages(prev => prev.map(msg => {
+      if (msg.id !== messageId) return msg;
+      const reactions = msg.reactions || [];
+      const existingIdx = reactions.findIndex(r => r.user_id === user.id && r.emoji === emoji);
+      if (existingIdx >= 0) {
+        return { ...msg, reactions: reactions.filter((_, i) => i !== existingIdx) };
+      }
+      return { ...msg, reactions: [...reactions, { id: `temp-${Date.now()}`, message_id: messageId, user_id: user.id, emoji, profile: { full_name: user.email?.split("@")[0] || null } }] };
+    }));
 
-    if (existingReaction) {
-      await supabase.from("message_reactions").delete().eq("id", existingReaction.id);
+    // DB sync
+    const { data: existing } = await supabase
+      .from("message_reactions")
+      .select("id")
+      .eq("message_id", messageId)
+      .eq("user_id", user.id)
+      .eq("emoji", emoji);
+
+    if (existing && existing.length > 0) {
+      await supabase.from("message_reactions").delete().eq("id", existing[0].id);
     } else {
       await supabase.from("message_reactions").insert({
         message_id: messageId,
@@ -503,7 +573,7 @@ export function EmbeddedTeamChat() {
                   <div
                     key={msg.id}
                     className={cn(
-                      "flex gap-2 mb-3 group",
+                      "flex gap-2 mb-3 group animate-fade-in",
                       isOwn ? "flex-row-reverse" : "flex-row"
                     )}
                   >
@@ -588,15 +658,16 @@ export function EmbeddedTeamChat() {
                               <Smile className="w-3 h-3" />
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-2" side="top">
-                            <div className="flex gap-1">
-                              {EMOJI_OPTIONS.map(emoji => (
+                          <PopoverContent className="w-auto p-1.5 bg-zinc-900/95 backdrop-blur-xl border-pink-500/20 shadow-2xl shadow-pink-500/10 rounded-2xl" side="top" sideOffset={4}>
+                            <div className="flex gap-0.5">
+                              {EMOJI_OPTIONS.map(opt => (
                                 <button
-                                  key={emoji}
-                                  onClick={() => handleReaction(msg.id, emoji)}
-                                  className="text-lg hover:scale-125 transition-transform p-1"
+                                  key={opt.emoji}
+                                  onClick={() => handleReaction(msg.id, opt.emoji)}
+                                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-pink-500/20 hover:scale-110 active:scale-90 transition-all text-xl"
+                                  title={opt.label}
                                 >
-                                  {emoji}
+                                  {opt.emoji}
                                 </button>
                               ))}
                             </div>

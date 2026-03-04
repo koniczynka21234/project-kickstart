@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
-import { Download, Upload, Trash2, Loader2, AlertTriangle, Check, FileJson, HardDrive, Users, Database, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Download, Upload, Trash2, Loader2, AlertTriangle, Check, FileJson, HardDrive, Users, Database, RefreshCw, History, Undo2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -49,6 +50,28 @@ interface DatabaseSizeData {
   largestTables: { table: string; count: number }[];
 }
 
+interface ImportHistoryEntry {
+  id: string;
+  imported_at: string;
+  user_id: string;
+  total_records: number;
+  table_details: Record<string, number>;
+  imported_ids: Record<string, string[]>;
+  reverted: boolean;
+  reverted_at: string | null;
+}
+
+interface ResetHistoryEntry {
+  id: string;
+  reset_at: string;
+  user_id: string;
+  total_deleted: number;
+  preserved_clients: number;
+  include_files: boolean;
+  table_details: Record<string, number>;
+  excluded_client_names: string[];
+}
+
 export function BackupRestoreSection() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -67,10 +90,80 @@ export function BackupRestoreSection() {
   const [sizeData, setSizeData] = useState<DatabaseSizeData | null>(null);
   const [loadingSize, setLoadingSize] = useState(true);
 
-  // Fetch database size on mount
+  // Import history
+  const [importHistory, setImportHistory] = useState<ImportHistoryEntry[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [revertingId, setRevertingId] = useState<string | null>(null);
+
+  // Reset history
+  const [resetHistory, setResetHistory] = useState<ResetHistoryEntry[]>([]);
+  const [loadingResetHistory, setLoadingResetHistory] = useState(false);
+
+  // Loading overlay
+  const [operationInProgress, setOperationInProgress] = useState<'import' | 'reset' | null>(null);
+
+  const fetchImportHistory = useCallback(async () => {
+    setLoadingHistory(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from('import_history')
+        .select('*')
+        .order('imported_at', { ascending: false });
+      
+      if (error) throw error;
+      setImportHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching import history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
+  const fetchResetHistory = useCallback(async () => {
+    setLoadingResetHistory(true);
+    try {
+      const { data, error } = await (supabase as any)
+        .from('reset_history')
+        .select('*')
+        .order('reset_at', { ascending: false });
+      
+      if (error) throw error;
+      setResetHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching reset history:', error);
+    } finally {
+      setLoadingResetHistory(false);
+    }
+  }, []);
+
+  const handleRevertImport = async (importId: string) => {
+    setRevertingId(importId);
+    try {
+      const response = await supabase.functions.invoke('revert-import', {
+        body: { importId },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      const result = response.data;
+      toast.success(`Cofnięto import: usunięto ${result.totalDeleted} rekordów`);
+      fetchImportHistory();
+    } catch (error) {
+      console.error('Revert error:', error);
+      toast.error(`Błąd cofania: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setRevertingId(null);
+    }
+  };
+
+  // Fetch database size and histories on mount
   useEffect(() => {
     fetchDatabaseSize();
-  }, []);
+    fetchImportHistory();
+    fetchResetHistory();
+  }, [fetchImportHistory, fetchResetHistory]);
 
   // Fetch clients when reset dialog opens
   useEffect(() => {
@@ -172,11 +265,12 @@ export function BackupRestoreSection() {
     }
   };
 
-  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setImporting(true);
+    setOperationInProgress('import');
     setLastResult(null);
 
     try {
@@ -201,6 +295,11 @@ export function BackupRestoreSection() {
         totalImported: result.totalImported,
         results: result.results 
       });
+      
+      // Wait for data to refresh before closing overlay
+      await fetchImportHistory();
+      await fetchDatabaseSize();
+      
       toast.success(`Zaimportowano ${result.totalImported} rekordów`);
     } catch (error) {
       console.error('Import error:', error);
@@ -208,7 +307,7 @@ export function BackupRestoreSection() {
       setLastResult({ success: false });
     } finally {
       setImporting(false);
-      // Reset file input
+      setOperationInProgress(null);
       event.target.value = '';
     }
   };
@@ -220,6 +319,7 @@ export function BackupRestoreSection() {
     }
 
     setResetting(true);
+    setOperationInProgress('reset');
     setLastResult(null);
 
     try {
@@ -246,6 +346,13 @@ export function BackupRestoreSection() {
       setExcludeClientIds([]);
       setResetDialogOpen(false);
       
+      // Wait for data to refresh before closing overlay
+      await Promise.all([
+        fetchResetHistory(),
+        fetchDatabaseSize(),
+        fetchClients(),
+      ]);
+      
       const message = result.preservedClients > 0
         ? `Usunięto ${result.totalDeleted} rekordów (zachowano ${result.preservedClients} klientów)`
         : `Usunięto ${result.totalDeleted} rekordów`;
@@ -256,6 +363,7 @@ export function BackupRestoreSection() {
       setLastResult({ success: false });
     } finally {
       setResetting(false);
+      setOperationInProgress(null);
     }
   };
 
@@ -293,6 +401,28 @@ export function BackupRestoreSection() {
 
   return (
     <div className="space-y-6">
+      {/* Loading Overlay Dialog */}
+      <Dialog open={operationInProgress !== null} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md [&>button]:hidden" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+          <div className="flex flex-col items-center justify-center py-8 gap-4">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <DialogTitle className="text-lg font-semibold">
+              {operationInProgress === 'import' ? 'Importowanie danych...' : 'Resetowanie systemu...'}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground text-center">
+              {operationInProgress === 'import' 
+                ? 'Trwa importowanie danych z kopii zapasowej. Nie zamykaj systemu.'
+                : 'Trwa usuwanie danych z systemu. Nie zamykaj systemu. Ta operacja może potrwać kilka minut.'
+              }
+            </p>
+            <div className="w-full mt-2">
+              <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: '100%' }} />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Database Size Card */}
       <Card className="border-border/50">
         <CardHeader className="pb-3">
@@ -654,7 +784,203 @@ export function BackupRestoreSection() {
         </CardContent>
       </Card>
 
-      {/* Last Result */}
+      {/* Import History Card */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" />
+              Historia importów
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={fetchImportHistory}
+              disabled={loadingHistory}
+              className="h-8 w-8"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingHistory ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+          <CardDescription>
+            Lista wszystkich importów z możliwością cofnięcia
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingHistory ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : importHistory.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              Brak historii importów
+            </div>
+          ) : (
+            <ScrollArea className="max-h-96">
+              <div className="space-y-3">
+                {importHistory.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={`border rounded-lg p-4 space-y-3 ${
+                      entry.reverted ? 'border-muted bg-muted/30 opacity-70' : 'border-border/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileJson className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-sm">
+                          {format(new Date(entry.imported_at), 'dd MMM yyyy, HH:mm', { locale: pl })}
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          {entry.total_records} rekordów
+                        </Badge>
+                      </div>
+                      {entry.reverted ? (
+                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                          Cofnięty {entry.reverted_at ? format(new Date(entry.reverted_at), 'dd.MM HH:mm', { locale: pl }) : ''}
+                        </Badge>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={revertingId === entry.id}
+                              className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                            >
+                              {revertingId === entry.id ? (
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              ) : (
+                                <Undo2 className="w-3 h-3 mr-1" />
+                              )}
+                              Cofnij
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cofnij import</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Czy na pewno chcesz cofnąć ten import? Usunie to {entry.total_records} zaimportowanych rekordów.
+                                Tej operacji nie można cofnąć.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleRevertImport(entry.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Cofnij import
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                    {entry.table_details && Object.keys(entry.table_details).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(entry.table_details).map(([table, count]) => (
+                          <span
+                            key={table}
+                            className="text-xs bg-secondary/50 text-muted-foreground px-2 py-0.5 rounded"
+                          >
+                            {tableNameMap[table] || table}: {count}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Reset History Card */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-destructive" />
+              Historia resetów
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={fetchResetHistory}
+              disabled={loadingResetHistory}
+              className="h-8 w-8"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingResetHistory ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+          <CardDescription>
+            Lista wszystkich operacji resetowania systemu
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingResetHistory ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : resetHistory.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              Brak historii resetów
+            </div>
+          ) : (
+            <ScrollArea className="max-h-96">
+              <div className="space-y-3">
+                {resetHistory.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="border border-destructive/20 rounded-lg p-4 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                        <span className="font-medium text-sm">
+                          {format(new Date(entry.reset_at), 'dd MMM yyyy, HH:mm', { locale: pl })}
+                        </span>
+                        <Badge variant="destructive" className="text-xs">
+                          {entry.total_deleted} usuniętych
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {entry.include_files && (
+                          <Badge variant="outline" className="text-xs">+ pliki</Badge>
+                        )}
+                        {entry.preserved_clients > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            zachowano {entry.preserved_clients} klientów
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    {entry.excluded_client_names && entry.excluded_client_names.length > 0 && (
+                      <div className="text-xs text-muted-foreground">
+                        Zachowani klienci: {entry.excluded_client_names.join(', ')}
+                      </div>
+                    )}
+                    {entry.table_details && Object.keys(entry.table_details).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(entry.table_details).map(([table, count]) => (
+                          <span
+                            key={table}
+                            className="text-xs bg-destructive/10 text-muted-foreground px-2 py-0.5 rounded"
+                          >
+                            {tableNameMap[table] || table}: {count}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
       {lastResult && (
         <Card className={`border-${lastResult.success ? 'green-500/30' : 'destructive/30'}`}>
           <CardContent className="py-4">

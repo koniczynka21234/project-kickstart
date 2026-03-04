@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   AlertTriangle, Clock, ChevronRight, X, Bell, 
-  MessageSquare, CheckCircle, UserPlus, FileText, Calendar
+  MessageSquare, CheckCircle, UserPlus, FileText, Calendar,
+  ChevronDown, ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,8 +42,13 @@ const notificationConfig: Record<string, { icon: typeof AlertTriangle; color: st
   },
   invoice_due: {
     icon: FileText,
-    color: "text-amber-400",
-    bgColor: "bg-amber-500/15",
+    color: "text-orange-400",
+    bgColor: "bg-orange-500/15",
+  },
+  final_invoice_due: {
+    icon: FileText,
+    color: "text-red-400",
+    bgColor: "bg-red-500/15",
   },
   invoice_required: {
     icon: FileText,
@@ -106,6 +112,7 @@ export function ImportantNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<ImportantNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   const fetchNotifications = async () => {
     if (!user?.id) return;
@@ -117,6 +124,7 @@ export function ImportantNotifications() {
       'payment_due',
       'invoice_due',
       'invoice_required',
+      'final_invoice_due',
       'task_overdue',
       'task_assigned',
       'mention',
@@ -216,7 +224,7 @@ export function ImportantNotifications() {
         </div>
         
         <div className="space-y-2">
-          {notifications.map((notification) => {
+          {(expanded ? notifications : notifications.slice(0, 3)).map((notification) => {
             const config = notificationConfig[notification.type] || notificationConfig.default;
             const Icon = config.icon;
             
@@ -251,6 +259,20 @@ export function ImportantNotifications() {
               </div>
             );
           })}
+          {notifications.length > 3 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? (
+                <><ChevronUp className="w-3 h-3 mr-1" /> Zwiń</>
+              ) : (
+                <><ChevronDown className="w-3 h-3 mr-1" /> Pokaż więcej ({notifications.length - 3})</>
+              )}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

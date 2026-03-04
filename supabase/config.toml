@@ -2,3 +2,6 @@ project_id = "joyjembuulzchyttcnjw"
 
 [functions.generate-campaign]
 verify_jwt = false
+
+[functions.revert-import]
+verify_jwt = false

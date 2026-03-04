@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { clientSchema } from '@/lib/validationSchemas';
+import { checkDuplicate } from '@/lib/duplicateCheck';
+import { transferClientNotifications, notifyGuardianAssigned } from '@/lib/notifications';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -87,12 +89,14 @@ const industryOptions = [
 ];
 
 const statusColors: Record<string, string> = {
+  pending: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   active: 'bg-green-500/20 text-green-400 border-green-500/30',
   paused: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   churned: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
 const statusLabels: Record<string, string> = {
+  pending: 'Oczekujący',
   active: 'Aktywny',
   paused: 'Wstrzymany',
   churned: 'Zakończony',
@@ -230,7 +234,24 @@ export default function Clients() {
       industry: formData.industry || null,
     };
 
+    // Duplicate check for new clients
+    if (!editingClient) {
+      const dup = await checkDuplicate({
+        table: 'clients',
+        salon_name: submitData.salon_name,
+        phone: submitData.phone,
+        email: submitData.email,
+      });
+      if (dup.isDuplicate) {
+        toast.error(dup.matchReason || 'Ten klient już istnieje');
+        return;
+      }
+    }
+
     if (editingClient) {
+      const oldGuardianId = editingClient.assigned_to;
+      const newGuardianId = submitData.assigned_to;
+
       const { error } = await supabase
         .from('clients')
         .update(submitData)
@@ -239,6 +260,14 @@ export default function Clients() {
       if (error) {
         toast.error('Błąd aktualizacji klienta');
       } else {
+        // Transfer tasks & notifications on guardian change
+        if (newGuardianId && oldGuardianId && oldGuardianId !== newGuardianId) {
+          await transferClientNotifications(editingClient.id, oldGuardianId, newGuardianId);
+          if (user) {
+            const assignerName = user.email?.split('@')[0] || 'Użytkownik';
+            await notifyGuardianAssigned(editingClient.id, editingClient.salon_name, newGuardianId, assignerName, user.id);
+          }
+        }
         toast.success('Klient zaktualizowany');
         fetchClients();
       }
@@ -439,7 +468,7 @@ export default function Clients() {
       return matchesSearch && matchesExpiring && matchesIndustry;
     }
     
-    const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || client.status === statusFilter || (statusFilter === 'active' && client.status === 'pending');
     const matchesIndustry = industryFilter === 'all' || client.industry === industryFilter;
     return matchesSearch && matchesStatus && matchesIndustry;
   });

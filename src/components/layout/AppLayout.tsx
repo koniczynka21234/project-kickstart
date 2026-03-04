@@ -60,7 +60,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         </header>
 
 				{/* Main content area - single scroll container */}
-				<div className="flex-1 flex flex-col lg:pl-64 w-full min-w-0 overflow-x-hidden overflow-y-auto">
+				<div data-scroll-container="main" className="flex-1 flex flex-col lg:pl-64 w-full min-w-0 overflow-x-hidden overflow-y-auto">
           {/* Desktop header with search and notifications */}
 					<div className="hidden lg:flex justify-end items-center gap-3 p-4 sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b border-border/20 flex-shrink-0">
             <GlobalSearch />

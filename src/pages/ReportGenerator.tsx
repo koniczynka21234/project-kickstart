@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ReportPreview } from "@/components/report/ReportPreview";
 import { ReportPreviewLandscape } from "@/components/report/ReportPreviewLandscape";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -58,7 +58,7 @@ type ReportFormData = z.infer<typeof reportSchema>;
 
 const ReportGenerator = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  
   const [reportData, setReportData] = useState<ReportFormData | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -214,11 +214,11 @@ const ReportGenerator = () => {
       if (error) throw error;
       if (data.recommendations) {
         setValue('recommendations', data.recommendations);
-        toast({ title: "Rekomendacje wygenerowane!", description: "AI przygotowało rekomendacje" });
+        toast.success("Rekomendacje wygenerowane!");
       }
     } catch (error) {
       console.error('Error generating AI recommendations:', error);
-      toast({ title: "Błąd", description: "Nie udało się wygenerować rekomendacji AI", variant: "destructive" });
+      toast.error("Nie udało się wygenerować rekomendacji AI");
     } finally {
       setIsGeneratingAI(false);
     }
@@ -236,7 +236,7 @@ const ReportGenerator = () => {
       selectedClientId || undefined
     );
     
-    toast({ title: "Raport zapisany!", description: "Możesz teraz pobrać PDF" });
+    toast.success("Raport zapisany!");
     
     if (docId) {
       // Use thumbnail generator hook with retry logic
@@ -313,10 +313,10 @@ const ReportGenerator = () => {
       const salonName = sanitizeSalonName(reportData.clientName);
       pdf.save(`${periodCode}-${salonName}-pionowy.pdf`);
 
-      toast({ title: "PDF wygenerowany!", description: "Raport został pobrany" });
+      toast.success("PDF wygenerowany!");
     } catch (error) {
       console.error("Error generating PDF:", error);
-      toast({ title: "Błąd", description: "Nie udało się wygenerować PDF", variant: "destructive" });
+      toast.error("Nie udało się wygenerować PDF");
     } finally {
       setIsGenerating(false);
     }
@@ -350,9 +350,9 @@ const ReportGenerator = () => {
       const salonName = sanitizeSalonName(reportData.clientName);
       pdf.save(`${periodCode}-${salonName}-16-9.pdf`);
 
-      toast({ title: "PDF 16:9 wygenerowany!" });
+      toast.success("PDF 16:9 wygenerowany!");
     } catch (error) {
-      toast({ title: "Błąd", variant: "destructive" });
+      toast.error("Błąd generowania PDF");
     } finally {
       setIsGenerating(false);
     }
@@ -381,9 +381,9 @@ const ReportGenerator = () => {
       link.href = imgData;
       link.click();
 
-      toast({ title: "Obraz pobrany!" });
+      // Download starts automatically
     } catch (error) {
-      toast({ title: "Błąd", variant: "destructive" });
+      toast.error("Błąd pobierania obrazu");
     } finally {
       setIsGenerating(false);
     }

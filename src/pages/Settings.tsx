@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Settings as SettingsIcon, Bell, Volume2, Moon, Sun, Monitor } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Volume2, Moon, Sun, Monitor, ZoomIn } from 'lucide-react';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
 const soundOptions = [
@@ -191,6 +191,42 @@ export default function Settings() {
                   checked={settings.compactMode}
                   onCheckedChange={(checked) => updateSettings({ compactMode: checked })}
                 />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Wielkość interfejsu</Label>
+                    <p className="text-xs text-muted-foreground">Skaluj cały interfejs ({settings.uiScale}%)</p>
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{settings.uiScale}%</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <ZoomIn className="w-4 h-4 text-muted-foreground" />
+                  <Slider
+                    value={[settings.uiScale]}
+                    onValueChange={([value]) => updateSettings({ uiScale: value })}
+                    min={75}
+                    max={125}
+                    step={5}
+                    className="flex-1"
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>75% — mniejszy</span>
+                  <span>100% — domyślny</span>
+                  <span>125% — większy</span>
+                </div>
+                {settings.uiScale !== 100 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full text-xs"
+                    onClick={() => updateSettings({ uiScale: 100 })}
+                  >
+                    Resetuj do domyślnego (100%)
+                  </Button>
+                )}
               </div>
 
               <div className="flex items-center justify-between">

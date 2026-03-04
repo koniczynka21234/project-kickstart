@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { X, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -7,10 +7,12 @@ import { InvoicePreview } from "@/components/invoice/InvoicePreview";
 import { ContractPreview } from "@/components/contract/ContractPreview";
 import { PresentationPreview } from "@/components/presentation/PresentationPreview";
 import { WelcomePackPreview } from "@/components/welcomepack/WelcomePackPreview";
+import { AuditPreview } from "@/components/audit/AuditPreview";
+import { generateAuditSlides } from "@/components/audit/auditFindings";
 import { CloudDocumentItem } from "@/hooks/useCloudDocumentHistory";
 import jsPDF from "jspdf";
-import { toJpeg } from "html-to-image";
-import { useToast } from "@/hooks/use-toast";
+import { toJpeg, getFontEmbedCSS } from "html-to-image";
+import { toast } from "sonner";
 
 interface DocumentViewerProps {
   document: CloudDocumentItem | null;
@@ -30,20 +32,43 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSlide, setGeneratingSlide] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(1);
-  const { toast } = useToast();
+  
 
   // Determine if presentation includes Academy from saved data
   const includeAcademy = document?.type === "presentation" 
     ? document.data?.includeAcademy !== "false" 
     : true;
 
+  // Restore audit state from saved data
+  const auditEnabledCategories = useMemo<Record<string, boolean>>(() => {
+    if (document?.type !== "audit" || !document.data?.enabledCategories) return {};
+    try { return JSON.parse(document.data.enabledCategories); } catch { return {}; }
+  }, [document?.id, document?.type, document?.data?.enabledCategories]);
+
+  const auditCheckedFindings = useMemo<Record<string, boolean>>(() => {
+    if (document?.type !== "audit" || !document.data?.checkedFindings) return {};
+    try { return JSON.parse(document.data.checkedFindings); } catch { return {}; }
+  }, [document?.id, document?.type, document?.data?.checkedFindings]);
+
+  const auditSlides = useMemo(() => generateAuditSlides(auditEnabledCategories, auditCheckedFindings), [auditEnabledCategories, auditCheckedFindings]);
+  const auditFormData = useMemo(() => document?.type === "audit" ? {
+    ownerName: document.data?.ownerName || "",
+    salonName: document.data?.salonName || "",
+    city: document.data?.city || "",
+    facebookUrl: document.data?.facebookUrl || "",
+    instagramUrl: document.data?.instagramUrl || "",
+    websiteUrl: document.data?.websiteUrl || "",
+  } : { ownerName: "", salonName: "", city: "", facebookUrl: "", instagramUrl: "", websiteUrl: "" }, [document?.id, document?.type]);
+
   // Calculate slides count based on document type and Academy setting
   const getPresentationSlidesCount = () => includeAcademy ? PRESENTATION_SLIDES_WITH_ACADEMY : PRESENTATION_SLIDES_WITHOUT_ACADEMY;
   const getPresentationSlidesArray = () => Array.from({ length: getPresentationSlidesCount() }, (_, i) => i + 1);
 
+  const isSlideType = document?.type === "presentation" || document?.type === "welcomepack" || document?.type === "audit";
+
   // Reset slide when document changes
   useEffect(() => {
-    if (document?.type === "presentation" || document?.type === "welcomepack") {
+    if (isSlideType) {
       setCurrentSlide(1);
     }
   }, [document?.id, document?.type]);
@@ -77,11 +102,13 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
     };
   }, [open, document]);
 
-  // Keyboard navigation for presentations and welcomepacks
+  // Keyboard navigation for slide-based documents
   useEffect(() => {
-    if (!open || (document?.type !== "presentation" && document?.type !== "welcomepack")) return;
+    if (!open || !isSlideType) return;
 
-    const maxSlides = document?.type === "welcomepack" ? WELCOMEPACK_SLIDES : getPresentationSlidesCount();
+    const maxSlides = document?.type === "welcomepack" ? WELCOMEPACK_SLIDES 
+      : document?.type === "audit" ? auditSlides.length
+      : getPresentationSlidesCount();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " ") {
@@ -95,7 +122,7 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, document?.type]);
+  }, [open, document?.type, auditSlides.length]);
 
   const generatePDF = async () => {
     if (!document) return;
@@ -115,11 +142,11 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
         bgColor = "#09090b";
       }
 
-      // For presentations and welcomepacks, capture from pre-rendered hidden slides
-      if (document.type === "presentation" || document.type === "welcomepack") {
+      // For slide-based documents, capture from pre-rendered hidden slides
+      if (document.type === "presentation" || document.type === "welcomepack" || document.type === "audit") {
         const hiddenContainer = hiddenSlidesRef.current;
         if (!hiddenContainer) {
-          toast({ title: "Błąd", description: "Brak elementu do eksportu", variant: "destructive" });
+          toast.error("Brak elementu do eksportu");
           setIsGenerating(false);
           return;
         }
@@ -131,22 +158,29 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
           compress: true,
         });
 
-        const totalSlides = document.type === "welcomepack" ? WELCOMEPACK_SLIDES : getPresentationSlidesCount();
+        const totalSlides = document.type === "welcomepack" ? WELCOMEPACK_SLIDES 
+          : document.type === "audit" ? auditSlides.length
+          : getPresentationSlidesCount();
+
+        // Cache font CSS once for all slides
+        const firstSlideEl = hiddenContainer.children[0] as HTMLElement;
+        const fontEmbedCSS = firstSlideEl ? await getFontEmbedCSS(firstSlideEl) : undefined;
+
         for (let i = 0; i < totalSlides; i++) {
           setGeneratingSlide(i + 1);
           
           const slideElement = hiddenContainer.children[i] as HTMLElement;
           if (!slideElement) continue;
 
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, document.type === "audit" ? 0 : 100));
 
           const dataUrl = await toJpeg(slideElement, {
             width: 1600,
             height: 900,
-            pixelRatio: 2,
+            pixelRatio: document.type === "presentation" ? 1.5 : 1.25,
             backgroundColor: "#000000",
-            quality: 0.92,
-            skipFonts: true,
+            quality: 0.88,
+            fontEmbedCSS,
           });
 
           if (i > 0) pdf.addPage([1600, 900], "landscape");
@@ -162,7 +196,7 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
         
         const element = window.document.getElementById(elementId);
         if (!element) {
-          toast({ title: "Błąd", description: "Brak elementu do eksportu", variant: "destructive" });
+          toast.error("Brak elementu do eksportu");
           setIsGenerating(false);
           return;
         }
@@ -187,10 +221,10 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
         pdf.save(`${document.title.replace(/\s+/g, "-")}.pdf`);
       }
 
-      toast({ title: "Sukces", description: "PDF został wygenerowany" });
+      toast.success("PDF został wygenerowany");
     } catch (error) {
       console.error("PDF generation error:", error);
-      toast({ title: "Błąd", description: "Nie udało się wygenerować PDF", variant: "destructive" });
+      toast.error("Nie udało się wygenerować PDF");
     } finally {
       setIsGenerating(false);
       setGeneratingSlide(0);
@@ -213,8 +247,12 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
     }
   };
 
-  const slidesCount = document.type === "welcomepack" ? WELCOMEPACK_SLIDES : getPresentationSlidesCount();
-  const slidesArray = document.type === "welcomepack" ? WELCOMEPACK_SLIDES_ARRAY : getPresentationSlidesArray();
+  const slidesCount = document.type === "welcomepack" ? WELCOMEPACK_SLIDES 
+    : document.type === "audit" ? auditSlides.length
+    : getPresentationSlidesCount();
+  const slidesArray = document.type === "welcomepack" ? WELCOMEPACK_SLIDES_ARRAY 
+    : document.type === "audit" ? auditSlides.map((_, i) => i + 1)
+    : getPresentationSlidesArray();
 
   const dims = getDocumentDimensions();
 
@@ -253,7 +291,7 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
         </div>
 
         {/* Presentation/WelcomePack Navigation */}
-        {(document.type === "presentation" || document.type === "welcomepack") && (
+        {isSlideType && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4 bg-zinc-900/90 backdrop-blur-sm rounded-full px-4 py-2 border border-zinc-800">
             <Button
               variant="ghost"
@@ -324,6 +362,14 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
             {document.type === "welcomepack" && (
               <WelcomePackPreview data={document.data as any} currentSlide={currentSlide} />
             )}
+            {document.type === "audit" && (
+              <AuditPreview
+                data={auditFormData}
+                currentSlide={currentSlide}
+                enabledCategories={auditEnabledCategories}
+                checkedFindings={auditCheckedFindings}
+              />
+            )}
           </div>
         </div>
 
@@ -379,6 +425,39 @@ export const DocumentViewer = ({ document, open, onClose }: DocumentViewerProps)
                 }}
               >
                 <WelcomePackPreview data={document.data as any} currentSlide={slideNum} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {document.type === "audit" && (
+          <div 
+            ref={hiddenSlidesRef}
+            style={{
+              position: 'fixed',
+              left: '-99999px',
+              top: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {auditSlides.map((_, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: '1600px',
+                  height: '900px',
+                  backgroundColor: '#000000',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}
+              >
+                <AuditPreview
+                  data={auditFormData}
+                  currentSlide={idx + 1}
+                  enabledCategories={auditEnabledCategories}
+                  checkedFindings={auditCheckedFindings}
+                />
               </div>
             ))}
           </div>

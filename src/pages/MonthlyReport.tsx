@@ -19,6 +19,7 @@ import jsPDF from 'jspdf';
 import * as htmlToImage from 'html-to-image';
 import { ReportHistory } from '@/components/report/ReportHistory';
 import { MonthlyRevenueSection, RevenueStats } from '@/components/report/MonthlyRevenueSection';
+import { InvoiceListSection, InvoiceListItem } from '@/components/report/InvoiceListSection';
 
 interface MonthlyStats {
   // Leads
@@ -86,6 +87,7 @@ export default function MonthlyReport() {
   const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [filterYear, setFilterYear] = useState<string>('all');
+  const [invoiceList, setInvoiceList] = useState<InvoiceListItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const month = currentDate.getMonth() + 1;
@@ -173,7 +175,7 @@ export default function MonthlyReport() {
     const today = new Date().toISOString().split('T')[0];
 
     try {
-      const [leadsRes, clientsRes, tasksRes, docsRes, messagesRes, profilesRes, campaignsRes, paymentsRes, pendingFinalRes] = await Promise.all([
+      const [leadsRes, clientsRes, tasksRes, docsRes, messagesRes, profilesRes, campaignsRes, paymentsRes, pendingFinalRes, invoiceDocsRes] = await Promise.all([
         supabase.from('leads').select('id, status, source, created_at, updated_at'),
         supabase.from('clients').select('id, monthly_budget, created_at'),
         supabase.from('tasks').select('id, status, created_at, completed_at'),
@@ -181,8 +183,9 @@ export default function MonthlyReport() {
         supabase.from('team_messages').select('id, created_at'),
         supabase.from('profiles').select('id, last_seen_at'),
         supabase.from('campaigns').select('id, status, budget, created_at'),
-        supabase.from('payments').select('id, amount, status, due_date, paid_date, notes, created_at'),
+        supabase.from('payments').select('id, amount, status, due_date, paid_date, notes, created_at, document_id'),
         supabase.from('pending_final_invoices').select('id, advance_amount, remaining_amount, total_amount, status, created_at'),
+        supabase.from('documents').select('id, title, subtitle, created_at, data, client:clients(id, salon_name)').eq('type', 'invoice').order('created_at', { ascending: false }),
       ]);
 
       const leads = leadsRes.data || [];
@@ -194,6 +197,7 @@ export default function MonthlyReport() {
       const campaigns = campaignsRes.data || [];
       const payments = paymentsRes.data || [];
       const pendingFinal = pendingFinalRes.data || [];
+      const invoiceDocs = invoiceDocsRes.data || [];
 
       // Filter by month
       const monthLeads = leads.filter(l => new Date(l.created_at) >= monthStart && new Date(l.created_at) <= monthEnd);
@@ -256,19 +260,19 @@ export default function MonthlyReport() {
       const pendingAmount = pendingPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
       const overdueAmount = overduePayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-      // Advance invoices (by notes containing "zaliczka" or type)
-      const advancePayments = monthPayments.filter(p => 
-        p.notes?.toLowerCase().includes('zaliczka') || 
-        p.notes?.toLowerCase().includes('advance')
+      // Advance invoices — based on document invoiceType field, not payment notes
+      const advanceInvoiceDocs = monthDocs.filter(d => 
+        d.type === 'invoice' && (d.data as Record<string, string>)?.invoiceType === 'advance'
       );
-      const advanceAmount = advancePayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+      const advanceInvoiceCount = advanceInvoiceDocs.length;
+      // Calculate advance amount from document data (amount field) or from matching payments
+      const advanceAmount = advanceInvoiceDocs.reduce((sum, doc) => {
+        const docData = doc.data as Record<string, string>;
+        const amount = parseFloat(docData?.totalGross || docData?.amount || docData?.nettoAmount || '0');
+        return sum + amount;
+      }, 0);
 
-      // Remaining from pending final invoices
-      const monthPendingFinal = pendingFinal.filter(pf => 
-        pf.status === 'pending' && 
-        new Date(pf.created_at) >= monthStart && 
-        new Date(pf.created_at) <= monthEnd
-      );
+      // Remaining from pending final invoices (all pending, not just current month)
       const remainingFromAdvances = pendingFinal
         .filter(pf => pf.status === 'pending')
         .reduce((sum, pf) => sum + Number(pf.remaining_amount || 0), 0);
@@ -295,7 +299,7 @@ export default function MonthlyReport() {
         pendingAmount,
         overdueInvoices: overduePayments.length,
         overdueAmount,
-        advanceInvoices: advancePayments.length,
+        advanceInvoices: advanceInvoiceCount,
         advanceAmount,
         remainingFromAdvances,
         pipelineValue: Math.round(pipelineValue),
@@ -305,6 +309,35 @@ export default function MonthlyReport() {
         monthOverMonthChange,
         totalMonthRevenue,
       };
+
+      // Build invoice list for the month
+      const monthInvoiceDocs = invoiceDocs.filter(d => {
+        const created = new Date(d.created_at);
+        return created >= monthStart && created <= monthEnd;
+      });
+
+      const builtInvoiceList: InvoiceListItem[] = monthInvoiceDocs.map(doc => {
+        const docData = doc.data as Record<string, string>;
+        const payment = payments.find(p => (p as any).document_id === doc.id);
+        const today = new Date().toISOString().split('T')[0];
+        let paymentStatus = payment?.status || 'pending';
+        if (paymentStatus === 'pending' && docData?.dueDate && docData.dueDate < today) {
+          paymentStatus = 'overdue';
+        }
+        return {
+          id: doc.id,
+          invoiceNumber: docData?.invoiceNumber || doc.title,
+          invoiceType: docData?.invoiceType || 'full',
+          clientName: (doc as any).client?.salon_name || '—',
+          clientNip: docData?.clientNIP || docData?.clientNip || (doc as any).client?.nip || '—',
+          issueDate: docData?.issueDate || doc.created_at,
+          dueDate: docData?.dueDate || docData?.paymentDue || null,
+          amount: parseFloat(docData?.totalGross || docData?.amount || '0'),
+          paymentStatus,
+        };
+      });
+
+      setInvoiceList(builtInvoiceList);
 
       setStats({
         newLeads: monthLeads.length,
@@ -687,6 +720,11 @@ export default function MonthlyReport() {
                 stats={stats.revenue} 
                 monthLabel={format(currentDate, 'LLLL yyyy', { locale: pl })}
               />
+            )}
+
+            {/* Invoice List Section */}
+            {invoiceList.length > 0 && (
+              <InvoiceListSection invoices={invoiceList} />
             )}
 
             {/* Key Metrics */}

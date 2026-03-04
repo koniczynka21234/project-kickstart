@@ -78,25 +78,28 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "bell-ring": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "10%": { transform: "rotate(14deg)" },
+          "20%": { transform: "rotate(-14deg)" },
+          "30%": { transform: "rotate(10deg)" },
+          "40%": { transform: "rotate(-10deg)" },
+          "50%": { transform: "rotate(6deg)" },
+          "60%": { transform: "rotate(-4deg)" },
+          "70%, 100%": { transform: "rotate(0deg)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "bell-ring": "bell-ring 1s ease-in-out infinite",
       },
     },
   },

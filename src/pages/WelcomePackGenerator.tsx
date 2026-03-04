@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download, ChevronLeft, ChevronRight, ArrowLeft, Users, Save } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, ArrowLeft, Users, Save, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,10 +13,10 @@ import { useCloudDocumentHistory } from "@/hooks/useCloudDocumentHistory";
 import { useThumbnailGenerator } from "@/hooks/useThumbnailGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
-import { toJpeg } from "html-to-image";
+import { toJpeg, getFontEmbedCSS } from "html-to-image";
 
-const TOTAL_SLIDES = 6;
-const slideNames = ["Powitanie", "Twój opiekun", "Onboarding", "Ciągła obsługa", "Wymagania", "Kontakt"];
+const TOTAL_SLIDES = 7;
+const slideNames = ["Powitanie", "Twój opiekun", "Onboarding", "Ciągła obsługa", "Wymagania", "Aurine Academy", "Kontakt"];
 
 interface ClientOption {
   id: string;
@@ -59,6 +59,7 @@ const WelcomePackGenerator = () => {
     managerEmail: "",
   });
   const [subscriptionCode, setSubscriptionCode] = useState<string | null>(null);
+  const [codeDuration, setCodeDuration] = useState("30");
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -189,7 +190,7 @@ const WelcomePackGenerator = () => {
   };
 
   // Generate subscription code for client
-  const generateSubscriptionCode = async (clientId: string): Promise<string | null> => {
+  const generateSubscriptionCode = async (clientId: string, durationDays: number): Promise<string | null> => {
     try {
       // Check if client already has an active code
       const { data: existingCodes } = await supabase
@@ -208,9 +209,9 @@ const WelcomePackGenerator = () => {
       const { data: newCode, error } = await supabase.rpc('generate_subscription_code');
       if (error) throw error;
 
-      // Calculate validity (1 year from now)
+      // Calculate validity based on selected duration
       const validUntil = new Date();
-      validUntil.setFullYear(validUntil.getFullYear() + 1);
+      validUntil.setDate(validUntil.getDate() + durationDays);
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -243,10 +244,9 @@ const WelcomePackGenerator = () => {
     // Generate subscription code if client is selected
     let generatedCode: string | null = null;
     if (selectedClientId) {
-      generatedCode = await generateSubscriptionCode(selectedClientId);
+      generatedCode = await generateSubscriptionCode(selectedClientId, parseInt(codeDuration));
       if (generatedCode) {
         setSubscriptionCode(generatedCode);
-        toast.success(`Wygenerowano kod dostępu: ${generatedCode}`);
       }
     }
 
@@ -260,7 +260,7 @@ const WelcomePackGenerator = () => {
       undefined
     );
     setCurrentDocId(docId);
-    toast.success("Welcome Pack zapisany!");
+    
 
     if (docId) {
       const thumbnail = await genThumb({
@@ -287,7 +287,7 @@ const WelcomePackGenerator = () => {
       // Generate subscription code if not already generated and client is selected
       let generatedCode = subscriptionCode;
       if (!generatedCode && selectedClientId) {
-        generatedCode = await generateSubscriptionCode(selectedClientId);
+        generatedCode = await generateSubscriptionCode(selectedClientId, parseInt(codeDuration));
         if (generatedCode) {
           setSubscriptionCode(generatedCode);
         }
@@ -331,24 +331,30 @@ const WelcomePackGenerator = () => {
         compress: true,
       });
 
-      for (let i = 1; i <= TOTAL_SLIDES; i++) {
-        setGeneratingSlide(i);
-        
-        const slideElement = document.getElementById(`capture-welcomepack-slide-${i}`);
-        if (!slideElement) {
-          console.error(`Slide ${i} element not found`);
+      // Cache font CSS once for all slides
+      const firstEl = document.getElementById(`capture-welcomepack-slide-1`);
+      const fontEmbedCSS = firstEl ? await getFontEmbedCSS(firstEl) : undefined;
+
+      for (let i = 0; i < TOTAL_SLIDES; i++) {
+        setGeneratingSlide(i + 1);
+        await new Promise(r => setTimeout(r, 0));
+
+        const el = document.getElementById(`capture-welcomepack-slide-${i + 1}`);
+        if (!el) {
+          console.error(`Slide ${i + 1} element not found`);
           continue;
         }
 
-        const imgData = await toJpeg(slideElement, {
+        const imgData = await toJpeg(el, {
           width: 1600,
           height: 900,
-          pixelRatio: 2,
+          pixelRatio: 1.5,
           backgroundColor: "#000000",
-          quality: 0.92,
+          quality: 0.88,
+          fontEmbedCSS,
         });
 
-        if (i > 1) pdf.addPage([1600, 900], "landscape");
+        if (i > 0) pdf.addPage([1600, 900], "landscape");
         pdf.addImage(imgData, "JPEG", 0, 0, 1600, 900, undefined, "FAST");
       }
       
@@ -449,6 +455,29 @@ const WelcomePackGenerator = () => {
                   className="h-9 mt-1"
                 />
               </div>
+
+              {/* Code Duration */}
+              {selectedClientId && (
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Key className="w-3 h-3 text-primary" />
+                    Ważność kodu Academy
+                  </Label>
+                  <Select value={codeDuration} onValueChange={setCodeDuration}>
+                    <SelectTrigger className="h-9 mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 dni</SelectItem>
+                      <SelectItem value="14">14 dni</SelectItem>
+                      <SelectItem value="30">1 miesiąc</SelectItem>
+                      <SelectItem value="90">3 miesiące</SelectItem>
+                      <SelectItem value="180">6 miesięcy</SelectItem>
+                      <SelectItem value="365">12 miesięcy</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             {/* Manager Selection */}
@@ -614,7 +643,7 @@ const WelcomePackGenerator = () => {
           }}
           aria-hidden="true"
         >
-          {[1, 2, 3, 4, 5, 6].map((slideNum) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((slideNum) => (
             <div
               key={slideNum}
               id={`capture-welcomepack-slide-${slideNum}`}

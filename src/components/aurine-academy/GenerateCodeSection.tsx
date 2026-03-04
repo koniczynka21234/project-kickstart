@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Key, Copy, RefreshCw, UserPlus, Link2, CheckCircle2, Clock, XCircle, CalendarPlus } from "lucide-react";
+import { Key, Copy, RefreshCw, UserPlus, Link2, CheckCircle2, Clock, XCircle, CalendarPlus, BarChart3, Zap, AlertTriangle, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { format, addDays, isPast } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -23,6 +23,15 @@ const DURATION_OPTIONS = [
   { value: "365", label: "12 miesięcy" },
 ];
 
+const PREFIX_TEMPLATES = [
+  { value: "none", label: "Bez prefixu" },
+  { value: "AURINE-", label: "AURINE-" },
+  { value: "ACADEMY-", label: "ACADEMY-" },
+  { value: "VIP-", label: "VIP-" },
+  { value: "BEAUTY-", label: "BEAUTY-" },
+  { value: "custom", label: "Własny prefix..." },
+];
+
 interface UnassignedCode {
   id: string;
   code: string;
@@ -31,6 +40,38 @@ interface UnassignedCode {
   created_at: string;
   used_at: string | null;
   used_by_email: string | null;
+}
+
+interface AllCode {
+  id: string;
+  code: string;
+  is_active: boolean;
+  valid_until: string;
+  created_at: string;
+  used_at: string | null;
+  client_id: string | null;
+}
+
+// Stats card component
+function StatCard({ icon: Icon, label, value, color, subtext }: {
+  icon: React.ElementType;
+  label: string;
+  value: number;
+  color: string;
+  subtext?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 p-4 rounded-xl border bg-card">
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
+        <Icon className="w-5 h-5 text-white" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {subtext && <p className="text-[10px] text-muted-foreground/70">{subtext}</p>}
+      </div>
+    </div>
+  );
 }
 
 export function GenerateCodeSection() {
@@ -43,6 +84,34 @@ export function GenerateCodeSection() {
   const [newClientName, setNewClientName] = useState("");
   const [newOwnerName, setNewOwnerName] = useState("");
   const [extendDuration, setExtendDuration] = useState("30");
+  const [selectedPrefix, setSelectedPrefix] = useState("none");
+  const [customPrefix, setCustomPrefix] = useState("");
+  const [showCustomPrefix, setShowCustomPrefix] = useState(false);
+
+  // Get effective prefix
+  const effectivePrefix = showCustomPrefix ? customPrefix.toUpperCase().replace(/[^A-Z0-9-]/g, '') : (selectedPrefix === "none" ? "" : selectedPrefix);
+
+  // Fetch all codes for statistics
+  const { data: allCodes } = useQuery({
+    queryKey: ["all-codes-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("subscription_codes")
+        .select("id, code, is_active, valid_until, created_at, used_at, client_id");
+      if (error) throw error;
+      return data as AllCode[];
+    },
+  });
+
+  // Compute stats
+  const stats = {
+    total: allCodes?.length || 0,
+    active: allCodes?.filter(c => c.is_active && !isPast(new Date(c.valid_until))).length || 0,
+    expired: allCodes?.filter(c => isPast(new Date(c.valid_until))).length || 0,
+    unassigned: allCodes?.filter(c => !c.client_id).length || 0,
+    assigned: allCodes?.filter(c => c.client_id).length || 0,
+    used: allCodes?.filter(c => c.used_at).length || 0,
+  };
 
   // Pobierz nieprzypisane kody
   const { data: unassignedCodes, isLoading } = useQuery({
@@ -74,27 +143,28 @@ export function GenerateCodeSection() {
     },
   });
 
-  // Generuj nowy kod (nieprzypisany)
+  // Generuj nowy kod z opcjonalnym prefixem
   const generateCodeMutation = useMutation({
-    mutationFn: async (durationDays: number) => {
-      const { data: newCode, error: codeError } = await supabase.rpc("generate_subscription_code");
+    mutationFn: async ({ durationDays, prefix }: { durationDays: number; prefix: string }) => {
+      const { data: rawCode, error: codeError } = await supabase.rpc("generate_subscription_code");
       if (codeError) throw codeError;
 
+      const finalCode = prefix ? `${prefix}${rawCode}` : rawCode;
       const validUntil = addDays(new Date(), durationDays);
       const { error: insertError } = await supabase.from("subscription_codes").insert({
         client_id: null,
-        code: newCode,
+        code: finalCode,
         valid_until: validUntil.toISOString(),
         is_active: true,
         created_by: user?.id,
       });
 
       if (insertError) throw insertError;
-      return newCode;
+      return finalCode;
     },
-    onSuccess: (code) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unassigned-codes"] });
-      toast.success(`Wygenerowano kod: ${code}`);
+      queryClient.invalidateQueries({ queryKey: ["all-codes-stats"] });
     },
     onError: () => toast.error("Błąd podczas generowania kodu"),
   });
@@ -102,13 +172,11 @@ export function GenerateCodeSection() {
   // Przypisz kod do istniejącego klienta
   const assignCodeMutation = useMutation({
     mutationFn: async ({ codeId, clientId }: { codeId: string; clientId: string }) => {
-      // Dezaktywuj stare kody klienta
       await supabase
         .from("subscription_codes")
         .update({ is_active: false })
         .eq("client_id", clientId);
 
-      // Przypisz nowy kod
       const { error } = await supabase
         .from("subscription_codes")
         .update({ client_id: clientId })
@@ -119,6 +187,7 @@ export function GenerateCodeSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unassigned-codes"] });
       queryClient.invalidateQueries({ queryKey: ["clients-academy"] });
+      queryClient.invalidateQueries({ queryKey: ["all-codes-stats"] });
       setShowAssignDialog(false);
       setSelectedCode(null);
       toast.success("Kod przypisany do klienta");
@@ -129,7 +198,6 @@ export function GenerateCodeSection() {
   // Dodaj nowego klienta i przypisz kod
   const addClientAndAssignMutation = useMutation({
     mutationFn: async ({ codeId, salonName, ownerName }: { codeId: string; salonName: string; ownerName: string }) => {
-      // Utwórz nowego klienta
       const { data: newClient, error: clientError } = await supabase
         .from("clients")
         .insert({
@@ -143,20 +211,19 @@ export function GenerateCodeSection() {
 
       if (clientError) throw clientError;
 
-      // Przypisz kod do nowego klienta
       const { error: codeError } = await supabase
         .from("subscription_codes")
         .update({ client_id: newClient.id })
         .eq("id", codeId);
 
       if (codeError) throw codeError;
-
       return newClient;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unassigned-codes"] });
       queryClient.invalidateQueries({ queryKey: ["clients-academy"] });
       queryClient.invalidateQueries({ queryKey: ["clients-for-assign"] });
+      queryClient.invalidateQueries({ queryKey: ["all-codes-stats"] });
       setShowAddClientDialog(false);
       setShowAssignDialog(false);
       setSelectedCode(null);
@@ -186,6 +253,7 @@ export function GenerateCodeSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unassigned-codes"] });
+      queryClient.invalidateQueries({ queryKey: ["all-codes-stats"] });
       toast.success("Przedłużono ważność kodu");
     },
     onError: () => toast.error("Błąd podczas przedłużania kodu"),
@@ -203,6 +271,7 @@ export function GenerateCodeSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unassigned-codes"] });
+      queryClient.invalidateQueries({ queryKey: ["all-codes-stats"] });
       toast.success("Kod usunięty");
     },
     onError: () => toast.error("Błąd podczas usuwania kodu"),
@@ -210,7 +279,6 @@ export function GenerateCodeSection() {
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success("Skopiowano kod");
   };
 
   const getCodeStatus = (code: UnassignedCode) => {
@@ -224,8 +292,34 @@ export function GenerateCodeSection() {
     setShowAssignDialog(true);
   };
 
+  const handlePrefixChange = (value: string) => {
+    if (value === "custom") {
+      setShowCustomPrefix(true);
+      setSelectedPrefix("none");
+    } else {
+      setShowCustomPrefix(false);
+      setSelectedPrefix(value);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Statistics Dashboard */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-primary" />
+          Statystyki kodów
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StatCard icon={Hash} label="Wszystkie kody" value={stats.total} color="bg-primary" />
+          <StatCard icon={CheckCircle2} label="Aktywne" value={stats.active} color="bg-green-500" />
+          <StatCard icon={Clock} label="Wygasłe" value={stats.expired} color="bg-amber-500" />
+          <StatCard icon={Link2} label="Przypisane" value={stats.assigned} color="bg-blue-500" />
+          <StatCard icon={AlertTriangle} label="Nieprzypisane" value={stats.unassigned} color="bg-orange-500" />
+          <StatCard icon={Zap} label="Użyte" value={stats.used} color="bg-fuchsia-500" subtext="aktywowane przez klientki" />
+        </div>
+      </div>
+
       {/* Generowanie nowego kodu */}
       <Card>
         <CardHeader>
@@ -234,12 +328,12 @@ export function GenerateCodeSection() {
             <CardTitle>Generuj nowy kod</CardTitle>
           </div>
           <CardDescription>
-            Wygeneruj kod dostępu niezwiązany z konkretnym klientem
+            Wygeneruj kod dostępu z opcjonalnym prefixem
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3 items-end">
-            <div className="flex-1 max-w-xs">
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="min-w-[160px]">
               <Label className="text-sm text-muted-foreground mb-2 block">Ważność kodu</Label>
               <Select value={selectedDuration} onValueChange={setSelectedDuration}>
                 <SelectTrigger>
@@ -254,14 +348,49 @@ export function GenerateCodeSection() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="min-w-[160px]">
+              <Label className="text-sm text-muted-foreground mb-2 block">Szablon prefixu</Label>
+              <Select value={showCustomPrefix ? "custom" : selectedPrefix} onValueChange={handlePrefixChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Bez prefixu" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PREFIX_TEMPLATES.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {showCustomPrefix && (
+              <div className="min-w-[140px]">
+                <Label className="text-sm text-muted-foreground mb-2 block">Własny prefix</Label>
+                <Input
+                  value={customPrefix}
+                  onChange={(e) => setCustomPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))}
+                  placeholder="np. SALON-"
+                  maxLength={10}
+                />
+              </div>
+            )}
+
             <Button
-              onClick={() => generateCodeMutation.mutate(parseInt(selectedDuration))}
+              onClick={() => generateCodeMutation.mutate({ durationDays: parseInt(selectedDuration), prefix: effectivePrefix })}
               disabled={generateCodeMutation.isPending}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${generateCodeMutation.isPending ? "animate-spin" : ""}`} />
               Generuj kod
             </Button>
           </div>
+
+          {effectivePrefix && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Podgląd: <code className="font-mono bg-muted px-1.5 py-0.5 rounded">{effectivePrefix}XXXXXXXX</code>
+            </p>
+          )}
         </CardContent>
       </Card>
 
