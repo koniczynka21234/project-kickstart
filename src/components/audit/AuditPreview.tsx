@@ -337,6 +337,42 @@ const ACADEMY_HINTS: Record<string, { text: string; feature: string }> = {
 
 const getAcademyHint = (subSectionId: string) => ACADEMY_HINTS[subSectionId];
 
+// ============ TEXT PERSONALIZATION ============
+
+/**
+ * Replaces generic "Salon" / "salon" references in audit texts with the actual salon name.
+ * Handles patterns like:
+ * - "Salon nie prowadzi" → "Beauty Studio nie prowadzi"
+ * - "salon tylko promuje" → "Beauty Studio tylko promuje"  
+ * - "profil salonu" → stays as is (grammatical reference)
+ * - "wnetrza salonu" → "wnetrza Beauty Studio"
+ */
+const personalizeAuditText = (text: string, salonName?: string): string => {
+  if (!salonName || !text) return text;
+
+  // Patterns where "Salon" is used as the subject (start of sentence or after punctuation)
+  let result = text
+    // "Salon nie..." "Salon tylko..." "Salon prowadzil..." "Salon odpowiada..." — Salon as subject at start
+    .replace(/\bSalon (nie |tylko |prowadzi|odpowiada|ma |uzywa|publikuje|stosuje|korzysta|posiada|oferuje|wyglada|moze|bedzie|jest |zostal|nie ma|nie uzywa|nie prowadzi|nie publikuje|nie stosuje|nie korzysta|nie posiada|nie oferuje)/gi, (match, rest) => {
+      const isUpperCase = match.charAt(0) === 'S';
+      return `${salonName} ${rest}`;
+    })
+    // "salon X" patterns — "salonu" (genitive) stays contextual but replace "wnetrza salonu" → "wnetrza [name]"
+    .replace(/salonu(?=\s|\.|\,|\!)/g, salonName)
+    // "w salonie" → "w [name]"
+    .replace(/w salonie/g, `w ${salonName}`)
+    // "do salonu" → "do [name]"  
+    .replace(/do salonu/g, `do ${salonName}`)
+    // "Twojego salonu" → specific name
+    .replace(/Twojego salonu/g, salonName)
+    // "Twoj salon" → name
+    .replace(/Twoj salon/g, salonName)
+    // "Twój salon" → name
+    .replace(/Twój salon/g, salonName);
+
+  return result;
+};
+
 // ============ INLINE EDITABLE TEXT ============
 
 const EditableText = ({ value, onChange, className, tag = "p", isEditing = false }: {
@@ -404,20 +440,21 @@ const EditableText = ({ value, onChange, className, tag = "p", isEditing = false
 
 // ============ FINDING CARD (redesigned) ============
 
-const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextChange, isEditing = false }: {
+const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextChange, isEditing = false, salonName }: {
   finding: EnrichedFinding;
   catId?: string;
   showAcademyHint?: { text: string; feature: string };
   textOverrides?: TextOverrides;
   onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void;
   isEditing?: boolean;
+  salonName?: string;
 }) => {
   const isPositive = finding.type === "positive";
   const a = getAccent(catId);
   const overrides = textOverrides?.[finding.id];
   const label = overrides?.label || finding.label;
-  const description = overrides?.description || finding.description;
-  const recommendation = overrides?.recommendation || finding.recommendation;
+  const description = personalizeAuditText(overrides?.description || finding.description, salonName);
+  const recommendation = personalizeAuditText(overrides?.recommendation || finding.recommendation || "", salonName) || undefined;
 
   const handleChange = onTextChange ? (field: 'label' | 'description' | 'recommendation') => (val: string) => onTextChange(finding.id, field, val) : undefined;
 
@@ -858,7 +895,7 @@ const CategoryOverviewSlide = ({ data, slideNumber, totalSlides, slide }: {
 
       <div className="grid grid-cols-5 gap-8 flex-1 min-h-0">
         <div className="col-span-3 space-y-5 overflow-hidden">
-          <p className="text-zinc-300 text-base leading-relaxed">{cat.description}</p>
+          <p className="text-zinc-300 text-base leading-relaxed">{personalizeAuditText(cat.description, data.salonName)}</p>
 
           {total > 0 ? (
             <div className="grid grid-cols-2 gap-4">
@@ -912,8 +949,8 @@ const CategoryOverviewSlide = ({ data, slideNumber, totalSlides, slide }: {
 
 // ============ FINDINGS SLIDE (redesigned) ============
 
-const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true, textOverrides, onTextChange, isEditing = false }: {
-  slideNumber: number; totalSlides: number; slide: AuditSlideData; includeAcademy?: boolean; textOverrides?: TextOverrides; onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void; isEditing?: boolean;
+const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true, textOverrides, onTextChange, isEditing = false, salonName }: {
+  slideNumber: number; totalSlides: number; slide: AuditSlideData; includeAcademy?: boolean; textOverrides?: TextOverrides; onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void; isEditing?: boolean; salonName?: string;
 }) => {
   const catId = slide.categoryId!;
   const a = getAccent(catId);
@@ -960,7 +997,7 @@ const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true,
           // Show Academy hint on every issue finding that has a matching hint
           const fSubId = f.type === "issue" ? findSubSectionId(catId, f.subSectionName) : undefined;
           const hint = includeAcademy && fSubId ? getAcademyHint(fSubId) : undefined;
-          return <FindingCard key={f.id} finding={f} catId={catId} showAcademyHint={hint} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} />;
+          return <FindingCard key={f.id} finding={f} catId={catId} showAcademyHint={hint} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={salonName} />;
         })}
       </div>
 
@@ -1201,7 +1238,7 @@ export const AuditPreview = ({ data, currentSlide, enabledCategories, checkedFin
     case 'category-overview':
       return <CategoryOverviewSlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} slide={current} />;
     case 'findings':
-      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} />;
+      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={data.salonName} />;
     case 'competition':
       return <CompetitionSlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} />;
     case 'recommendations':
