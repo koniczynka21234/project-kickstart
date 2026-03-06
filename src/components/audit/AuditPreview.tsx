@@ -337,6 +337,42 @@ const ACADEMY_HINTS: Record<string, { text: string; feature: string }> = {
 
 const getAcademyHint = (subSectionId: string) => ACADEMY_HINTS[subSectionId];
 
+// ============ TEXT PERSONALIZATION ============
+
+/**
+ * Replaces generic "Salon" / "salon" references in audit texts with the actual salon name.
+ * Handles patterns like:
+ * - "Salon nie prowadzi" → "Beauty Studio nie prowadzi"
+ * - "salon tylko promuje" → "Beauty Studio tylko promuje"  
+ * - "profil salonu" → stays as is (grammatical reference)
+ * - "wnetrza salonu" → "wnetrza Beauty Studio"
+ */
+const personalizeAuditText = (text: string, salonName?: string): string => {
+  if (!salonName || !text) return text;
+
+  // Patterns where "Salon" is used as the subject (start of sentence or after punctuation)
+  let result = text
+    // "Salon nie..." "Salon tylko..." "Salon prowadzil..." "Salon odpowiada..." — Salon as subject at start
+    .replace(/\bSalon (nie |tylko |prowadzi|odpowiada|ma |uzywa|publikuje|stosuje|korzysta|posiada|oferuje|wyglada|moze|bedzie|jest |zostal|nie ma|nie uzywa|nie prowadzi|nie publikuje|nie stosuje|nie korzysta|nie posiada|nie oferuje)/gi, (match, rest) => {
+      const isUpperCase = match.charAt(0) === 'S';
+      return `${salonName} ${rest}`;
+    })
+    // "salon X" patterns — "salonu" (genitive) stays contextual but replace "wnetrza salonu" → "wnetrza [name]"
+    .replace(/salonu(?=\s|\.|\,|\!)/g, salonName)
+    // "w salonie" → "w [name]"
+    .replace(/w salonie/g, `w ${salonName}`)
+    // "do salonu" → "do [name]"  
+    .replace(/do salonu/g, `do ${salonName}`)
+    // "Twojego salonu" → specific name
+    .replace(/Twojego salonu/g, salonName)
+    // "Twoj salon" → name
+    .replace(/Twoj salon/g, salonName)
+    // "Twój salon" → name
+    .replace(/Twój salon/g, salonName);
+
+  return result;
+};
+
 // ============ INLINE EDITABLE TEXT ============
 
 const EditableText = ({ value, onChange, className, tag = "p", isEditing = false }: {
