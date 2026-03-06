@@ -997,7 +997,7 @@ const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true,
           // Show Academy hint on every issue finding that has a matching hint
           const fSubId = f.type === "issue" ? findSubSectionId(catId, f.subSectionName) : undefined;
           const hint = includeAcademy && fSubId ? getAcademyHint(fSubId) : undefined;
-          return <FindingCard key={f.id} finding={f} catId={catId} showAcademyHint={hint} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} />;
+          return <FindingCard key={f.id} finding={f} catId={catId} showAcademyHint={hint} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={salonName} />;
         })}
       </div>
 
