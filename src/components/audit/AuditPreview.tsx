@@ -463,7 +463,7 @@ const EditableText = ({ value, onChange, className, tag = "p", isEditing = false
 
 // ============ FINDING CARD (redesigned) ============
 
-const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextChange, isEditing = false, salonName }: {
+const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextChange, isEditing = false, salonName, cityName }: {
   finding: EnrichedFinding;
   catId?: string;
   showAcademyHint?: { text: string; feature: string };
@@ -471,13 +471,14 @@ const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextCha
   onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void;
   isEditing?: boolean;
   salonName?: string;
+  cityName?: string;
 }) => {
   const isPositive = finding.type === "positive";
   const a = getAccent(catId);
   const overrides = textOverrides?.[finding.id];
   const label = overrides?.label || finding.label;
-  const description = personalizeAuditText(overrides?.description || finding.description, salonName);
-  const recommendation = personalizeAuditText(overrides?.recommendation || finding.recommendation || "", salonName) || undefined;
+  const description = personalizeAuditText(overrides?.description || finding.description, salonName, cityName);
+  const recommendation = personalizeAuditText(overrides?.recommendation || finding.recommendation || "", salonName, cityName) || undefined;
 
   const handleChange = onTextChange ? (field: 'label' | 'description' | 'recommendation') => (val: string) => onTextChange(finding.id, field, val) : undefined;
 
