@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   FileSearch, Instagram, Film, Palette,
   TrendingUp, Check, CheckCircle2,
@@ -23,12 +24,17 @@ interface AuditFormData {
   websiteUrl: string;
 }
 
+export type TextOverrides = Record<string, { label?: string; description?: string; recommendation?: string }>;
+
 interface AuditPreviewProps {
   data: AuditFormData;
   currentSlide: number;
   enabledCategories: Record<string, boolean>;
   checkedFindings: Record<string, boolean>;
   includeAcademy?: boolean;
+  textOverrides?: TextOverrides;
+  isEditing?: boolean;
+  onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void;
 }
 
 // ============ CATEGORY COLOR SYSTEM ============
@@ -244,157 +250,248 @@ const CategoryHeader = ({ catId, title, subtitle }: { catId: string; title: stri
 
 const ACADEMY_HINTS: Record<string, { text: string; feature: string }> = {
   fb_posts: {
-    text: "Klientki agencji mają w aplikacji Aurine Academy gotowe szablony postów z grafikami i opisami — wystarczy skopiować i opublikować.",
-    feature: "Szablony treści + Opisy",
+    text: "W aplikacji Aurine Academy klientka ma dostęp do generatora strategii AI, który tworzy gotowe opisy postów — z hookiem, storytellingiem i CTA. Wystarczy skopiować i opublikować. Do tego kalendarz postów planuje treści na cały miesiąc.",
+    feature: "Generator opisów AI + Kalendarz",
   },
   fb_photos: {
-    text: "W aplikacji Aurine Academy dostępny jest generator grafik — wystarczy wkleić zdjęcia z zabiegu, a system tworzy gotowe grafiki w wielu wariantach.",
-    feature: "Generator grafik",
+    text: "Generator grafik w Aurine Academy pozwala klientce wkleić swoje zdjęcia z zabiegów, a system automatycznie tworzy profesjonalne grafiki w 10+ szablonach — before/after, karuzele, posty z opisem. Bez Canvy, bez grafika.",
+    feature: "Generator grafik z własnych zdjęć",
   },
   fb_profile: {
-    text: "Klientki agencji w aplikacji Aurine Academy mają kursy o budowaniu profilu i gotowe materiały do uzupełnienia wizytówki.",
-    feature: "Kurs profilu + Materiały",
+    text: "Klientka otrzymuje w aplikacji kurs krok po kroku jak uzupełnić profil Facebook — od zdjęcia w tle, przez opis, po przycisk CTA. Plus gotowe teksty do skopiowania i uzupełnienia swoimi danymi.",
+    feature: "Kurs uzupełniania profilu + gotowe teksty",
+  },
+  fb_engagement: {
+    text: "W Aurine Academy są gotowe szablony odpowiedzi na komentarze i wiadomości — klientka wybiera sytuację (pytanie o cenę, reklamacja, prośba o termin) i ma gotową odpowiedź do personalizacji.",
+    feature: "Szablony odpowiedzi na wiadomości",
   },
   ig_profile: {
-    text: "W aplikacji Aurine Academy są gotowe szablony bio i kurs optymalizacji profilu — klientki agencji mają to w pakiecie.",
-    feature: "Szablony bio + Kurs IG",
+    text: "Aplikacja zawiera generator bio na Instagram z AI — klientka podaje specjalizację i miasto, a system tworzy profesjonalne bio z emoji i CTA. Plus kurs optymalizacji profilu z przykładami najlepszych salonów.",
+    feature: "Generator bio AI + Kurs profilu IG",
   },
   ig_feed: {
-    text: "Generator grafik w Aurine Academy tworzy spójne grafiki na feed — klientka wybiera szablon i wkleja swoje zdjęcia.",
-    feature: "Generator grafik na feed",
+    text: "Generator grafik tworzy spójne wizualnie posty na feed — klientka wybiera szablon w kolorach swojego salonu, wkleja zdjęcia efektów pracy i dostaje gotową grafikę do publikacji.",
+    feature: "Generator spójnych grafik na feed",
   },
   ig_stories: {
-    text: "W Aurine Academy są szablony stories i kursy o angażowaniu odbiorców — dostępne dla klientek agencji.",
-    feature: "Szablony stories + Kurs",
+    text: "W aplikacji są gotowe scenariusze stories na każdy dzień tygodnia — poniedziałek: kulisy, wtorek: efekt pracy, środa: porada. Plus interaktywne szablony z ankietami i quizami do zaangażowania obserwujących.",
+    feature: "Scenariusze stories + szablony interakcji",
   },
   content_copy: {
-    text: "Generator strategii AI w Aurine Academy tworzy gotowe pomysły na posty, opisy i strategie — klientka dodaje je jednym kliknięciem do kalendarza.",
-    feature: "Generator AI + Kalendarz",
+    text: "Generator strategii AI analizuje branżę klientki i tworzy spersonalizowany plan treści na 30 dni — z konkretnymi tematami, opisami i hashtagami. Klientka dodaje je jednym kliknięciem do kalendarza postów.",
+    feature: "Plan treści AI na 30 dni + Kalendarz",
   },
   content_photos: {
-    text: "W Aurine Academy jest generator grafik before/after — klientka wkleja zdjęcia, a system generuje gotowe grafiki w 10 szablonach.",
-    feature: "Generator before/after",
+    text: "Generator before/after w aplikacji — klientka wkleja 2 zdjęcia (przed i po zabiegu), wybiera szablon i dostaje profesjonalną grafikę porównawczą gotową do publikacji. 10+ szablonów do wyboru.",
+    feature: "Generator grafik before/after",
   },
   content_hashtags: {
-    text: "Generator strategii AI w Aurine Academy dobiera hashtagi do każdego posta — wszystko w ramach współpracy z agencją.",
-    feature: "AI hashtagi + Strategia",
+    text: "AI w Aurine Academy dobiera hashtagi do każdego posta automatycznie — analizuje treść, branżę i lokalizację. Klientka dostaje zestaw 20-30 hashtagów podzielonych na kategorie: lokalne, branżowe, popularne.",
+    feature: "Inteligentne hashtagi AI",
   },
   content_frequency: {
-    text: "Kalendarz postów w Aurine Academy planuje treści na cały miesiąc — klientka widzi co, kiedy i jak publikować.",
-    feature: "Kalendarz postów",
+    text: "Kalendarz postów w aplikacji pokazuje klientce dokładnie co, kiedy i jak publikować — z przypomnieniami push. Plan na cały miesiąc z różnorodnymi formatami: edukacja, efekty, kulisy, angażowanie.",
+    feature: "Kalendarz postów z przypomnieniami",
   },
   sr_reels: {
-    text: "Aurine Academy zawiera kursy o tworzeniu Reels z gotowymi scenariuszami — dostępne dla klientek agencji w aplikacji.",
-    feature: "Kurs Reels + Scenariusze",
+    text: "Aurine Academy zawiera bibliotekę gotowych scenariuszy Reels — klientka wybiera typ (metamorfoza, porada, dzień z życia salonu), dostaje dokładny skrypt: co powiedzieć, jak sfilmować, jaka muzyka.",
+    feature: "Gotowe scenariusze Reels + instrukcje",
   },
   sr_interaction: {
-    text: "W aplikacji Aurine Academy są gotowe szablony interaktywnych stories i materiały o budowaniu relacji z odbiorcami.",
-    feature: "Szablony interakcji",
+    text: "Gotowe szablony interaktywnych stories do skopiowania — ankiety, quizy, pytania, slidery. Każdy szablon ma instrukcję jak go użyć i przykład z branży beauty.",
+    feature: "Szablony interaktywnych stories",
   },
   brand_visual: {
-    text: "Generator grafik w Aurine Academy ma szablony brandingowe — klientka tworzy spójne materiały w kolorach swojego salonu.",
-    feature: "Szablony grafik",
+    text: "Generator grafik w Aurine Academy ma szablony brandingowe dopasowane do kolorów salonu — klientka ustawia swoje kolory raz i wszystkie generowane materiały są wizualnie spójne.",
+    feature: "Szablony grafik w kolorach salonu",
   },
   brand_tone: {
-    text: "W Aurine Academy są kursy o komunikacji marki i budowaniu relacji z klientkami — w ramach współpracy z agencją.",
-    feature: "Kurs komunikacji marki",
+    text: "Kurs komunikacji marki w aplikacji uczy klientkę jak budować spójny ton komunikacji — od postów, przez stories, po odpowiedzi na wiadomości. Z przykładami i ćwiczeniami.",
+    feature: "Kurs komunikacji + ton marki",
   },
   ads_campaigns: {
-    text: "Klientki agencji widzą w Aurine Academy status swoich kampanii reklamowych na żywo — aktywna, wstrzymana czy zakończona.",
-    feature: "Status kampanii na żywo",
+    text: "Klientka widzi w aplikacji status swoich kampanii reklamowych na żywo — czy kampania jest aktywna, ile wydano budżetu, jakie są wyniki. Plus bezpośredni kontakt z opiekunem kampanii.",
+    feature: "Podgląd kampanii na żywo + kontakt",
   },
   ads_strategy: {
-    text: "W Aurine Academy klientka ma podgląd kampanii i bezpośredni kontakt z opiekunem — wszystko w jednym miejscu.",
-    feature: "Podgląd + Kontakt z opiekunem",
+    text: "W aplikacji klientka ma podgląd całej strategii reklamowej — cele, grupy docelowe, budżety. Może zgłaszać uwagi i zadawać pytania bezpośrednio do opiekuna bez czekania na maile.",
+    feature: "Strategia + bezpośredni kontakt",
   },
   gmb_profile: {
-    text: "W Aurine Academy są materiały o wizytówce Google i gotowe opisy usług — klientki agencji mają to w aplikacji.",
-    feature: "Materiały Google + Opisy",
+    text: "W Aurine Academy są materiały krok po kroku jak uzupełnić wizytówkę Google — zdjęcia, opis usług, kategorie, godziny otwarcia. Plus gotowe opisy usług do skopiowania i personalizacji.",
+    feature: "Kurs Google + gotowe opisy usług",
   },
   gmb_reviews: {
-    text: "Aurine Academy zawiera gotowe szablony wiadomości z prośbą o opinię — do skopiowania i wysłania klientce salonu.",
-    feature: "Szablony próśb o opinie",
+    text: "Gotowe szablony wiadomości SMS i WhatsApp z prośbą o opinię Google — klientka salonu dostaje link bezpośrednio do formularza opinii. Plus szablony odpowiedzi na pozytywne i negatywne opinie.",
+    feature: "Szablony próśb o opinie + odpowiedzi",
   },
   web_ux: {
-    text: "W Aurine Academy są kursy o budowaniu obecności online i materiały o stronach www — w ramach współpracy z agencją.",
-    feature: "Kurs obecności online",
+    text: "Kurs w aplikacji pokazuje klientce co powinna mieć na stronie www salonu — rezerwacja online, cennik, galeria efektów, opinie. Z checklistą i przykładami dobrze zrobionych stron.",
+    feature: "Kurs strony www + checklista",
   },
   web_seo: {
-    text: "Klientki agencji mają w Aurine Academy materiały o widoczności w Google i gotowe wskazówki SEO.",
-    feature: "Materiały SEO",
+    text: "Materiały SEO w Aurine Academy uczą klientkę jak być widoczną w Google — od wizytówki, przez wpisy blogowe, po słowa kluczowe. Gotowe wskazówki dopasowane do branży beauty.",
+    feature: "Poradnik SEO dla salonów beauty",
   },
 };
 
 const getAcademyHint = (subSectionId: string) => ACADEMY_HINTS[subSectionId];
 
+// ============ INLINE EDITABLE TEXT ============
+
+const EditableText = ({ value, onChange, className, tag = "p", isEditing = false }: {
+  value: string;
+  onChange?: (val: string) => void;
+  className?: string;
+  tag?: "p" | "span";
+  isEditing?: boolean;
+}) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { setDraft(value); }, [value]);
+
+  useEffect(() => {
+    if (editing && ref.current) {
+      ref.current.focus();
+      ref.current.style.height = 'auto';
+      ref.current.style.height = ref.current.scrollHeight + 'px';
+    }
+  }, [editing]);
+
+  const commit = useCallback(() => {
+    setEditing(false);
+    if (draft.trim() !== value && onChange) onChange(draft.trim());
+  }, [draft, value, onChange]);
+
+  // Not in editing mode or no onChange - just render text
+  if (!isEditing || !onChange) {
+    const Tag = tag;
+    return <Tag className={className}>{value}</Tag>;
+  }
+
+  if (editing) {
+    return (
+      <textarea
+        ref={ref}
+        value={draft}
+        onChange={e => {
+          setDraft(e.target.value);
+          e.target.style.height = 'auto';
+          e.target.style.height = e.target.scrollHeight + 'px';
+        }}
+        onBlur={commit}
+        onKeyDown={e => { if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
+        className={`${className} bg-white/5 rounded px-1.5 py-0.5 outline-none ring-1 ring-primary/30 resize-none w-full`}
+        style={{ minHeight: '1.5em' }}
+      />
+    );
+  }
+
+  const Tag = tag;
+  return (
+    <Tag
+      className={`${className} cursor-pointer hover:bg-white/5 rounded px-1 -mx-1 transition-colors group/edit relative ring-1 ring-dashed ring-white/10 hover:ring-primary/30`}
+      onClick={() => setEditing(true)}
+      title="Kliknij aby edytować"
+    >
+      {value}
+      <Pen className="w-3 h-3 text-primary opacity-60 group-hover/edit:opacity-100 transition-opacity inline-block ml-1.5 -mt-0.5" />
+    </Tag>
+  );
+};
+
 // ============ FINDING CARD (redesigned) ============
 
-const FindingCard = ({ finding, catId, showAcademyHint }: { finding: EnrichedFinding; catId?: string; showAcademyHint?: { text: string; feature: string } }) => {
+const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextChange, isEditing = false }: {
+  finding: EnrichedFinding;
+  catId?: string;
+  showAcademyHint?: { text: string; feature: string };
+  textOverrides?: TextOverrides;
+  onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void;
+  isEditing?: boolean;
+}) => {
   const isPositive = finding.type === "positive";
   const a = getAccent(catId);
+  const overrides = textOverrides?.[finding.id];
+  const label = overrides?.label || finding.label;
+  const description = overrides?.description || finding.description;
+  const recommendation = overrides?.recommendation || finding.recommendation;
+
+  const handleChange = onTextChange ? (field: 'label' | 'description' | 'recommendation') => (val: string) => onTextChange(finding.id, field, val) : undefined;
 
   if (isPositive) {
     return (
-      <div className="flex items-start gap-4 p-5 rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/15 backdrop-blur-sm">
-        <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+      <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-emerald-500/[0.08] to-emerald-400/[0.03] border border-emerald-500/20 backdrop-blur-sm">
+        <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/5">
+          <CheckCircle2 className="w-5.5 h-5.5 text-emerald-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2.5 mb-1">
-            <p className="text-emerald-300 text-[15px] font-semibold">{finding.label}</p>
-            <span className="text-[9px] uppercase tracking-wider text-emerald-500/70 font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/15">✓ OK</span>
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <EditableText value={label} onChange={handleChange?.('label')} className="text-emerald-200 text-[15px] font-bold" isEditing={isEditing} />
+            <span className="text-[8px] uppercase tracking-[0.15em] text-emerald-400 font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/20">DOBRZE</span>
           </div>
-          <p className="text-zinc-400 text-xs leading-relaxed mt-1">{finding.description}</p>
+          <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-400 text-[13px] leading-relaxed" isEditing={isEditing} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl bg-zinc-800/30 border border-zinc-700/25 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-2xl bg-gradient-to-br from-zinc-800/40 to-zinc-800/20 border border-zinc-700/30 backdrop-blur-sm overflow-hidden shadow-lg shadow-black/10">
+      {/* Issue header strip */}
+      <div className="px-5 py-2 bg-red-500/[0.06] border-b border-red-500/10 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+          <span className="text-[9px] uppercase tracking-[0.15em] text-red-400/90 font-bold">Wymaga poprawy</span>
+        </div>
+        <span className="text-[10px] text-zinc-600 font-medium">{finding.subSectionName}</span>
+      </div>
+
       {/* Main finding content */}
       <div className="p-5">
         <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-xl bg-red-500/12 border border-red-500/20 flex items-center justify-center flex-shrink-0">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
+          <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-500/5">
+            <AlertTriangle className="w-5.5 h-5.5 text-red-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5 mb-1">
-              <p className="text-white text-[15px] font-semibold">{finding.label}</p>
-              <span className="text-[9px] uppercase tracking-wider text-red-400/80 font-bold px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/15">DO POPRAWY</span>
-            </div>
-            <p className="text-zinc-500 text-[10px] uppercase tracking-wider font-medium mb-1.5">{finding.subSectionName}</p>
-            <p className="text-zinc-400 text-[13px] leading-relaxed">{finding.description}</p>
+            <EditableText value={label} onChange={handleChange?.('label')} className="text-white text-[15px] font-bold mb-2" isEditing={isEditing} />
+            <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-400 text-[13px] leading-[1.7]" isEditing={isEditing} />
           </div>
         </div>
 
         {/* Recommendation */}
-        {finding.recommendation && (
-          <div className={`mt-4 p-4 rounded-xl ${a?.bgSubtle || 'bg-teal-500/5'} border ${a?.border || 'border-teal-500/20'}`}>
+        {recommendation && (
+          <div className={`mt-4 p-4 rounded-xl bg-gradient-to-r ${a?.bgSubtle ? `from-zinc-800/60 to-zinc-800/30` : 'from-zinc-800/60 to-zinc-800/30'} border ${a?.border || 'border-teal-500/20'}`}>
             <div className="flex items-start gap-3">
-              <div className={`w-8 h-8 rounded-lg ${a?.iconBg || 'bg-teal-500/15'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Lightbulb className={`w-4 h-4 ${a?.text || 'text-teal-400'}`} />
+              <div className={`w-9 h-9 rounded-lg ${a?.iconBg || 'bg-teal-500/15'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                <Lightbulb className={`w-4.5 h-4.5 ${a?.text || 'text-teal-400'}`} />
               </div>
               <div className="flex-1">
-                <span className={`text-[10px] uppercase tracking-wider font-bold ${a?.text || 'text-teal-400'}`}>Jak powinno być</span>
-                <p className="text-zinc-300 text-[13px] leading-relaxed mt-1">{finding.recommendation}</p>
+                <span className={`text-[10px] uppercase tracking-[0.15em] font-bold ${a?.text || 'text-teal-400'}`}>Nasza rekomendacja</span>
+                <EditableText value={recommendation} onChange={handleChange?.('recommendation')} className="text-zinc-300 text-[13px] leading-[1.7] mt-1.5" isEditing={isEditing} />
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Academy hint strip (subtle promotion) */}
+      {/* Academy hint - expanded with full description */}
       {showAcademyHint && (
-        <div className="px-5 py-3 bg-gradient-to-r from-cyan-500/[0.04] to-teal-500/[0.04] border-t border-teal-500/10 flex items-center gap-3">
-          <img src={agencyLogo} alt="Academy" className="w-6 h-6 object-contain opacity-70 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-zinc-500 text-[11px] leading-relaxed">
-              <span className="text-teal-400/80 font-semibold">Aurine Academy</span>
-              {" · "}{showAcademyHint.feature}
-            </p>
+        <div className="px-5 py-3.5 bg-gradient-to-r from-fuchsia-500/[0.05] via-cyan-500/[0.04] to-teal-500/[0.05] border-t border-teal-500/15">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/15 border border-fuchsia-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <BookOpen className="w-4 h-4 text-fuchsia-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] uppercase tracking-[0.12em] font-bold text-fuchsia-300/90">Aurine Academy</span>
+                <span className="text-[8px] text-cyan-400/60 font-medium px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/15">{showAcademyHint.feature}</span>
+              </div>
+              <p className="text-zinc-400 text-[12px] leading-relaxed">{showAcademyHint.text}</p>
+            </div>
           </div>
-          <span className="text-[9px] text-teal-500/50 uppercase tracking-wider font-medium flex-shrink-0 hidden">Dowiedz się więcej</span>
         </div>
       )}
     </div>
@@ -767,7 +864,7 @@ const CategoryOverviewSlide = ({ data, slideNumber, totalSlides, slide }: {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-center">
                 <p className="text-4xl font-bold text-emerald-400">{positives}</p>
-                <p className="text-zinc-400 text-sm mt-1">Mocne strony</p>
+                <p className="text-zinc-400 text-sm mt-1">Co działa dobrze</p>
               </div>
               <div className="p-5 rounded-xl bg-red-500/5 border border-red-500/20 text-center">
                 <p className="text-4xl font-bold text-red-400">{issues}</p>
@@ -815,8 +912,8 @@ const CategoryOverviewSlide = ({ data, slideNumber, totalSlides, slide }: {
 
 // ============ FINDINGS SLIDE (redesigned) ============
 
-const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true }: {
-  slideNumber: number; totalSlides: number; slide: AuditSlideData; includeAcademy?: boolean;
+const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true, textOverrides, onTextChange, isEditing = false }: {
+  slideNumber: number; totalSlides: number; slide: AuditSlideData; includeAcademy?: boolean; textOverrides?: TextOverrides; onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void; isEditing?: boolean;
 }) => {
   const catId = slide.categoryId!;
   const a = getAccent(catId);
@@ -824,10 +921,6 @@ const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true 
   const findings = slide.findings || [];
   const positives = findings.filter(f => f.type === "positive");
   const issues = findings.filter(f => f.type === "issue");
-
-  // Determine subsection for Academy hint (use first issue's subsection)
-  const firstIssue = findings.find(f => f.type === "issue");
-  const subSectionId = firstIssue ? findSubSectionId(catId, firstIssue.subSectionName) : undefined;
 
   return (
     <SlideShell slideNumber={slideNumber} totalSlides={totalSlides} catId={catId}>
@@ -864,10 +957,10 @@ const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true 
       {/* Finding cards */}
       <div className="flex-1 space-y-3 overflow-hidden">
         {findings.map((f) => {
-          // Show Academy hint only on first issue finding per slide
-          const isFirstIssue = f.type === "issue" && f === firstIssue;
-          const hint = includeAcademy && isFirstIssue && subSectionId ? getAcademyHint(subSectionId) : undefined;
-          return <FindingCard key={f.id} finding={f} catId={catId} showAcademyHint={hint} />;
+          // Show Academy hint on every issue finding that has a matching hint
+          const fSubId = f.type === "issue" ? findSubSectionId(catId, f.subSectionName) : undefined;
+          const hint = includeAcademy && fSubId ? getAcademyHint(fSubId) : undefined;
+          return <FindingCard key={f.id} finding={f} catId={catId} showAcademyHint={hint} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} />;
         })}
       </div>
 
@@ -1091,7 +1184,7 @@ const SummarySlide = ({ data, slideNumber, totalSlides, includeAcademy = true }:
 
 // ============ MAIN COMPONENT ============
 
-export const AuditPreview = ({ data, currentSlide, enabledCategories, checkedFindings, includeAcademy = true }: AuditPreviewProps) => {
+export const AuditPreview = ({ data, currentSlide, enabledCategories, checkedFindings, includeAcademy = true, textOverrides, isEditing = false, onTextChange }: AuditPreviewProps) => {
   const slides = generateAuditSlides(enabledCategories, checkedFindings);
   const totalSlides = slides.length;
   const current = slides[currentSlide - 1];
@@ -1108,7 +1201,7 @@ export const AuditPreview = ({ data, currentSlide, enabledCategories, checkedFin
     case 'category-overview':
       return <CategoryOverviewSlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} slide={current} />;
     case 'findings':
-      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} />;
+      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} />;
     case 'competition':
       return <CompetitionSlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} />;
     case 'recommendations':

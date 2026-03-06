@@ -33,6 +33,7 @@ export interface ConversationSection {
   talkingPoints: ConversationTalkingPoint[];
   closingLine: string;
   closingSellLine: string;
+  includeAcademy?: boolean;
 }
 
 // Category-specific opening lines for conversation
@@ -220,6 +221,10 @@ export function generateConversationGuide(
 
     if (talkingPoints.length === 0) continue;
 
+    const academySellLine = includeAcademy
+      ? ` A dzięki Aurine Academy — naszej aplikacji dla klientek — możesz uczyć się tych rzeczy krok po kroku, z gotowymi materiałami i wsparciem.`
+      : "";
+
     sections.push({
       categoryId: cat.id,
       categoryName: cat.name,
@@ -228,37 +233,8 @@ export function generateConversationGuide(
       openingTechnique: CATEGORY_OPENING_TECHNIQUES[cat.id] || "Zacznij od pozytywu, potem przejdź do obserwacji.",
       talkingPoints,
       closingLine: CATEGORY_CLOSERS[cat.id] || "To tyle w tej sekcji. Przejdźmy dalej.",
-      closingSellLine: CATEGORY_CLOSING_SELL[cat.id] || "To są rzeczy, którymi się zajmujemy w ramach współpracy — jeśli chcesz, możemy to ogarnąć za Ciebie.",
-    });
-  }
-
-  // Add Aurine Academy section if enabled
-  if (includeAcademy) {
-    sections.push({
-      categoryId: "academy",
-      categoryName: "Aurine Academy",
-      categoryDescription: "Program szkoleniowy i edukacyjny dla właścicielek salonów beauty.",
-      openingLine: "Chciałam Ci też opowiedzieć o czymś dodatkowym — mamy program Aurine Academy, który pomaga właścicielkom salonów rozwijać się nie tylko w marketingu, ale też w prowadzeniu biznesu.",
-      openingTechnique: "Academy to wartość dodana, nie główny produkt. Przedstaw to jako bonus, nie jako dodatkowy koszt. Powiedz: 'To jest coś, co dostają nasze klientki w ramach współpracy.'",
-      talkingPoints: [
-        {
-          findingId: "academy_intro",
-          label: "Czym jest Aurine Academy?",
-          type: "positive",
-          subSectionName: "Program edukacyjny",
-          introduction: "Aurine Academy to nasz autorski program edukacyjny dla właścicielek salonów beauty. Zawiera gotowe materiały, szkolenia i narzędzia do rozwoju biznesu.",
-          whatToSay: "W Academy masz dostęp do szkoleń z social media, zarządzania salonem, obsługi klienta i budowania marki osobistej. To nie jest teoria — to praktyczne narzędzia, które od razu możesz wdrożyć.",
-          howToSell: "Academy to Twoja przewaga konkurencyjna. Inne salony działają na wyczucie — Ty będziesz mieć gotowe strategie i sprawdzone rozwiązania. To jak mieć mentora biznesowego na wyciągnięcie ręki.",
-          salesTechnique: "🟢 TECHNIKA: Ekskluzywność. 'To nie jest dostępne publicznie — to program tylko dla naszych klientek. Dostajesz go w ramach współpracy.'",
-          possibleQuestions: [
-            { question: "Czy muszę za to osobno płacić?", answer: "Nie — Academy jest częścią współpracy z nami. To dodatkowa wartość, którą dostajesz bez dodatkowych kosztów." },
-            { question: "Ile czasu muszę na to poświęcić?", answer: "Materiały są krótkie i praktyczne — 15-30 minut tygodniowo wystarczy. Możesz się uczyć w swoim tempie, kiedy masz czas." },
-          ],
-          transitionToNext: "Dobrze, to było tyle o Academy. Przejdźmy teraz do podsumowania tego co dzisiaj omawiałyśmy...",
-        },
-      ],
-      closingLine: "Academy to Twoja dodatkowa wartość — szkolenia, narzędzia i wsparcie w jednym miejscu.",
-      closingSellLine: "To jest coś, co odróżnia naszą współpracę od innych agencji — nie tylko robimy marketing, ale też uczymy i wspieramy Twój rozwój.",
+      closingSellLine: (CATEGORY_CLOSING_SELL[cat.id] || "To są rzeczy, którymi się zajmujemy w ramach współpracy — jeśli chcesz, możemy to ogarnąć za Ciebie.") + academySellLine,
+      includeAcademy,
     });
   }
 

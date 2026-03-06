@@ -44,9 +44,17 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "fb_profile",
         name: "Ustawienia profilu",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "fb_profile_ok", label: "Profil kompletny i profesjonalny", type: "positive", description: "Profil Facebook jest kompletny — zdjecie profilowe, cover, opis, godziny i przycisk CTA sa poprawnie ustawione. Buduje to zaufanie od pierwszego wejrzenia." },
+          { id: "fb_cover_pro", label: "Profesjonalne zdjęcie w tle", type: "positive", description: "Zdjęcie w tle jest wysokiej jakości, aktualne i dobrze skadrowane — prezentuje salon lub efekty pracy w atrakcyjny sposób." },
+          { id: "fb_photo_pro", label: "Profesjonalne zdjęcie profilowe / logo", type: "positive", description: "Zdjęcie profilowe to czytelne, rozpoznawalne logo lub portret — wyglada profesjonalnie nawet w małym rozmiarze w komentarzach i wiadomościach." },
+          { id: "fb_about_complete", label: "Kompletna i rozbudowana sekcja O nas", type: "positive", description: "Sekcja O nas zawiera pełny opis salonu — specjalizacje, lata doświadczenia, unikalne cechy i dane kontaktowe. Buduje to zaufanie i pozycję eksperta." },
+          { id: "fb_cta_set", label: "Przycisk CTA poprawnie ustawiony", type: "positive", description: "Przycisk akcji (np. Zarezerwuj, Zadzwoń) jest aktywny i kieruje do właściwego miejsca — ułatwia klientkom szybki kontakt." },
+          { id: "fb_hours_correct", label: "Aktualne godziny otwarcia", type: "positive", description: "Godziny otwarcia są ustawione i odpowiadają rzeczywistości — klientki zawsze wiedzą kiedy salon jest otwarty." },
+          { id: "fb_category_correct", label: "Prawidłowa kategoria profilu", type: "positive", description: "Profil ma ustawioną właściwą kategorię branży beauty — zwiększa widoczność w wyszukiwarce Facebooka." },
+          { id: "fb_messenger_active", label: "Aktywny Messenger z szybką odpowiedzią", type: "positive", description: "Wiadomości na Messengerze są włączone i salon odpowiada szybko — odznaka 'Bardzo szybko odpowiada' buduje zaufanie." },
           
-          // Zdjecie w tle
+          // Błędy
           { id: "fb_cover_none", label: "Brak zdjecia w tle", type: "issue", description: "Sekcja zdjecia w tle jest calkowicie pusta — profil wyglada na niekompletny i porzucony. Klientka widzi szary prostokat zamiast wizerunku salonu.", recommendation: "Dodaj profesjonalne zdjecie wnetrza salonu lub najlepszy efekt pracy. Wymiary: 820x312 px. To pierwsza rzecz, ktora widzi odwiedzajacy." },
           { id: "fb_cover_old_promo", label: "Stara promocja w zdjęciu w tle", type: "issue", description: "Zdjecie w tle reklamuje promocje lub oferte, ktora juz sie skonczyla. Klientka widzi nieaktualną informacje i moze pomyslec, ze salon nie dba o swoj profil.", recommendation: "Usun stara promocje i wstaw aktualne zdjecie: swiezy efekt pracy, wnetrze salonu lub sezonowa grafike. Aktualizuj co 2-3 miesiace." },
           { id: "fb_cover_old_decor", label: "Poprzedni wystroj salonu w tle", type: "issue", description: "Zdjecie w tle pokazuje stary wystroj salonu, ktory juz nie istnieje. Klientka oczekuje czegos innego niz zobaczy na zywo — to dezorientuje i obniza zaufanie.", recommendation: "Zrob nowe zdjecie aktualnego wnetrza salonu w dobrym swietle. Pokaz jak salon wyglada TERAZ." },
@@ -56,22 +64,16 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
           { id: "fb_cover_dark", label: "Ciemne zdjecie w tle", type: "issue", description: "Zdjecie w tle jest ciemne — wnętrze salonu lub efekt pracy jest ledwo widoczny. Nie przyciaga uwagi i nie buduje wizerunku.", recommendation: "Zrob zdjecie w jasnym swietle lub podkrecec jasnosc w edycji. Cover photo musi byc jasny i czytelny." },
           { id: "fb_cover_canva_stock", label: "Generyczna grafika z Canva w tle", type: "issue", description: "Zdjecie w tle to gotowy szablon z Canva z generycznymi zdjeciami — wyglada jak u kazdego innego salonu. Brak autentycznosci.", recommendation: "Zamien na wlasne zdjecie: efekt pracy, wnetrze salonu, zespol. Autentycznosc buduje wiecej zaufania niz stockowe grafiki." },
           { id: "fb_cover_text_overload", label: "Za duzo tekstu na zdjeciu w tle", type: "issue", description: "Zdjecie w tle jest zaladowane tekstem — cennik, adres, telefon, social media. Na telefonie nic nie jest czytelne.", recommendation: "Cover to zdjecie, nie ulotka. Max. 3-4 slowa. Informacje kontaktowe podaj w sekcji O nas." },
-
-          // Zdjecie profilowe
           { id: "fb_photo_none", label: "Brak zdjecia profilowego", type: "issue", description: "Profil nie ma ustawionego zdjecia profilowego — wyswietla sie domyslna ikona Facebooka. Calkowity brak rozpoznawalnosci marki.", recommendation: "Dodaj profesjonalne logo salonu lub estetyczne zdjecie. Zdjecie profilowe to Twoja wizytowka w komentarzach i wiadomosciach." },
           { id: "fb_photo_selfie", label: "Selfie jako zdjecie profilowe", type: "issue", description: "Zdjecie profilowe to selfie — nieformalne, czesto w zlym swietle. Nie buduje profesjonalnego wizerunku salonu beauty.", recommendation: "Zamien selfie na profesjonalne logo lub dedykowane zdjecie portretowe. Avatar powinien byc rozpoznawalny i spojny z marka." },
           { id: "fb_photo_private", label: "Prywatne zdjecie jako profilowe", type: "issue", description: "Zdjecie profilowe to zdjecie prywatne — z wakacji, imprezy lub z rodzina. Nie pasuje do profesjonalnej wizytowki salonu.", recommendation: "Uzyj profesjonalnego logo lub portretu w kontekscie salonowym. Profil firmowy to nie prywatny — musi budowac zaufanie." },
           { id: "fb_photo_random", label: "Przypadkowy kadr jako profilowe", type: "issue", description: "Zdjecie profilowe to przypadkowy kadr — zdjecie efektu pracy, grupowe zdjecie lub kadr z daleka. Nie pelni roli rozpoznawalnego avatara.", recommendation: "Avatar musi byc czytelny w rozmiarze 40x40 px. Logo lub portret z bliska — nic wiecej." },
           { id: "fb_photo_blurry", label: "Rozmazane zdjecie profilowe", type: "issue", description: "Zdjecie profilowe jest rozmazane, ciemne lub nieczytelne w malym rozmiarze — nie da sie rozpoznac marki w feedzie.", recommendation: "Wymien na ostre, kontrastowe logo lub zdjecie. Sprawdz jak wyglada w rozmiarze 40x40 px — musi byc czytelne." },
           { id: "fb_photo_generator", label: "Logo z darmowego generatora", type: "issue", description: "Zdjecie profilowe to logo wygenerowane w darmowym generatorze — wyglada tanio, generycznie i amatorsko. Klientki to widzą.", recommendation: "Zainwestuj w proste, ale profesjonalne logo. Nawet minimalistyczny monogram wyglada lepiej niz generator z internetu." },
-
-          // Sekcja O nas
           { id: "fb_about_empty", label: "Calkowicie pusta sekcja O nas", type: "issue", description: "Sekcja O nas jest kompletnie pusta — zero informacji o salonie, uslugach, specjalizacji. Klientka nie wie czym sie salon zajmuje.", recommendation: "Uzupelnij opis: specjalizacje, liste uslug, adres, godziny otwarcia. Napisz minimum 3-4 zdania o tym co wyroznia salon." },
           { id: "fb_about_address_only", label: "W sekcji O nas tylko adres i telefon", type: "issue", description: "Sekcja O nas zawiera wylacznie dane kontaktowe — zero opisu uslug, specjalizacji, lat doswiadczenia. Klientka nie wie co wyroznia salon.", recommendation: "Dodaj opis: czym sie specjalizujesz, ile lat doswiadczenia, jakie uslugi oferujesz. Dane kontaktowe to za malo." },
           { id: "fb_about_generic", label: "Ogolnikowy opis 'Salon beauty. Zapraszamy'", type: "issue", description: "Opis brzmi jak u kazdego salonu: 'Salon fryzjerski. Zapraszamy.' — zero konkretow, zero wyroznikow. Mogloby byc o dowolnym salonie.", recommendation: "Napisz co KONKRETNIE wyroznia TEN salon: specjalizacje, unikalne uslugi, lata doswiadczenia, szkolenia. Dodaj slowa kluczowe lokalne." },
           { id: "fb_about_outdated", label: "Nieaktualne informacje w sekcji O nas", type: "issue", description: "Sekcja O nas zawiera nieaktualne informacje — stary adres, nieaktualne godziny, uslugi ktore salon juz nie oferuje.", recommendation: "Zaktualizuj wszystkie dane do aktualnego stanu. Sprawdzaj regularnie, szczegolnie po zmianach w ofercie." },
-
-          // CTA, godziny, kategoria
           { id: "fb_no_cta", label: "Brak przycisku CTA na profilu", type: "issue", description: "Na profilu brakuje przycisku akcji (np. Zarezerwuj, Zadzwon) — klientki nie maja latwego sposobu na kontakt.", recommendation: "Dodaj przycisk CTA — najlepiej Zarezerwuj z linkiem do systemu rezerwacji lub Zadzwon z numerem telefonu." },
           { id: "fb_cta_wrong", label: "Przycisk CTA kieruje w zle miejsce", type: "issue", description: "Przycisk CTA jest ustawiony, ale kieruje na nieaktualny link, strone w budowie lub ogolna strone — nie konwertuje.", recommendation: "Sprawdz dokad kieruje przycisk. Najlepiej link do rezerwacji online lub bezposredni numer telefonu." },
           { id: "fb_no_hours", label: "Brak godzin otwarcia na profilu", type: "issue", description: "Godziny otwarcia nie sa ustawione — klientki nie wiedza kiedy salon jest otwarty i moga przyjechac na zamkniete drzwi.", recommendation: "Dodaj aktualne godziny otwarcia. Aktualizuj przy swietach i zmianach grafiku." },
@@ -85,7 +87,13 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "fb_posts",
         name: "Opisy postow",
         findings: [
-          { id: "fb_posts_engaging", label: "Angazujace opisy z CTA", type: "positive", description: "Posty zawieraja rozbudowane, angazujace opisy z wyraznym wezwaniem do dzialania. To zwieksza interakcje i zasiegi." },
+          // Pozytywne — szczegółowe
+          { id: "fb_posts_engaging", label: "Angażujące opisy z CTA", type: "positive", description: "Posty zawieraja rozbudowane, angazujace opisy z wyraznym wezwaniem do dzialania. To zwieksza interakcje i zasiegi." },
+          { id: "fb_posts_storytelling", label: "Storytelling i emocje w opisach", type: "positive", description: "Opisy opowiadają historie klientek, budują emocje i angażują czytelniczki — to wyróżnia profil na tle szablonowej konkurencji." },
+          { id: "fb_posts_hooks", label: "Mocne hooki w pierwszym zdaniu", type: "positive", description: "Posty zaczynają się od pytań, zaskakujących faktów lub emocji, które zatrzymują scrollowanie i zachęcają do przeczytania całości." },
+          { id: "fb_posts_formatted", label: "Czytelne formatowanie postów", type: "positive", description: "Opisy są dobrze sformatowane — krótkie akapity, emoji jako separatory, czytelna struktura. Łatwo się je czyta na telefonie." },
+          { id: "fb_posts_variety", label: "Różnorodne formaty treści", type: "positive", description: "Profil publikuje mix treści: efekty pracy, porady, kulisy, ankiety, pytania — nie tylko promocje. To buduje społeczność." },
+          // Błędy
           { id: "fb_posts_empty", label: "Posty bez zadnego opisu", type: "issue", description: "Posty sa publikowane bez jakiegokolwiek tekstu — samo zdjecie bez kontekstu. Algorytm nie wie jak je promowac, klientka nie wie co widzi.", recommendation: "Pisz opisy minimum 3-5 zdan. Uzyj formuly: hook, historia, CTA. Kazdy post to okazja do komunikacji." },
           { id: "fb_posts_emoji_only", label: "Same emoji zamiast opisu", type: "issue", description: "Pod postami sa tylko emoji (💇‍♀️✨💕) bez zadnego tekstu — wyglada to nieprofesjonalnie i nie daje wartosci klientkom.", recommendation: "Emoji to dodatek, nie zamiast opisu. Napisz historie, opisz efekt, dodaj kontekst. Emoji uzywaj jako separatorow." },
           { id: "fb_posts_one_word", label: "Opisy jednowyrazowe: 'Efekt', 'Zapraszamy'", type: "issue", description: "Opisy to pojedyncze slowa: 'Nowy kolor', 'Zapraszamy', 'Efekt'. Zero wartosci, zero kontekstu, zero personalizacji.", recommendation: "Rozbuduj opisy: opowiedz historie klientki, opisz efekt, dodaj tip. Zamien 'Zapraszamy' na 'Napisz KOLOR w komentarzu'." },
@@ -102,7 +110,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "fb_photos",
         name: "Zdjecia i grafiki",
         findings: [
-          { id: "fb_photos_quality", label: "Zdjecia wysokiej jakosci", type: "positive", description: "Zdjecia na profilu sa dobrze oswietlone, ostre i profesjonalnie wygladajace. To buduje zaufanie do jakosci uslug." },
+          // Pozytywne — szczegółowe
+          { id: "fb_photos_quality", label: "Zdjęcia wysokiej jakości", type: "positive", description: "Zdjecia na profilu sa dobrze oswietlone, ostre i profesjonalnie wygladajace. To buduje zaufanie do jakosci uslug." },
+          { id: "fb_photos_ba_present", label: "Regularne zdjęcia before/after", type: "positive", description: "Profil regularnie prezentuje efekty pracy w formacie before/after — najskuteczniejszym formacie w branży beauty." },
+          { id: "fb_photos_clean_bg", label: "Czyste, neutralne tło na zdjęciach", type: "positive", description: "Zdjęcia mają czyste, zadbane tło bez bałaganu — klientka skupia się na efekcie pracy, nie na otoczeniu." },
+          { id: "fb_photos_diverse", label: "Różnorodne typy zdjęć", type: "positive", description: "Profil pokazuje mix treści wizualnych: efekty pracy, wnętrze salonu, zespół, kulisy — buduje pełny obraz marki." },
+          { id: "fb_photos_natural", label: "Własne, autentyczne zdjęcia", type: "positive", description: "Profil używa wyłącznie własnych zdjęć efektów pracy — autentyczność buduje większe zaufanie niż stockowe grafiki." },
           { id: "fb_photos_dark", label: "Ciemne zdjecia ze zlym oswietleniem", type: "issue", description: "Zdjecia sa ciemne, robione w zlym oswietleniu. Efekty pracy sa ledwo widoczne — klientka nie oceni jakosci uslug.", recommendation: "Uzywaj ring light lub fotografuj przy oknie. Koszt ring light to ok. 80-150 zl — inwestycja, ktora sie szybko zwraca." },
           { id: "fb_photos_blurry", label: "Rozmazane, nieostrze zdjecia", type: "issue", description: "Zdjecia sa nieostrze, robione w ruchu lub z brudnym obiektywem. Wyglada to nieprofesjonalnie i odstrasza klientki.", recommendation: "Czysc obiektyw telefonu, ustabilizuj reke lub uzyj statywu. Rob zdjecia w dobrym swietle — telefon lepiej ostrzy." },
           { id: "fb_photos_messy_bg", label: "Balagan w tle zdjec", type: "issue", description: "Na zdjeciach widac balagan, nieuporzadkowane stanowisko, produkty, inne osoby — tlo odciaga uwage od efektu pracy.", recommendation: "Przygotuj czyste, neutralne tlo. Zrob 'kat foto' w salonie — dobre tlo, oswietlenie, kilka rekwizytow." },
@@ -119,7 +132,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "fb_engagement",
         name: "Zaangazowanie i interakcje",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "fb_engage_active", label: "Aktywne odpowiadanie na komentarze", type: "positive", description: "Salon odpowiada na komentarze szybko i personalnie — buduje relacje i zacheca do interakcji." },
+          { id: "fb_engage_high_likes", label: "Wysoka liczba reakcji na posty", type: "positive", description: "Posty zbierają dużo reakcji (polubień, serc) — algorytm promuje takie treści i pokazuje je większej liczbie osób." },
+          { id: "fb_engage_comments_active", label: "Aktywne komentarze pod postami", type: "positive", description: "Pod postami toczą się rozmowy z klientkami — komentarze, pytania, komplementy. To sygnał wysokiego zaangażowania dla algorytmu." },
+          { id: "fb_engage_shares", label: "Posty udostępniane przez klientki", type: "positive", description: "Klientki udostępniają posty na swoich profilach — to najlepsza darmowa reklama i rekomendacja." },
+          { id: "fb_engage_reviews_positive", label: "Pozytywne opinie na Facebooku", type: "positive", description: "Profil ma pozytywne opinie od klientek z odpowiedziami salonu — buduje to zaufanie nowych odwiedzających." },
           { id: "fb_engage_no_reply_comments", label: "Komentarze bez odpowiedzi", type: "issue", description: "Pod postami sa komentarze od klientek, ale salon na nie nie odpowiada. To niszczy relacje i zniecheca do interakcji.", recommendation: "Odpowiadaj na KAZDY komentarz w ciagu kilku godzin. Nawet 'Dziekujemy! ❤️' jest lepsze niz cisza." },
           { id: "fb_engage_zero_comments", label: "Posty bez zadnych komentarzy", type: "issue", description: "Posty nie generuja komentarzy — zero interakcji pod tresciami. Algorytm widzi brak zaangazowania i obcina zasiegi.", recommendation: "Zadawaj pytania w postach, uzywaj CTA 'Napisz w komentarzu'. Odpowiadaj na kazdy komentarz — buduj nawyk interakcji." },
           { id: "fb_engage_zero_likes", label: "Minimalna liczba reakcji na posty", type: "issue", description: "Posty zbieraja 2-5 reakcji — to sygnalizuje niskie zaangazowanie i obniza zasiegi organiczne.", recommendation: "Popraw jakosc tresci: lepsze zdjecia, angazujace opisy, CTA. Udostepniaj posty na stories. Zaangażuj zespol." },
@@ -139,9 +157,15 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "ig_profile",
         name: "Ustawienia profilu",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "ig_profile_ok", label: "Kompletny, profesjonalny profil", type: "positive", description: "Profil Instagram jest kompletny — profesjonalne zdjecie, bio z CTA, link do rezerwacji i uporzadkowane highlights." },
+          { id: "ig_bio_pro", label: "Konkretne, dobrze napisane bio", type: "positive", description: "Bio zawiera specjalizację, lokalizację i CTA — nowa osoba od razu wie czym salon się zajmuje i jak się umówić." },
+          { id: "ig_link_active", label: "Aktywny link do rezerwacji w bio", type: "positive", description: "Link w bio kieruje bezpośrednio do systemu rezerwacji lub Linktree z opcjami kontaktu — łatwy dostęp 24/7." },
+          { id: "ig_highlights_pro", label: "Uporządkowane highlights ze spójnymi okładkami", type: "positive", description: "Highlights są uporządkowane tematycznie ze spójnymi okładkami w kolorach marki — Cennik, Efekty, Opinie, Salon." },
+          { id: "ig_photo_matching", label: "Spójne zdjęcie profilowe z innymi platformami", type: "positive", description: "Zdjęcie profilowe jest takie samo jak na FB i Google — klientka od razu rozpoznaje markę na każdej platformie." },
+          { id: "ig_business_account", label: "Konto firmowe z przyciskami kontaktowymi", type: "positive", description: "Profil jest ustawiony jako konto firmowe z aktywnymi przyciskami Zadzwoń, Email i Jak dojechać." },
           
-          // Bio
+          // Błędy
           { id: "ig_bio_none", label: "Calkowicie puste bio", type: "issue", description: "Bio jest kompletnie puste — nowa osoba nie ma pojecia czym zajmuje sie salon, gdzie sie znajduje ani jak sie umowic.", recommendation: "Struktura bio: 1) Specjalizacja, 2) Lokalizacja, 3) CTA z emoji. Max 150 znakow. Jasno i konkretnie." },
           { id: "ig_bio_name_only", label: "W bio tylko nazwa salonu", type: "issue", description: "Bio zawiera wylacznie nazwe salonu — brak lokalizacji, specjalizacji, CTA. Nowa osoba nie zostanie, bo nie wie co tu znajdzie.", recommendation: "Dodaj: co robi salon, gdzie sie znajduje, jak sie umowic. Np. 'Koloryzacja & Stylizacja ✂️ Nowy Sącz 📍 Link poniżej ⬇️'" },
           { id: "ig_bio_generic", label: "Bio generyczne 'Salon beauty. Zapraszamy ❤️'", type: "issue", description: "Bio brzmi jak u kazdego salonu: 'Salon beauty 💇‍♀️ Zapraszamy ❤️' — zero wyroznikow, zero konkretow, mogloby byc o dowolnym salonie.", recommendation: "Dodaj konkrety: specjalizacja, lokalizacja, unikalna oferta. Np. 'Koloryzacja | Keratyna | Nowy Sacz | Umow sie ⬇️'." },
@@ -177,7 +201,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "ig_feed",
         name: "Spojnosc feedu",
         findings: [
-          { id: "ig_feed_consistent", label: "Spojny wizualnie feed", type: "positive", description: "Feed ma spojna palete kolorow i styl — profil wyglada profesjonalnie na pierwszy rzut oka." },
+          // Pozytywne — szczegółowe
+          { id: "ig_feed_consistent", label: "Spójny wizualnie feed", type: "positive", description: "Feed ma spojna palete kolorow i styl — profil wyglada profesjonalnie na pierwszy rzut oka." },
+          { id: "ig_feed_regular", label: "Regularne publikacje min. 3x/tydzień", type: "positive", description: "Posty pojawiają się regularnie minimum 3 razy w tygodniu — algorytm nagradza konsekwencję wyższymi zasięgami." },
+          { id: "ig_feed_mix", label: "Mix formatów: zdjęcia, karuzele, reelsy", type: "positive", description: "Feed zawiera różne formaty treści — zdjęcia, karuzele edukacyjne, reelsy. Każdy format przyciąga inną grupę." },
+          { id: "ig_feed_bright", label: "Jasne, dobrze oświetlone zdjęcia", type: "positive", description: "Zdjęcia w feedzie są jasne i atrakcyjne — dobre oświetlenie przyciąga uwagę i buduje profesjonalny wizerunek." },
+          // Błędy
           { id: "ig_feed_chaotic", label: "Chaotyczny feed z roznymi filtrami i stylami", type: "issue", description: "Feed jest wizualnie niespojny — rozne filtry, kolory, style zdjec. Profil nie buduje profesjonalnego wizerunku.", recommendation: "Wybierz 2-3 kolory przewodnie i jeden preset na zdjecia. Planuj feed wizualnie (aplikacja Preview lub Later)." },
           { id: "ig_feed_dark", label: "Ciemne zdjecia dominuja w feedzie", type: "issue", description: "Wiekszosc zdjec w feedzie jest ciemna — zle oswietlenie sprawia ze efekty pracy sa ledwo widoczne.", recommendation: "Inwestuj w oswietlenie (ring light). Edytuj zdjecia: podkrecaj jasnosc, kontrast, cieplo. Spojny preset pomoze." },
           { id: "ig_feed_only_photos", label: "Tylko jeden format tresci w feedzie", type: "issue", description: "Feed zawiera wylacznie jeden typ tresci (np. same zdjecia efektow). Brakuje karuzeli, grafik, reelsow.", recommendation: "Zaplanuj mix: zdjecia efektow, karuzele edukacyjne, reelsy, grafiki z tipami. Kazdy format przyciaga inna grupe." },
@@ -191,7 +220,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "ig_stories",
         name: "Stories",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "ig_stories_regular", label: "Regularne publikowanie stories", type: "positive", description: "Stories sa publikowane regularnie — to buduje relacje z obserwujacymi i utrzymuje widocznosc w algorytmie." },
+          { id: "ig_stories_interactive", label: "Interaktywne stories z ankietami i quizami", type: "positive", description: "Stories wykorzystują ankiety, pytania i quizy — angażują obserwujących i budują relację." },
+          { id: "ig_stories_face", label: "Właścicielka pokazuje się w stories", type: "positive", description: "W stories pojawia się twarz właścicielki/stylistki — klientki widzą kto stoi za marką. Buduje to osobistą relację." },
+          { id: "ig_stories_variety", label: "Różnorodne stories: kulisy, efekty, relacje", type: "positive", description: "Stories pokazują kulisy pracy, efekty, relacje z klientkami — autentyczność buduje silniejsze połączenie z marką." },
+          // Błędy
           { id: "ig_stories_none", label: "Zero stories na profilu", type: "issue", description: "Stories nie sa w ogole publikowane. To najsilniejszy kanal do budowania relacji z klientkami — pomijanie go to stracona szansa.", recommendation: "Zacznij od minimum 2-3 stories dziennie. Pokaz kulisy pracy, proces, efekty, poranki w salonie." },
           { id: "ig_stories_rare", label: "Stories kilka razy w miesiacu", type: "issue", description: "Stories pojawiaja sie sporadycznie — kilka w miesiacu. To za malo, zeby budowac relacje i byc w swiadomosci klientek.", recommendation: "Publikuj stories CODZIENNIE. Min. 3-5 dziennie. Stories znikaja po 24h — to format na ilosc, nie jakosc." },
           { id: "ig_stories_no_interact", label: "Brak ankiet, pytan i quizow", type: "issue", description: "Stories nie wykorzystuja elementow interaktywnych — zero ankiet, pytan, quizow. Obniza zaangazowanie i zasiegi.", recommendation: "Dodaj min. 1 interaktywny element dziennie: ankieta, quiz, pytanie, suwak. Algorytm nagradza interakcje." },
@@ -215,7 +249,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "content_copy",
         name: "Copywriting i opisy",
         findings: [
-          { id: "content_copy_good", label: "Angazujace, storytellingowe opisy", type: "positive", description: "Opisy postow opowiadaja historie, buduja emocje i prowadza do dzialania. To wyroznia profil na tle konkurencji." },
+          // Pozytywne — szczegółowe
+          { id: "content_copy_good", label: "Angażujące, storytellingowe opisy", type: "positive", description: "Opisy postow opowiadaja historie, buduja emocje i prowadza do dzialania. To wyroznia profil na tle konkurencji." },
+          { id: "content_copy_cta_present", label: "Wyraźne CTA w każdym poście", type: "positive", description: "Każdy post kończy się wezwaniem do działania — klientki wiedzą co zrobić: napisać, zadzwonić, zarezerwować." },
+          { id: "content_copy_personal", label: "Spersonalizowane, unikalne opisy", type: "positive", description: "Każdy post ma unikalny, spersonalizowany opis — opowiada inną historię, używa różnych formatów. Żadne kopiuj-wklej." },
+          { id: "content_copy_structured", label: "Dobrze sformatowane teksty", type: "positive", description: "Opisy są czytelnie sformatowane — krótkie akapity, emoji separatory, hook na początku. Łatwe do czytania na telefonie." },
+          // Błędy
           { id: "content_copy_missing", label: "Posty calkowicie bez opisow", type: "issue", description: "Posty sa publikowane bez jakiegokolwiek opisu — samo zdjecie. Algorytm nie wie jak klasyfikowac tresci i nie promuje ich.", recommendation: "KAZDY post musi miec opis. Min. 3-5 zdan. Bez opisu post jest niewidoczny dla algorytmu i bezwartosciowy dla klientek." },
           { id: "content_copy_minimal", label: "Minimalne opisy, 1-2 slowa lub emoji", type: "issue", description: "Opisy to pojedyncze slowa lub emotikony: 'Efekt', '💇‍♀️✨', 'Zapraszamy'. Zero wartosci, zero personalizacji.", recommendation: "Rozbuduj opisy: opowiedz o procesie, uzytych produktach, efekcie. Min. 3-5 zdan. Uzyj emocji i storytellingu." },
           { id: "content_copy_template", label: "Szablonowe, kopiowane opisy", type: "issue", description: "Kazdy post ma identyczny schemat opisu — te same frazy, ten sam uklad. Wyglada jak automat, nie jak czlowiek.", recommendation: "Personalizuj kazdy opis. Opowiedz cos nowego: historie klientki, wyzwanie, proces. Kazdy post to unikalna historia." },
@@ -230,7 +269,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "content_photos",
         name: "Jakosc zdjec i wideo",
         findings: [
-          { id: "content_photos_pro", label: "Profesjonalna jakosc zdjec", type: "positive", description: "Zdjecia sa dobrze oswietlone, ostre, z neutralnym tlem. Buduja zaufanie do jakosci uslug." },
+          // Pozytywne — szczegółowe
+          { id: "content_photos_pro", label: "Profesjonalna jakość zdjęć", type: "positive", description: "Zdjecia sa dobrze oswietlone, ostre, z neutralnym tlem. Buduja zaufanie do jakosci uslug." },
+          { id: "content_photos_ba_quality", label: "Spójne before/after w tych samych warunkach", type: "positive", description: "Zdjęcia before/after są robione w identycznych warunkach — to samo światło, kąt i dystans. Wiarygodny dowód jakości." },
+          { id: "content_photos_video_present", label: "Regularne treści wideo", type: "positive", description: "Profil zawiera regularne treści wideo — reelsy, metamorfozy, timelapse. Wideo generuje 2-3x więcej zasięgów." },
+          { id: "content_photos_setup", label: "Profesjonalne stanowisko do zdjęć", type: "positive", description: "Salon ma przygotowane stanowisko foto z dobrym oświetleniem i neutralnym tłem — każde zdjęcie wygląda profesjonalnie." },
+          // Błędy
           { id: "content_photos_dark", label: "Ciemne zdjecia ze zlym oswietleniem", type: "issue", description: "Zdjecia sa ciemne i zle oswietlone — efekty pracy sa ledwo widoczne. W branzy beauty zdjecie = dowod jakosci.", recommendation: "Ring light (ok. 100 zl), neutralne tlo, ten sam kat. Rob 3-5 zdjec i wybieraj najlepsze." },
           { id: "content_photos_blurry", label: "Rozmazane, nieostrze zdjecia", type: "issue", description: "Zdjecia sa nieostrze, robione w ruchu lub z brudnym obiektywem. Profesjonalny efekt na rozmazanym zdjeciu jest stracony.", recommendation: "Czysc obiektyw telefonu, ustabilizuj reke lub uzyj statywu. Rob zdjecia w dobrym swietle — telefon lepiej ostrzy." },
           { id: "content_photos_bad_bg", label: "Balagan w tle zdjec", type: "issue", description: "Na zdjeciach widac balagan: produkty, reczniki, inne klientki, nieuporzadkowane stanowisko. Tlo odciaga uwage od efektu.", recommendation: "Przygotuj czyste, neutralne tlo. Zrob 'kat foto' w salonie — dobre tlo, oswietlenie, kilka rekwizytow." },
@@ -246,7 +290,11 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "content_hashtags",
         name: "Strategia hashtagow",
         findings: [
-          { id: "content_hashtags_good", label: "Strategiczny dobor hashtagow", type: "positive", description: "Hashtagi sa dobrane strategicznie — mix popularnych, niszowych i lokalnych. Zwieksza to widocznosc postow." },
+          // Pozytywne — szczegółowe
+          { id: "content_hashtags_good", label: "Strategiczny dobór hashtagów", type: "positive", description: "Hashtagi sa dobrane strategicznie — mix popularnych, niszowych i lokalnych. Zwieksza to widocznosc postow." },
+          { id: "content_hashtags_local", label: "Hashtagi lokalne z miastem", type: "positive", description: "Hashtagi zawierają nazwę miasta i regionu — profil jest widoczny dla lokalnych klientek szukających salonu." },
+          { id: "content_hashtags_rotated", label: "Rotacja zestawów hashtagów", type: "positive", description: "Hashtagi są rotowane między postami — różne zestawy unikają efektu spam i docierają do szerszej grupy." },
+          // Błędy
           { id: "content_hashtags_none", label: "Calkowity brak hashtagow", type: "issue", description: "Posty nie maja hashtagow — sa niewidoczne w wyszukiwarce Instagram i Explore. Stracona szansa na nowe osoby.", recommendation: "Dodaj hashtagi do KAZDEGO posta. Przygotuj 3-4 zestawy hashtagow i rotuj je miedzy postami." },
           { id: "content_hashtags_random", label: "Losowe, przypadkowe hashtagi", type: "issue", description: "Hashtagi sa przypadkowe, nie pasuja do tresci posta. Np. #love #instagood pod zdjeciem metamorfozy.", recommendation: "Uzyj 15-20 hashtagow: 5 popularnych branżowych, 5 niszowych, 5 lokalnych. Dopasowuj do tresci konkretnego posta." },
           { id: "content_hashtags_same", label: "Te same hashtagi pod kazdym postem", type: "issue", description: "Pod kazdym postem sa identyczne hashtagi — algorytm to rozpoznaje i moze traktowac jako spam.", recommendation: "Przygotuj 3-5 zestawow hashtagow i rotuj je. Dopasowuj hashtagi do konkretnej tresci posta." },
@@ -260,7 +308,11 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "content_frequency",
         name: "Regularnosc publikacji",
         findings: [
-          { id: "content_freq_regular", label: "Regularne publikacje 3-4x na tydzien", type: "positive", description: "Posty sa publikowane regularnie, minimum 3-4 razy w tygodniu. Algorytm nagradza konsekwencje." },
+          // Pozytywne — szczegółowe
+          { id: "content_freq_regular", label: "Regularne publikacje 3-4x na tydzień", type: "positive", description: "Posty sa publikowane regularnie, minimum 3-4 razy w tygodniu. Algorytm nagradza konsekwencje." },
+          { id: "content_freq_planned", label: "Zaplanowany kalendarz treści", type: "positive", description: "Salon ma plan publikacji — treści są zaplanowane z wyprzedzeniem, co eliminuje przerwy i stres." },
+          { id: "content_freq_good_times", label: "Publikacje o optymalnych godzinach", type: "positive", description: "Posty są publikowane w godzinach największej aktywności grupy docelowej (11-13 i 18-21) — maksymalne zasięgi." },
+          // Błędy
           { id: "content_freq_dead", label: "Brak postow od wielu tygodni", type: "issue", description: "Ostatni post byl opublikowany wiele tygodni temu. Profil wyglada na porzucony — nikt nie zaobserwuje martwego konta.", recommendation: "Wroc do regularnych publikacji NATYCHMIAST. Zacznij od 2-3 postow/tydzien i zwieksz do 4-5. Plan tresci to klucz." },
           { id: "content_freq_irregular", label: "Seria postow, potem tygodnie ciszy", type: "issue", description: "Publikacje sa nieregularne — tydzien po 5 postow, potem 2 tygodnie ciszy. Algorytm karze za takie przerwy.", recommendation: "Ustal plan publikacji: min. 3 posty/tydzien + codzienne stories. Zaplanuj tresci na caly miesiac z gory." },
           { id: "content_freq_rare", label: "Jeden post na tydzien lub rzadziej", type: "issue", description: "Posty pojawiaja sie raz na tydzien lub rzadziej. Profil traci widocznosc, algorytm przestaje go promowac.", recommendation: "Zwieksz czestotliwosc do min. 3-4x/tydzien. Przygotuj kalendarz tresci — planowanie eliminuje stres." },
@@ -281,7 +333,13 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "sr_reels",
         name: "Formaty Reels",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "sr_reels_active", label: "Aktywne publikowanie Reels", type: "positive", description: "Reelsy sa publikowane regularnie z dobra jakoscia. To najlepszy sposob na zdobywanie nowych obserwujacych organicznie." },
+          { id: "sr_reels_edited", label: "Dobrze zmontowane reelsy z hookiem", type: "positive", description: "Reelsy mają dynamiczny montaż, hook w pierwszych 3 sekundach i trendową muzykę — zatrzymują uwagę widzów." },
+          { id: "sr_reels_subtitles", label: "Reelsy z napisami", type: "positive", description: "Reelsy mają napisy — większość osób ogląda bez dźwięku, napisy zapewniają że treść dotrze do wszystkich." },
+          { id: "sr_reels_trending", label: "Wykorzystanie trendowych dźwięków", type: "positive", description: "Reelsy korzystają z trendowych dźwięków i formatów — algorytm promuje treści z popularnymi audio." },
+          { id: "sr_reels_diverse", label: "Różnorodne formaty reelsów", type: "positive", description: "Reelsy są w różnych formatach: metamorfozy, POV, timelapse, tutorial, Q&A — różnorodność utrzymuje zainteresowanie." },
+          // Błędy
           { id: "sr_reels_none", label: "Zero Reels na profilu", type: "issue", description: "Profil nie ma w ogole reelsow. To rezygnacja z formatu, ktory generuje 2-3x wiecej zasiegow niz zwykle posty.", recommendation: "Zacznij od prostych formatow: metamorfoza 10 sek., POV klientki, timelapse procesu. Codziennie trendowa muzyka." },
           { id: "sr_reels_rare", label: "Sporadyczne Reels, 1-2 w miesiacu", type: "issue", description: "Reelsy pojawiaja sie za rzadko — algorytm nie promuje profilu w Explore jesli reelsy sa sporadyczne.", recommendation: "Publikuj min. 3-4 reelsy tygodniowo. Regularnosc jest kluczowa — algorytm nagradza konsekwentnych tworcow." },
           { id: "sr_reels_dark", label: "Ciemne Reels ze zlym oswietleniem", type: "issue", description: "Reelsy sa ciemne i zle oswietlone — efekty pracy sa ledwo widoczne. Klientka scrolluje dalej.", recommendation: "Ring light lub naturalne swiatlo z okna. Jasne, dobrze oswietlone reelsy maja wyzszy wskaznik ogladania." },
@@ -300,7 +358,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "sr_interaction",
         name: "Interakcje w stories",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "sr_interact_good", label: "Aktywne interakcje w stories", type: "positive", description: "Stories wykorzystuja ankiety, pytania, quizy — to buduje zaangazowanie i relacje z obserwujacymi." },
+          { id: "sr_interact_dialogue", label: "Dwustronna komunikacja z obserwującymi", type: "positive", description: "Salon odpowiada na wiadomości do stories i prowadzi dialog z klientkami — buduje to lojalność i zaufanie." },
+          { id: "sr_interact_link_sticker", label: "Naklejka z linkiem do rezerwacji", type: "positive", description: "Stories zawierają naklejkę z linkiem do rezerwacji — jeden klik = umówiona wizyta." },
+          { id: "sr_interact_countdown", label: "Odliczania do wydarzeń i promocji", type: "positive", description: "Stories wykorzystują odliczania do premier usług, promocji i wydarzeń — buduje to oczekiwanie i zaangażowanie." },
+          // Błędy
           { id: "sr_interact_none", label: "Zero elementow interaktywnych w stories", type: "issue", description: "Stories nie maja zadnych ankiet, pytan ani quizow. Interaktywne stories zwiekszaja engagement nawet o 40%.", recommendation: "Dodaj min. 1 interaktywny element dziennie. Pomysly: 'Blond czy braz?', 'Jaki kolor na wiosne?', 'Pytania do mnie!'" },
           { id: "sr_interact_passive", label: "Stories jednostronne bez dialogu z obserwujacymi", type: "issue", description: "Stories sa jednostronne — salon publikuje, ale nie zadaje pytan, nie zaczepka obserwujacych. Brak dialogu = slabe relacje.", recommendation: "Zadawaj pytania, rob ankiety, uzywaj 'zadaj mi pytanie'. Odpowiadaj na kazda wiadomosc — nawet krotko." },
           { id: "sr_interact_no_reply", label: "Brak odpowiedzi na wiadomosci do stories", type: "issue", description: "Wiadomosci od obserwujacych w odpowiedzi na stories pozostaja bez odpowiedzi — to niszczy relacje i zniecheca.", recommendation: "Odpowiadaj na KAZDA wiadomosc, nawet krotko. To buduje lojalnosc. Ustaw quick replies na najczestsze pytania." },
@@ -320,7 +383,13 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "brand_visual",
         name: "Identyfikacja wizualna",
         findings: [
-          { id: "brand_visual_ok", label: "Spojna identyfikacja wizualna", type: "positive", description: "Logo, kolory i styl grafik sa spojne na wszystkich platformach. Marka jest rozpoznawalna." },
+          // Pozytywne — szczegółowe
+          { id: "brand_visual_ok", label: "Spójna identyfikacja wizualna", type: "positive", description: "Logo, kolory i styl grafik sa spojne na wszystkich platformach. Marka jest rozpoznawalna." },
+          { id: "brand_logo_pro", label: "Profesjonalne, czytelne logo", type: "positive", description: "Logo jest proste, czytelne nawet w małym rozmiarze i spójne z branżą beauty. Buduje rozpoznawalność marki." },
+          { id: "brand_colors_consistent", label: "Spójna paleta kolorów marki", type: "positive", description: "Salon konsekwentnie używa 2-3 kolorów marki na wszystkich grafikach, postach i materiałach — buduje to rozpoznawalność." },
+          { id: "brand_templates_used", label: "Spójne szablony grafik", type: "positive", description: "Grafiki są tworzone z użyciem spójnych szablonów — te same czcionki, kolory, styl. Feed wygląda profesjonalnie." },
+          { id: "brand_watermark", label: "Znak wodny na zdjęciach efektów", type: "positive", description: "Zdjęcia efektów pracy mają delikatny znak wodny z logo/nazwą — chroni treści i buduje rozpoznawalność." },
+          // Błędy
           { id: "brand_no_logo", label: "Brak profesjonalnego logo", type: "issue", description: "Salon nie ma profesjonalnego logo — uzywa tekstu, losowego symbolu lub w ogole nic. Brak rozpoznawalnosci.", recommendation: "Zainwestuj w proste, czytelne logo. Nie musi byc drogie — wazne zeby bylo spojne i rozpoznawalne." },
           { id: "brand_logo_unreadable", label: "Logo nieczytelne w malym rozmiarze", type: "issue", description: "Logo ma za duzo detali i jest nieczytelne jako zdjecie profilowe (40x40 px) — traci swoja funkcje identyfikacyjna.", recommendation: "Uprość logo: mniej detali, wiekszy kontrast. Moze potrzebujesz uproszczonej wersji na social media." },
           { id: "brand_logo_different", label: "Rozne logo na roznych platformach", type: "issue", description: "Na Facebooku jest inne logo niz na Instagramie i stronie — klientka nie wie czy to ten sam salon.", recommendation: "Uzyj tego samego logo (lub wariantu) wszedzie. Spojnosc buduje rozpoznawalnosc i zaufanie." },
@@ -336,7 +405,11 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "brand_tone",
         name: "Ton komunikacji",
         findings: [
-          { id: "brand_tone_ok", label: "Spojny ton komunikacji", type: "positive", description: "Komunikacja jest spojna — ten sam styl, jezyk i emocje we wszystkich kanalach. Buduje to rozpoznawalnosc." },
+          // Pozytywne — szczegółowe
+          { id: "brand_tone_ok", label: "Spójny ton komunikacji", type: "positive", description: "Komunikacja jest spojna — ten sam styl, jezyk i emocje we wszystkich kanalach. Buduje to rozpoznawalnosc." },
+          { id: "brand_tone_warm", label: "Ciepły, osobisty ton komunikacji", type: "positive", description: "Salon komunikuje się ciepło i osobiście — klientki czują relację z marką, co buduje lojalność." },
+          { id: "brand_tone_personality", label: "Wyrazista osobowość marki", type: "positive", description: "Profil ma wyrazistą osobowość — własny głos, styl i charakter. Wyróżnia się na tle szablonowej konkurencji." },
+          // Błędy
           { id: "brand_tone_mixed", label: "Niespojny ton, raz formalny raz luzny", type: "issue", description: "Ton komunikacji zmienia sie miedzy postami — raz formalny, raz slangowy. Brak jednolitego glosu marki.", recommendation: "Ustal ton: przyjazny i profesjonalny. Mow do klientek jak do przyjaciolki, ale z szacunkiem." },
           { id: "brand_tone_cold", label: "Zbyt formalny, sztywny ton komunikacji", type: "issue", description: "Komunikacja brzmi jak z korporacji — sztywna, bezosobowa. W branzy beauty klientki szukaja ciepla i relacji.", recommendation: "Pisz cieplo, personalnie. Uzywaj imion, emocji, opowiadaj historie. Klientka ma czuc, ze pisze do niej czlowiek." },
           { id: "brand_tone_no_personality", label: "Brak osobowosci marki w komunikacji", type: "issue", description: "Profil nie ma wyrazistej osobowosci — posty moglyby byc z dowolnego salonu. Zero elementow wyrozniajacych.", recommendation: "Zdefiniuj osobowosc marki: co Cie wyroznia? Humor? Profesjonalizm? Edukacja? Konsekwentnie komunikuj te cechy." },
@@ -348,7 +421,11 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "brand_cross_platform",
         name: "Spojnosc miedzy platformami",
         findings: [
-          { id: "brand_cross_ok", label: "Spojna prezentacja na wszystkich platformach", type: "positive", description: "Salon wyglada tak samo na FB, IG, Google i stronie www — klientka od razu rozpoznaje marke." },
+          // Pozytywne — szczegółowe
+          { id: "brand_cross_ok", label: "Spójna prezentacja na wszystkich platformach", type: "positive", description: "Salon wyglada tak samo na FB, IG, Google i stronie www — klientka od razu rozpoznaje marke." },
+          { id: "brand_cross_linked", label: "Platformy linkują do siebie nawzajem", type: "positive", description: "Na każdej platformie są linki do pozostałych — klientka łatwo znajdzie salon wszędzie." },
+          { id: "brand_cross_same_info", label: "Spójne dane na wszystkich platformach", type: "positive", description: "Ten sam adres, telefon, godziny i nazwa na FB, IG, Google i stronie — zero dezorientacji." },
+          // Błędy
           { id: "brand_cross_different_names", label: "Rozne nazwy na roznych platformach", type: "issue", description: "Na FB salon nazywa sie inaczej niz na IG i Google — klientki nie wiedza czy to ten sam salon.", recommendation: "Ujednolic nazwe na wszystkich platformach. Ta sama nazwa = latwe znajdowanie i rozpoznawalnosc." },
           { id: "brand_cross_different_info", label: "Rozne informacje na roznych platformach", type: "issue", description: "Na FB sa inne godziny niz na Google, inny telefon niz na stronie — klientka nie wie komu ufac.", recommendation: "Sprawdz i zaktualizuj dane na WSZYSTKICH platformach jednoczesnie. Ten sam adres, telefon, godziny wszedzie." },
           { id: "brand_cross_abandoned_platform", label: "Porzucona platforma z przestarzalymi danymi", type: "issue", description: "Jedna z platform (np. FB) jest calkowicie porzucona — stare posty, nieaktualne dane. Klientki trafiaja tu i tracą zaufanie.", recommendation: "Albo usun/ukryj porzucona platforme, albo zaktualizuj podstawowe dane. Porzucony profil szkodzi wizerunkowi." },
@@ -367,7 +444,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "comp_local",
         name: "Konkurencja lokalna",
         findings: [
-          { id: "comp_local_ahead", label: "Salon wyprzedza lokalna konkurencje", type: "positive", description: "Na tle lokalnej konkurencji salon wyroznia sie profesjonalnym marketingiem, regularnymi publikacjami i spojnym wizerunkiem." },
+          // Pozytywne — szczegółowe
+          { id: "comp_local_ahead", label: "Salon wyprzedza lokalną konkurencję", type: "positive", description: "Na tle lokalnej konkurencji salon wyroznia sie profesjonalnym marketingiem, regularnymi publikacjami i spojnym wizerunkiem." },
+          { id: "comp_local_more_reviews_us", label: "Więcej opinii niż konkurencja", type: "positive", description: "Salon ma więcej pozytywnych opinii na Google niż lokalna konkurencja — to buduje zaufanie i wyższą pozycję w mapach." },
+          { id: "comp_local_better_content", label: "Lepsza jakość treści niż konkurencja", type: "positive", description: "Zdjęcia, opisy i reelsy salonu są wyraźnie lepszej jakości niż u lokalnej konkurencji — buduje to przewagę." },
+          { id: "comp_local_unique_offer", label: "Unikalna oferta niedostępna u konkurencji", type: "positive", description: "Salon oferuje usługi lub specjalizacje, których nie ma lokalna konkurencja — to naturalny wyróżnik." },
+          // Błędy
           { id: "comp_local_strong_rival", label: "Silna konkurencja z profesjonalnym marketingiem", type: "issue", description: "W okolicy dziala salon z profesjonalnym marketingiem — regularnie publikuje, ma reklamy, aktywne opinie. Przejmuje klientki.", recommendation: "Przeanalizuj co robi konkurencja dobrze i zrob to LEPIEJ. Wyroznik to klucz — znajdz cos czego oni nie robia." },
           { id: "comp_local_more_reviews", label: "Konkurencja ma wiecej opinii na Google", type: "issue", description: "Lokalne salony maja znacznie wiecej opinii na Google — klientki porownuja i wybieraja te z wyzsza ocena i wieksza liczba.", recommendation: "Zacznij aktywnie zbierac opinie. SMS po wizycie z linkiem. Cel: przewyzszyc konkurencje w ciagu 3-6 miesiecy." },
           { id: "comp_local_more_followers", label: "Konkurencja ma wiecej obserwujacych", type: "issue", description: "Lokalne salony maja wiecej obserwujacych na IG/FB. Wieksza spolecznosc = wiecej zasiegow i rekomendacji.", recommendation: "Skup sie na jakosci, nie ilości. Regularnosc + reelsy + interakcje = organiczny wzrost. Rozważ współprace lokalne." },
@@ -384,7 +466,11 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "comp_positioning",
         name: "Pozycjonowanie marki",
         findings: [
-          { id: "comp_pos_unique", label: "Salon ma wyrazny wyroznik na rynku", type: "positive", description: "Salon ma jasno zdefiniowany wyroznik — specjalizacje, unikalna usluge lub styl komunikacji, ktory przyciaga klientki." },
+          // Pozytywne — szczegółowe
+          { id: "comp_pos_unique", label: "Salon ma wyraźny wyróżnik na rynku", type: "positive", description: "Salon ma jasno zdefiniowany wyroznik — specjalizacje, unikalna usluge lub styl komunikacji, ktory przyciaga klientki." },
+          { id: "comp_pos_specialty_clear", label: "Jasna specjalizacja i nisza", type: "positive", description: "Salon jest rozpoznawany jako specjalista w konkretnej dziedzinie — to przyciąga klientki szukające eksperta." },
+          { id: "comp_pos_premium", label: "Pozycjonowanie jako salon premium", type: "positive", description: "Salon skutecznie pozycjonuje się jako premium — jakość usług, komunikacja i wizerunek uzasadniają wyższe ceny." },
+          // Błędy
           { id: "comp_pos_no_usp", label: "Brak wyroznika na tle konkurencji", type: "issue", description: "Salon nie ma wyraznego wyroznika na tle konkurencji — te same uslugi, podobne ceny, generyczna komunikacja. Klientka nie wie dlaczego wybrac wlasnie ten salon.", recommendation: "Zdefiniuj USP: co robi TEN salon lepiej? Specjalizacja, doswiadczenie, podejscie, atmosfera? Komunikuj to konsekwentnie." },
           { id: "comp_pos_no_specialty", label: "Brak wyraznej specjalizacji", type: "issue", description: "Salon oferuje wszystko, ale nie specjalizuje sie w niczym konkretnym. 'Robimy wszystko' = 'Nie robimy nic wybitnie'.", recommendation: "Wybierz 1-2 glowne specjalizacje i komunikuj je jako ekspert. Lepiej byc znanym z jednej rzeczy niz nieznanym z wielu." },
           { id: "comp_pos_price_war", label: "Konkurowanie wylacznie cena", type: "issue", description: "Salon konkuruje glownie niska cena — to sciganie w dol. Klientki szukajace najtanszego salonu nie sa lojalne.", recommendation: "Konkuruj WARTOSCIA, nie cena. Pokaz jakosc, doswiadczenie, efekty. Klientki platne za pewnosc, nie za najtansza cene." },
@@ -397,7 +483,11 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "comp_opportunities",
         name: "Szanse rynkowe",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "comp_opp_exploited", label: "Salon wykorzystuje luki rynkowe", type: "positive", description: "Salon identyfikuje i wykorzystuje szanse, ktorych konkurencja nie widzi — to buduje przewage konkurencyjna." },
+          { id: "comp_opp_collabs", label: "Aktywne współprace lokalne", type: "positive", description: "Salon współpracuje z lokalnymi influencerkami i twórcami — cross-promocja generuje nowych klientek." },
+          { id: "comp_opp_seasonal_active", label: "Aktywne kampanie sezonowe", type: "positive", description: "Salon planuje kampanie sezonowe z wyprzedzeniem — wesela, studniówki, święta. Wykorzystuje każdą okazję." },
+          // Błędy
           { id: "comp_opp_no_education", label: "Konkurencja nie edukuje, szansa na eksperta", type: "issue", description: "Zadna lokalna konkurencja nie publikuje tresci edukacyjnych. To szansa na pozycje eksperta w regionie.", recommendation: "Zacznij publikowac tipy, porady, edukacje. Klientki szukaja wiedzy — pokaz sie jako ekspert i buduj zaufanie." },
           { id: "comp_opp_no_reels_local", label: "Konkurencja nie robi Reels, szansa na zasiegi", type: "issue", description: "Lokalna konkurencja nie publikuje reelsow lub robi to sporadycznie. To szansa na zdobycie zasiegow i nowych klientek.", recommendation: "Zacznij publikowac reelsy TERAZ. Na rynku bez konkurencji nawet proste reelsy zdobywaja duze zasiegi." },
           { id: "comp_opp_no_collab", label: "Brak wspólprac lokalnych", type: "issue", description: "Salon nie wspólpracuje z lokalnymi influencerkami, fotografami, makeup artists. To stracona szansa na cross-promocje.", recommendation: "Nawiaz wspolprace z lokalnymi tworcami: wymiana uslug za tresci, wspolne live'y, polecenia. Win-win dla obu stron." },
@@ -418,7 +508,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "ads_campaigns",
         name: "Kampanie reklamowe",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "ads_active", label: "Aktywne kampanie reklamowe", type: "positive", description: "Salon prowadzi aktywne kampanie reklamowe na Facebooku/Instagramie. To przyspiesza pozyskiwanie nowych klientek." },
+          { id: "ads_good_creatives", label: "Atrakcyjne kreacje reklamowe", type: "positive", description: "Kreacje reklamowe są wysokiej jakości — dobre zdjęcia/wideo, chwytliwe nagłówki i wyraźne CTA." },
+          { id: "ads_targeted", label: "Precyzyjne targetowanie reklam", type: "positive", description: "Reklamy są precyzyjnie targetowane na grupę docelową — lokalne kobiety zainteresowane beauty. Budżet nie jest marnowany." },
+          { id: "ads_video_used", label: "Reklamy wideo z metamorfozami", type: "positive", description: "Kampanie wykorzystują wideo — metamorfozy, before/after z muzyką. Wideo konwertuje 2-3x lepiej niż statyczne zdjęcia." },
+          // Błędy
           { id: "ads_none", label: "Zero kampanii reklamowych", type: "issue", description: "Salon nie prowadzi zadnych kampanii platnych. Organiczny zasieg to za malo, zeby szybko rozwijac baze klientek.", recommendation: "Zacznij od prostej kampanii na zasieg lub wiadomosci. Budzet: min. 10-20 zl/dzien. Targetuj kobiety w promieniu 15 km." },
           { id: "ads_boosted_only", label: "Tylko promowane posty zamiast kampanii", type: "issue", description: "Salon tylko promuje posty przyciskiem 'Promuj' — to najmniej skuteczna forma reklamy z ograniczonymi opcjami.", recommendation: "Przejdz do Menadzera Reklam — pozwala na precyzyjne targetowanie, A/B testy i optymalizacje pod konwersje." },
           { id: "ads_inactive", label: "Kampanie zostaly wylaczone", type: "issue", description: "Salon prowadzil kampanie, ale je wylaczyl. Brak ciaglości reklamowej oznacza utrate rozpędu i cieplej grupy odbiorcow.", recommendation: "Wlacz kampanie ponownie. Nawet maly budzet (10 zl/dzien) utrzymuje widocznosc i zbiera dane o grupie docelowej." },
@@ -433,7 +528,11 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "ads_strategy",
         name: "Strategia reklamowa",
         findings: [
-          { id: "ads_strategy_ok", label: "Przemyslana strategia reklamowa", type: "positive", description: "Salon testuje warianty reklam, ma lejek i optymalizuje kampanie. To profesjonalne podejscie do reklam." },
+          // Pozytywne — szczegółowe
+          { id: "ads_strategy_ok", label: "Przemyślana strategia reklamowa", type: "positive", description: "Salon testuje warianty reklam, ma lejek i optymalizuje kampanie. To profesjonalne podejscie do reklam." },
+          { id: "ads_strategy_testing", label: "A/B testowanie wariantów reklam", type: "positive", description: "Kampanie testują różne warianty kreacji, nagłówków i CTA — dane pokazują co działa najlepiej." },
+          { id: "ads_strategy_funnel", label: "Działający lejek reklamowy", type: "positive", description: "Reklamy mają lejek: zimny ruch → retargeting → konwersja. Systematyczne podejście maksymalizuje ROI." },
+          // Błędy
           { id: "ads_no_testing", label: "Brak testowania wariantow reklam", type: "issue", description: "Reklamy nie sa testowane w wariantach. Bez testow nie wiadomo, co dziala najlepiej — budzet jest marnowany.", recommendation: "Tworz min. 2-3 warianty kazdej reklamy: rozne zdjecia, naglowki, CTA. Porownuj wyniki po 3-5 dniach." },
           { id: "ads_no_funnel", label: "Brak lejka reklamowego", type: "issue", description: "Reklamy kieruja tylko do nowych osob. Brakuje retargetingu na osoby, ktore juz widzialy profil lub wchodzily w interakcje.", recommendation: "Stworz lejek: 1) Reklama na zimny ruch, 2) Retargeting na osoby interagujace, 3) Reklama na konwersje." },
           { id: "ads_no_pixel", label: "Brak piksela Facebooka na stronie", type: "issue", description: "Na stronie www nie jest zainstalowany piksel Facebooka — brak danych o ruchu uniemozliwia retargeting.", recommendation: "Zainstaluj piksel Facebooka na stronie i w systemie rezerwacji. Pozwoli to na precyzyjny retargeting." },
@@ -454,7 +553,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "gmb_profile",
         name: "Dane wizytowki",
         findings: [
-          { id: "gmb_complete", label: "Kompletna wizytowka Google", type: "positive", description: "Wizytowka Google jest kompletna — aktualne dane, zdjecia, godziny otwarcia. Salon jest latwy do znalezienia." },
+          // Pozytywne — szczegółowe
+          { id: "gmb_complete", label: "Kompletna wizytówka Google", type: "positive", description: "Wizytowka Google jest kompletna — aktualne dane, zdjecia, godziny otwarcia. Salon jest latwy do znalezienia." },
+          { id: "gmb_photos_many", label: "Dużo aktualnych zdjęć w wizytówce", type: "positive", description: "Wizytówka ma 15+ aktualnych zdjęć — wnętrze, efekty pracy, zespół. To zwiększa zaufanie i konwersję o 42%." },
+          { id: "gmb_services_listed", label: "Pełna lista usług z cenami", type: "positive", description: "Wizytówka ma kompletną listę usług z opisami i cenami — klientki mogą porównać ofertę bez telefonowania." },
+          { id: "gmb_posts_active", label: "Regularne posty w wizytówce Google", type: "positive", description: "Salon publikuje posty w Google Business regularnie — oferty, efekty, aktualności. Google nagradza aktywne wizytówki." },
+          // Błędy
           { id: "gmb_not_claimed", label: "Wizytowka nie jest przejeta przez wlasciciela", type: "issue", description: "Wizytowka Google nie jest przejeta przez wlasciciela — ktokolwiek moze dodac bledne informacje lub zdjecia.", recommendation: "Przejmij wizytowke w Google Business Profile. Weryfikacja trwa kilka dni, ale daje pelna kontrole nad profilem." },
           { id: "gmb_no_description", label: "Brak opisu w wizytowce Google", type: "issue", description: "Wizytowka Google nie ma opisu — klientka widzi tylko nazwe i adres, bez informacji czym salon sie wyroznia.", recommendation: "Napisz opis do 750 znakow: specjalizacje, uslugi, co wyroznia salon. Dodaj slowa kluczowe lokalne." },
           { id: "gmb_no_photos", label: "Brak zdjec w wizytowce Google", type: "issue", description: "Wizytowka Google nie ma zdjec. Wizytowki ze zdjeciami dostaja 42% wiecej zapytan o trase do salonu.", recommendation: "Dodaj min. 10-15 zdjec: wnetrze salonu, efekty pracy, zespol, fasada. Aktualizuj co miesiac." },
@@ -471,7 +575,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "gmb_reviews",
         name: "Opinie Google",
         findings: [
-          { id: "gmb_reviews_good", label: "Duzo pozytywnych opinii z odpowiedziami", type: "positive", description: "Salon ma liczne pozytywne opinie na Google z odpowiedziami — to buduje zaufanie i wplywa na ranking w mapach." },
+          // Pozytywne — szczegółowe
+          { id: "gmb_reviews_good", label: "Dużo pozytywnych opinii z odpowiedziami", type: "positive", description: "Salon ma liczne pozytywne opinie na Google z odpowiedziami — to buduje zaufanie i wplywa na ranking w mapach." },
+          { id: "gmb_reviews_high_rating", label: "Wysoka średnia ocen 4.8+", type: "positive", description: "Średnia ocen jest powyżej 4.8 — klientki filtrują salony po ocenie i ten salon jest w czołówce." },
+          { id: "gmb_reviews_system", label: "System aktywnego zbierania opinii", type: "positive", description: "Salon ma wdrożony system proszenia o opinie — SMS po wizycie, QR kod w salonie. Regularnie przybywa nowych opinii." },
+          { id: "gmb_reviews_personal", label: "Spersonalizowane odpowiedzi na opinie", type: "positive", description: "Odpowiedzi na opinie są spersonalizowane — z imieniem, odniesieniem do usługi. Buduje to autentyczność." },
+          // Błędy
           { id: "gmb_reviews_zero", label: "Zero opinii na Google", type: "issue", description: "Salon nie ma zadnych opinii na Google. Klientki nie umowia wizyty w salonie bez opinii — brak zaufania.", recommendation: "Zacznij zbierac opinie OD DZIS. Wyslij SMS z linkiem do opinii do zadowolonych klientek po wizycie." },
           { id: "gmb_reviews_few", label: "Za malo opinii, ponizej 20", type: "issue", description: "Salon ma malo opinii na Google. Klientki porownuja liczbe opinii miedzy salonami — mala liczba nie budzi zaufania.", recommendation: "Pros zadowolone klientki o opinie — najlepiej SMS z linkiem tuz po wizycie. Cel: 2-3 nowe opinie/tydzien." },
           { id: "gmb_reviews_no_reply", label: "Opinie bez odpowiedzi od salonu", type: "issue", description: "Opinie na Google pozostaja bez odpowiedzi. To sygnal dla klientek, ze salon nie dba o feedback.", recommendation: "Odpowiadaj na KAZDA opinie w ciagu 24h — pozytywna i negatywna. Podziekuj, spersonalizuj, zapros ponownie." },
@@ -494,7 +603,13 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "web_ux",
         name: "Responsywnosc i UX",
         findings: [
+          // Pozytywne — szczegółowe
           { id: "web_ux_ok", label: "Responsywna, szybka strona", type: "positive", description: "Strona dziala poprawnie na telefonie — czytelna, szybka i latwa w nawigacji." },
+          { id: "web_booking_present", label: "Rezerwacja online na stronie", type: "positive", description: "Strona oferuje rezerwację online — klientki mogą umówić wizytę 24/7 bez telefonowania." },
+          { id: "web_prices_visible", label: "Przejrzysty cennik na stronie", type: "positive", description: "Strona ma przejrzysty, aktualny cennik — klientki wiedzą ile zapłacą przed umówieniem wizyty." },
+          { id: "web_gallery_present", label: "Galeria efektów pracy na stronie", type: "positive", description: "Strona prezentuje galerię efektów pracy — klientka widzi jakość usług i buduje zaufanie." },
+          { id: "web_testimonials_present", label: "Opinie klientek na stronie", type: "positive", description: "Strona prezentuje opinie klientek — społeczny dowód słuszności buduje zaufanie skuteczniej niż reklamy." },
+          // Błędy
           { id: "web_no_site", label: "Brak strony internetowej", type: "issue", description: "Salon nie ma strony internetowej. Klientki szukajace w Google nie znajda informacji o uslugach i cenach.", recommendation: "Stworz prosta strone: uslugi, cennik, galeria, kontakt, rezerwacja. WordPress lub Squarespace wystarczy." },
           { id: "web_not_responsive", label: "Strona nie dziala na telefonie", type: "issue", description: "Strona nie jest responsywna — na telefonie jest nieczytelna, elementy sie nakladaja. 80% klientek traci sie tu.", recommendation: "Strona MUSI byc mobile-first. Jesli obecna nie jest responsywna, rozwaz nowa strone na nowoczesnej platformie." },
           { id: "web_slow", label: "Wolne ladowanie strony ponad 3 sekundy", type: "issue", description: "Strona laduje sie dluzej niz 3 sekundy. 53% uzytkownikow porzuca strone, ktora laduje sie za dlugo.", recommendation: "Zoptymalizuj zdjecia (max 200 KB), wlacz cache, sprawdz hosting. Test na PageSpeed Insights (Google)." },
@@ -513,7 +628,12 @@ export const AUDIT_CATEGORIES: AuditCategoryDef[] = [
         id: "web_seo",
         name: "SEO i widocznosc",
         findings: [
-          { id: "web_seo_good", label: "Dobra widocznosc w Google", type: "positive", description: "Strona pojawia sie wysoko w wynikach Google na lokalne frazy. To generuje staly ruch organiczny." },
+          // Pozytywne — szczegółowe
+          { id: "web_seo_good", label: "Dobra widoczność w Google", type: "positive", description: "Strona pojawia sie wysoko w wynikach Google na lokalne frazy. To generuje staly ruch organiczny." },
+          { id: "web_seo_local_optimized", label: "Optymalizacja pod lokalne frazy", type: "positive", description: "Strona jest zoptymalizowana pod lokalne frazy kluczowe — 'salon fryzjerski + miasto'. Generuje ruch od lokalnych klientek." },
+          { id: "web_seo_meta_set", label: "Poprawne meta tagi i tytuły stron", type: "positive", description: "Każda strona ma unikalne meta tagi z nazwą miasta i specjalizacji — wyższy CTR w wynikach Google." },
+          { id: "web_seo_blog_active", label: "Aktywny blog z treściami SEO", type: "positive", description: "Strona ma aktywny blog z artykułami o pielęgnacji i trendach — buduje autorytet i pozycję w Google." },
+          // Błędy
           { id: "web_seo_invisible", label: "Strona niewidoczna w Google", type: "issue", description: "Strona nie pojawia sie w wynikach wyszukiwania nawet na nazwe salonu — jest calkowicie niewidoczna.", recommendation: "Sprawdz czy strona jest zaindeksowana w Google Search Console. Dodaj meta tagi, tytuly i opisy do kazdej strony." },
           { id: "web_seo_no_local", label: "Brak optymalizacji pod lokalne frazy", type: "issue", description: "Strona nie jest zoptymalizowana pod frazy typu 'salon fryzjerski Nowy Sacz' — traci lokalny ruch z Google.", recommendation: "Dodaj lokalne frazy kluczowe w tytulach, opisach i tresciach. Stworz strone z uslugami zawierajaca nazwe miasta." },
           { id: "web_seo_no_content", label: "Brak tekstu na stronie, same zdjecia", type: "issue", description: "Strona ma zdjecia, ale brak tekstu — Google nie wie o czym jest strona i nie moze jej zaindeksowac.", recommendation: "Dodaj opisy uslug, cennik tekstowy, sekcje FAQ, blog. Google potrzebuje tekstu, zeby zrozumiec tematykę strony." },

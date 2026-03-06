@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download, ChevronLeft, ChevronRight, ArrowLeft, Users, Save, Facebook, Instagram, Globe, Monitor, ChevronDown, Loader2, Check, X, GraduationCap } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, ArrowLeft, Users, Save, Facebook, Instagram, Globe, Monitor, ChevronDown, Loader2, Check, X, GraduationCap, ThumbsUp, AlertTriangle, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { AuditPreview } from "@/components/audit/AuditPreview";
 import {
   AUDIT_CATEGORIES, generateAuditSlides, getDefaultEnabledCategories,
-  getCategorySummary, getSubSectionFindingIds,
+  getCategorySummary,
 } from "@/components/audit/auditFindings";
 import { CATEGORY_ICONS } from "@/components/audit/auditSections";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,9 @@ const AuditGenerator = () => {
   const [checkedFindings, setCheckedFindings] = useState<Record<string, boolean>>({});
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [includeAcademy, setIncludeAcademy] = useState(true);
+  const [findingsView, setFindingsView] = useState<"issues" | "positives">("issues");
+  const [textOverrides, setTextOverrides] = useState<Record<string, { label?: string; description?: string; recommendation?: string }>>({});
+  const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
     ownerName: "",
@@ -94,6 +97,9 @@ const AuditGenerator = () => {
           }
           if (d.includeAcademy !== undefined) {
             setIncludeAcademy(d.includeAcademy === 'true');
+          }
+          if (d.textOverrides) {
+            try { setTextOverrides(JSON.parse(d.textOverrides)); } catch {}
           }
         }
       } catch (e) {
@@ -145,42 +151,14 @@ const AuditGenerator = () => {
 
   // Multi-select: toggle individual findings
   // Selecting "positive" deselects all issues in subsection; selecting any issue deselects positive
-  const selectFinding = (findingId: string, subSectionId: string) => {
+  const selectFinding = (findingId: string, _subSectionId: string) => {
     setCheckedFindings(prev => {
       const updated = { ...prev };
-      const subFindingIds = getSubSectionFindingIds(subSectionId);
-      
-      // Find the category to determine if this finding is positive or issue
-      let clickedFinding: { type: string } | undefined;
-      for (const cat of AUDIT_CATEGORIES) {
-        for (const sub of cat.subSections) {
-          if (sub.id === subSectionId) {
-            clickedFinding = sub.findings.find(f => f.id === findingId);
-          }
-        }
-      }
-      
-      if (clickedFinding?.type === "positive") {
-        // Clicking positive: deselect all in subsection, then toggle positive
-        for (const id of subFindingIds) delete updated[id];
-        if (!prev[findingId]) updated[findingId] = true;
+      // Simple toggle — positive and issue findings are independent
+      if (updated[findingId]) {
+        delete updated[findingId];
       } else {
-        // Clicking issue: deselect any positive in this subsection, then toggle this issue
-        for (const cat of AUDIT_CATEGORIES) {
-          for (const sub of cat.subSections) {
-            if (sub.id === subSectionId) {
-              for (const f of sub.findings) {
-                if (f.type === "positive" && updated[f.id]) delete updated[f.id];
-              }
-            }
-          }
-        }
-        // Toggle clicked issue
-        if (updated[findingId]) {
-          delete updated[findingId];
-        } else {
-          updated[findingId] = true;
-        }
+        updated[findingId] = true;
       }
       return updated;
     });
@@ -211,6 +189,7 @@ const AuditGenerator = () => {
     checkedFindings: JSON.stringify(checkedFindings),
     enabledCategories: JSON.stringify(enabledCategories),
     includeAcademy: String(includeAcademy),
+    textOverrides: JSON.stringify(textOverrides),
   });
 
   const handleSave = async () => {
@@ -426,8 +405,34 @@ const AuditGenerator = () => {
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-foreground">Sekcje audytu</p>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                {checkedCount} zaznaczonych \u00b7 {TOTAL_SLIDES} slajdow
+                {checkedCount} zaznaczonych · {TOTAL_SLIDES} slajdow
               </span>
+            </div>
+
+            {/* Toggle: Positives vs Issues */}
+            <div className="flex rounded-lg bg-secondary/50 border border-border/50 p-0.5">
+              <button
+                onClick={() => setFindingsView("positives")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all ${
+                  findingsView === "positives"
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <ThumbsUp className="w-3 h-3" />
+                Co działa dobrze
+              </button>
+              <button
+                onClick={() => setFindingsView("issues")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-xs font-medium transition-all ${
+                  findingsView === "issues"
+                    ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <AlertTriangle className="w-3 h-3" />
+                Do poprawy
+              </button>
             </div>
 
             <div className="space-y-1">
@@ -472,7 +477,7 @@ const AuditGenerator = () => {
                         {checkedInCat > 0 && (
                           <p className="text-[10px] text-muted-foreground">
                             {summary.positives > 0 && <span className="text-emerald-400">{summary.positives} ok</span>}
-                            {summary.positives > 0 && summary.issues > 0 && " \u00b7 "}
+                            {summary.positives > 0 && summary.issues > 0 && " · "}
                             {summary.issues > 0 && <span className="text-red-400">{summary.issues} do poprawy</span>}
                           </p>
                         )}
@@ -484,75 +489,68 @@ const AuditGenerator = () => {
                       />
                     </div>
 
-                    {/* Sub-sections with findings */}
+                    {/* Sub-sections with findings — filtered by view */}
                     {isEnabled && cat.subSections.length > 0 && expandedCategories[cat.id] && (
                       <div className="ml-4 mt-1 mb-2 space-y-2 border-l-2 border-primary/10 pl-3">
                         {cat.subSections.map((sub) => {
-                          const selectedInSub = sub.findings.filter(f => checkedFindings[f.id]);
-                          const positiveFindings = sub.findings.filter(f => f.type === "positive");
-                          const issueFindings = sub.findings.filter(f => f.type === "issue");
+                          const filteredFindings = sub.findings.filter(f =>
+                            findingsView === "positives" ? f.type === "positive" : f.type === "issue"
+                          );
+                          const selectedInSub = filteredFindings.filter(f => checkedFindings[f.id]);
+                          
+                          if (filteredFindings.length === 0) return null;
                           
                           return (
                             <div key={sub.id}>
                               <p className="text-[11px] font-semibold text-muted-foreground mb-1.5 px-2 flex items-center justify-between">
                                 {sub.name}
-                                {selectedInSub.length > 0 && (() => {
-                                  const hasPositive = selectedInSub.some(f => f.type === 'positive');
-                                  const issueCount = selectedInSub.filter(f => f.type === 'issue').length;
-                                  return (
-                                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${hasPositive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
-                                      {hasPositive ? 'OK' : `${issueCount} ${issueCount === 1 ? 'problem' : 'problemy'}`}
-                                    </span>
-                                  );
-                                })()}
+                                {selectedInSub.length > 0 && (
+                                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                                    findingsView === "positives"
+                                      ? 'bg-emerald-500/15 text-emerald-400'
+                                      : 'bg-red-500/15 text-red-400'
+                                  }`}>
+                                    {selectedInSub.length} zaznaczonych
+                                  </span>
+                                )}
                               </p>
                               
-                              {/* Positive options (radio-like — exclusive) */}
-                              {positiveFindings.map((finding) => (
-                                <div
-                                  key={finding.id}
-                                  className={`flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors ${
-                                    checkedFindings[finding.id] ? 'bg-emerald-500/10 border border-emerald-500/20' : 'hover:bg-secondary/30'
-                                  }`}
-                                  onClick={() => selectFinding(finding.id, sub.id)}
-                                >
-                                  <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                                    checkedFindings[finding.id] ? 'border-emerald-400 bg-emerald-400' : 'border-muted-foreground/40'
-                                  }`}>
-                                    {checkedFindings[finding.id] && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              {filteredFindings.map((finding) => {
+                                const isPositive = finding.type === "positive";
+                                const isChecked = checkedFindings[finding.id];
+                                return (
+                                  <div
+                                    key={finding.id}
+                                    className={`flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors ${
+                                      isChecked
+                                        ? isPositive
+                                          ? 'bg-emerald-500/10 border border-emerald-500/20'
+                                          : 'bg-red-500/10 border border-red-500/20'
+                                        : 'hover:bg-secondary/30'
+                                    }`}
+                                    onClick={() => selectFinding(finding.id, sub.id)}
+                                  >
+                                    <div className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                      isChecked
+                                        ? isPositive ? 'border-emerald-400 bg-emerald-400' : 'border-red-400 bg-red-400'
+                                        : isPositive ? 'border-emerald-500/30' : 'border-muted-foreground/40'
+                                    }`}>
+                                      {isChecked && <Check className="w-2.5 h-2.5 text-white" />}
+                                    </div>
+                                    <span className={`text-[11px] flex-1 ${
+                                      isChecked
+                                        ? isPositive ? 'text-emerald-300 font-medium' : 'text-red-300 font-medium'
+                                        : 'text-muted-foreground'
+                                    }`}>
+                                      {finding.label}
+                                    </span>
+                                    {isPositive
+                                      ? <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                                      : <X className="w-3 h-3 text-red-400 flex-shrink-0" />
+                                    }
                                   </div>
-                                  <span className={`text-[11px] flex-1 ${checkedFindings[finding.id] ? 'text-emerald-300 font-medium' : 'text-muted-foreground'}`}>
-                                    {finding.label}
-                                  </span>
-                                  <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />
-                                </div>
-                              ))}
-                              
-                              {/* Separator */}
-                              {positiveFindings.length > 0 && issueFindings.length > 0 && (
-                                <div className="border-t border-border/30 my-1 mx-2" />
-                              )}
-                              
-                              {/* Issue options (multi-select checkboxes) */}
-                              {issueFindings.map((finding) => (
-                                <div
-                                  key={finding.id}
-                                  className={`flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors ${
-                                    checkedFindings[finding.id] ? 'bg-red-500/10 border border-red-500/20' : 'hover:bg-secondary/30'
-                                  }`}
-                                  onClick={() => selectFinding(finding.id, sub.id)}
-                                >
-                                  <div className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                                    checkedFindings[finding.id] ? 'border-red-400 bg-red-400' : 'border-muted-foreground/40'
-                                  }`}>
-                                    {checkedFindings[finding.id] && <Check className="w-2.5 h-2.5 text-white" />}
-                                  </div>
-                                  <span className={`text-[11px] flex-1 ${checkedFindings[finding.id] ? 'text-red-300 font-medium' : 'text-muted-foreground'}`}>
-                                    {finding.label}
-                                  </span>
-                                  <X className="w-3 h-3 text-red-400 flex-shrink-0" />
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           );
                         })}
@@ -617,6 +615,20 @@ const AuditGenerator = () => {
             <Button onClick={nextSlide} size="icon" variant="outline" className="h-8 w-8" disabled={TOTAL_SLIDES === 0}>
               <ChevronRight className="w-4 h-4" />
             </Button>
+            <Button
+              variant={isEditing ? "default" : "outline"}
+              size="sm"
+              className="gap-2 ml-2"
+              onClick={() => {
+                if (isEditing) {
+                  toast.success("Zmiany w audycie zostały zapisane");
+                }
+                setIsEditing(!isEditing);
+              }}
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              {isEditing ? "Zapisz zmiany" : "Edytuj teksty"}
+            </Button>
           </div>
 
           <div className="flex gap-1.5 flex-wrap justify-end max-w-[200px]">
@@ -655,6 +667,14 @@ const AuditGenerator = () => {
                 enabledCategories={enabledCategories}
                 checkedFindings={checkedFindings}
                 includeAcademy={includeAcademy}
+                textOverrides={textOverrides}
+                isEditing={isEditing}
+                onTextChange={(findingId, field, value) => {
+                  setTextOverrides(prev => ({
+                    ...prev,
+                    [findingId]: { ...prev[findingId], [field]: value }
+                  }));
+                }}
               />
             </div>
           </div>
@@ -678,6 +698,7 @@ const AuditGenerator = () => {
               enabledCategories={enabledCategories}
               checkedFindings={checkedFindings}
               includeAcademy={includeAcademy}
+              textOverrides={textOverrides}
             />
           </div>
         ))}

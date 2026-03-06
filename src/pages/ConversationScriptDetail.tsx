@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AUDIT_CATEGORIES } from "@/components/audit/auditFindings";
+
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,22 +59,17 @@ export default function ConversationScriptDetail() {
   const [auditViewerOpen, setAuditViewerOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Load saved edits from localStorage - with version check
-  const loadSavedSections = (scriptId: string, expectedPointCount: number): ConversationSection[] | null => {
+  // Load saved edits from localStorage
+  const loadSavedSections = (scriptId: string): ConversationSection[] | null => {
     try {
-      const raw = localStorage.getItem(`script_edits_v2_${scriptId}`);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as ConversationSection[];
-      // Validate that saved data roughly matches expected audit findings count
-      const savedTotal = parsed.reduce((s, sec) => s + sec.talkingPoints.length, 0);
-      if (Math.abs(savedTotal - expectedPointCount) > 5) return null; // stale cache
-      return parsed;
+      const raw = localStorage.getItem(`script_edits_${scriptId}`);
+      return raw ? JSON.parse(raw) : null;
     } catch { return null; }
   };
 
   const saveSections = (scriptId: string, sections: ConversationSection[]) => {
     try {
-      localStorage.setItem(`script_edits_v2_${scriptId}`, JSON.stringify(sections));
+      localStorage.setItem(`script_edits_${scriptId}`, JSON.stringify(sections));
     } catch {}
   };
 
@@ -132,41 +127,50 @@ export default function ConversationScriptDetail() {
           let enabledCategories: Record<string, boolean> = {};
           let checkedFindings: Record<string, boolean> = {};
 
+          // Parse enabledCategories - may be string or object
           try {
-            enabledCategories = typeof auditData.enabledCategories === "string"
-              ? JSON.parse(auditData.enabledCategories)
-              : auditData.enabledCategories || {};
+            let raw = auditData.enabledCategories;
+            if (typeof raw === "string") raw = JSON.parse(raw);
+            if (typeof raw === "string") raw = JSON.parse(raw); // double-encoded
+            enabledCategories = raw || {};
           } catch {}
 
+          // Parse checkedFindings - may be string or object
           try {
-            checkedFindings = typeof auditData.checkedFindings === "string"
-              ? JSON.parse(auditData.checkedFindings)
-              : auditData.checkedFindings || {};
+            let raw = auditData.checkedFindings;
+            if (typeof raw === "string") raw = JSON.parse(raw);
+            if (typeof raw === "string") raw = JSON.parse(raw); // double-encoded
+            checkedFindings = raw || {};
           } catch {}
 
-          const hasAcademyFlag = auditData.includeAcademy === true || auditData.includeAcademy === "true";
+          console.log("[ConversationScript] enabledCategories:", enabledCategories);
+          console.log("[ConversationScript] checkedFindings:", checkedFindings);
 
-          // If enabledCategories is empty (no categories), use defaults
-          const hasAnyEnabled = Object.values(enabledCategories).some(v => v === true);
+          // If enabledCategories is empty, use defaults
+          const hasAnyEnabled = Object.values(enabledCategories).some(v => !!v);
           if (!hasAnyEnabled) {
+            console.warn("[ConversationScript] No enabled categories found");
             setGuideSections([]);
             return;
           }
 
-          // Only use findings that were actually checked in the audit
-          const hasAnyChecked = Object.values(checkedFindings).some(v => v === true);
+          // Only use actually checked findings
+          const hasAnyChecked = Object.values(checkedFindings).some(v => !!v);
+          if (!hasAnyChecked) {
+            console.warn("[ConversationScript] No checked findings found");
+            setGuideSections([]);
+            return;
+          }
 
-          if (hasAnyChecked) {
-            const freshSections = generateConversationGuide(enabledCategories, checkedFindings, hasAcademyFlag);
-            const expectedCount = freshSections.reduce((s, sec) => s + sec.talkingPoints.length, 0);
-            
-            // Check for user-edited version (v2 cache with version check)
-            const savedSections = id ? loadSavedSections(id, expectedCount) : null;
-            if (savedSections && savedSections.length > 0) {
-              setGuideSections(savedSections);
-            } else {
-              setGuideSections(freshSections);
-            }
+          const includeAcademyFlag = auditData.includeAcademy === true || auditData.includeAcademy === "true";
+
+          // Check for saved edits first
+          const savedSections = id ? loadSavedSections(id) : null;
+          if (savedSections && savedSections.length > 0) {
+            setGuideSections(savedSections);
+          } else {
+            const sections = generateConversationGuide(enabledCategories, checkedFindings, includeAcademyFlag);
+            setGuideSections(sections);
           }
         }
 
