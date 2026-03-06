@@ -895,7 +895,7 @@ const CategoryOverviewSlide = ({ data, slideNumber, totalSlides, slide }: {
 
       <div className="grid grid-cols-5 gap-8 flex-1 min-h-0">
         <div className="col-span-3 space-y-5 overflow-hidden">
-          <p className="text-zinc-300 text-base leading-relaxed">{cat.description}</p>
+          <p className="text-zinc-300 text-base leading-relaxed">{personalizeAuditText(cat.description, data.salonName)}</p>
 
           {total > 0 ? (
             <div className="grid grid-cols-2 gap-4">
