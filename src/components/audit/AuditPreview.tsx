@@ -250,89 +250,61 @@ const CategoryHeader = ({ catId, title, subtitle }: { catId: string; title: stri
 // ============ ACADEMY HINTS (subtle promotion) ============
 
 const ACADEMY_HINTS: Record<string, { text: string; feature: string }> = {
+  fb_profile: {
+    text: "W ramach współpracy klientka otrzymuje dostęp do Aurine Academy — autorskiej aplikacji, w której znajdzie materiały krok po kroku jak uzupełnić i zoptymalizować swój profil. Plus gotowe opisy do personalizacji.",
+    feature: "Materiały i gotowe opisy",
+  },
   fb_posts: {
-    text: "W aplikacji Aurine Academy klientka ma dostęp do generatora strategii AI, który tworzy gotowe opisy postów — z hookiem, storytellingiem i CTA. Wystarczy skopiować i opublikować. Do tego kalendarz postów planuje treści na cały miesiąc.",
-    feature: "Generator opisów AI + Kalendarz",
+    text: "W aplikacji Aurine Academy klientka ma dostęp do narzędzi wspierających tworzenie treści — gotowe szablony opisów, pomysły na posty i wskazówki jak pisać angażująco. Wszystko dopasowane do branży beauty.",
+    feature: "Wsparcie w tworzeniu treści",
   },
   fb_photos: {
-    text: "Generator grafik w Aurine Academy pozwala klientce wkleić swoje zdjęcia z zabiegów, a system automatycznie tworzy profesjonalne grafiki w 10+ szablonach — before/after, karuzele, posty z opisem. Bez Canvy, bez grafika.",
-    feature: "Generator grafik z własnych zdjęć",
-  },
-  fb_profile: {
-    text: "Klientka otrzymuje w aplikacji kurs krok po kroku jak uzupełnić profil Facebook — od zdjęcia w tle, przez opis, po przycisk CTA. Plus gotowe teksty do skopiowania i uzupełnienia swoimi danymi.",
-    feature: "Kurs uzupełniania profilu + gotowe teksty",
-  },
-  fb_engagement: {
-    text: "W Aurine Academy są gotowe szablony odpowiedzi na komentarze i wiadomości — klientka wybiera sytuację (pytanie o cenę, reklamacja, prośba o termin) i ma gotową odpowiedź do personalizacji.",
-    feature: "Szablony odpowiedzi na wiadomości",
+    text: "Aurine Academy zawiera praktyczne poradniki fotografii mobilnej dla salonów — jak robić zdjęcia efektów pracy, jakie oświetlenie wybrać i jak edytować zdjęcia na telefonie.",
+    feature: "Poradniki fotografii mobilnej",
   },
   ig_profile: {
-    text: "Aplikacja zawiera generator bio na Instagram z AI — klientka podaje specjalizację i miasto, a system tworzy profesjonalne bio z emoji i CTA. Plus kurs optymalizacji profilu z przykładami najlepszych salonów.",
-    feature: "Generator bio AI + Kurs profilu IG",
+    text: "W aplikacji klientka znajdzie narzędzia do optymalizacji profilu Instagram — generator bio, wskazówki dotyczące highlights i checklistę kompletnego profilu.",
+    feature: "Optymalizacja profilu IG",
   },
   ig_feed: {
-    text: "Generator grafik tworzy spójne wizualnie posty na feed — klientka wybiera szablon w kolorach swojego salonu, wkleja zdjęcia efektów pracy i dostaje gotową grafikę do publikacji.",
-    feature: "Generator spójnych grafik na feed",
+    text: "Aurine Academy wspiera budowanie spójnego feedu — klientka ma dostęp do szablonów grafik w kolorach swojego salonu i wskazówek jak planować publikacje.",
+    feature: "Spójność wizualna feedu",
   },
   ig_stories: {
-    text: "W aplikacji są gotowe scenariusze stories na każdy dzień tygodnia — poniedziałek: kulisy, wtorek: efekt pracy, środa: porada. Plus interaktywne szablony z ankietami i quizami do zaangażowania obserwujących.",
-    feature: "Scenariusze stories + szablony interakcji",
+    text: "W aplikacji są gotowe scenariusze stories na każdy dzień tygodnia i szablony interaktywne z ankietami — wszystko gotowe do użycia od razu.",
+    feature: "Gotowe scenariusze stories",
   },
   content_copy: {
-    text: "Generator strategii AI analizuje branżę klientki i tworzy spersonalizowany plan treści na 30 dni — z konkretnymi tematami, opisami i hashtagami. Klientka dodaje je jednym kliknięciem do kalendarza postów.",
-    feature: "Plan treści AI na 30 dni + Kalendarz",
+    text: "Aurine Academy oferuje narzędzia do planowania treści — kalendarz postów, pomysły tematyczne na cały miesiąc i wskazówki jak tworzyć angażujące opisy.",
+    feature: "Planowanie treści",
   },
   content_photos: {
-    text: "Generator before/after w aplikacji — klientka wkleja 2 zdjęcia (przed i po zabiegu), wybiera szablon i dostaje profesjonalną grafikę porównawczą gotową do publikacji. 10+ szablonów do wyboru.",
+    text: "W aplikacji klientka znajdzie generator grafik before/after — wkleja swoje zdjęcia, wybiera szablon i dostaje gotową grafikę do publikacji.",
     feature: "Generator grafik before/after",
   },
   content_hashtags: {
-    text: "AI w Aurine Academy dobiera hashtagi do każdego posta automatycznie — analizuje treść, branżę i lokalizację. Klientka dostaje zestaw 20-30 hashtagów podzielonych na kategorie: lokalne, branżowe, popularne.",
-    feature: "Inteligentne hashtagi AI",
-  },
-  content_frequency: {
-    text: "Kalendarz postów w aplikacji pokazuje klientce dokładnie co, kiedy i jak publikować — z przypomnieniami push. Plan na cały miesiąc z różnorodnymi formatami: edukacja, efekty, kulisy, angażowanie.",
-    feature: "Kalendarz postów z przypomnieniami",
+    text: "Aurine Academy dobiera hashtagi automatycznie — analizuje treść i lokalizację, proponując zestaw hashtagów dopasowany do branży beauty.",
+    feature: "Inteligentne hashtagi",
   },
   sr_reels: {
-    text: "Aurine Academy zawiera bibliotekę gotowych scenariuszy Reels — klientka wybiera typ (metamorfoza, porada, dzień z życia salonu), dostaje dokładny skrypt: co powiedzieć, jak sfilmować, jaka muzyka.",
-    feature: "Gotowe scenariusze Reels + instrukcje",
-  },
-  sr_interaction: {
-    text: "Gotowe szablony interaktywnych stories do skopiowania — ankiety, quizy, pytania, slidery. Każdy szablon ma instrukcję jak go użyć i przykład z branży beauty.",
-    feature: "Szablony interaktywnych stories",
+    text: "W aplikacji jest biblioteka gotowych scenariuszy Reels — klientka wybiera typ metamorfozy, dostaje dokładny skrypt co powiedzieć i jak sfilmować.",
+    feature: "Scenariusze Reels",
   },
   brand_visual: {
-    text: "Generator grafik w Aurine Academy ma szablony brandingowe dopasowane do kolorów salonu — klientka ustawia swoje kolory raz i wszystkie generowane materiały są wizualnie spójne.",
-    feature: "Szablony grafik w kolorach salonu",
-  },
-  brand_tone: {
-    text: "Kurs komunikacji marki w aplikacji uczy klientkę jak budować spójny ton komunikacji — od postów, przez stories, po odpowiedzi na wiadomości. Z przykładami i ćwiczeniami.",
-    feature: "Kurs komunikacji + ton marki",
-  },
-  ads_campaigns: {
-    text: "Klientka widzi w aplikacji status swoich kampanii reklamowych na żywo — czy kampania jest aktywna, ile wydano budżetu, jakie są wyniki. Plus bezpośredni kontakt z opiekunem kampanii.",
-    feature: "Podgląd kampanii na żywo + kontakt",
-  },
-  ads_strategy: {
-    text: "W aplikacji klientka ma podgląd całej strategii reklamowej — cele, grupy docelowe, budżety. Może zgłaszać uwagi i zadawać pytania bezpośrednio do opiekuna bez czekania na maile.",
-    feature: "Strategia + bezpośredni kontakt",
+    text: "Szablony grafik w Aurine Academy są dopasowane do kolorów salonu — klientka ustawia swoją paletę raz i wszystkie materiały są wizualnie spójne.",
+    feature: "Spójne szablony grafik",
   },
   gmb_profile: {
-    text: "W Aurine Academy są materiały krok po kroku jak uzupełnić wizytówkę Google — zdjęcia, opis usług, kategorie, godziny otwarcia. Plus gotowe opisy usług do skopiowania i personalizacji.",
-    feature: "Kurs Google + gotowe opisy usług",
+    text: "W Aurine Academy są materiały jak uzupełnić wizytówkę Google — zdjęcia, opisy usług, kategorie. Plus gotowe opisy do skopiowania i personalizacji.",
+    feature: "Optymalizacja wizytówki Google",
   },
   gmb_reviews: {
-    text: "Gotowe szablony wiadomości SMS i WhatsApp z prośbą o opinię Google — klientka salonu dostaje link bezpośrednio do formularza opinii. Plus szablony odpowiedzi na pozytywne i negatywne opinie.",
-    feature: "Szablony próśb o opinie + odpowiedzi",
+    text: "Gotowe szablony wiadomości z prośbą o opinię Google — klientka salonu dostaje link bezpośrednio do formularza opinii. Plus szablony odpowiedzi na opinie.",
+    feature: "Szablony próśb o opinie",
   },
   web_ux: {
-    text: "Kurs w aplikacji pokazuje klientce co powinna mieć na stronie www salonu — rezerwacja online, cennik, galeria efektów, opinie. Z checklistą i przykładami dobrze zrobionych stron.",
-    feature: "Kurs strony www + checklista",
-  },
-  web_seo: {
-    text: "Materiały SEO w Aurine Academy uczą klientkę jak być widoczną w Google — od wizytówki, przez wpisy blogowe, po słowa kluczowe. Gotowe wskazówki dopasowane do branży beauty.",
-    feature: "Poradnik SEO dla salonów beauty",
+    text: "Aurine Academy zawiera checklistę co powinna mieć strona www salonu — rezerwacja online, cennik, galeria efektów, opinie. Z przykładami dobrze zrobionych stron.",
+    feature: "Checklista strony www",
   },
 };
 
@@ -497,12 +469,11 @@ const EditableText = ({ value, onChange, className, tag = "p", isEditing = false
   );
 };
 
-// ============ FINDING CARD (redesigned) ============
+// ============ FINDING CARD (redesigned — compact, visual) ============
 
-const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextChange, isEditing = false, salonName, cityName }: {
+const FindingCard = ({ finding, catId, textOverrides, onTextChange, isEditing = false, salonName, cityName }: {
   finding: EnrichedFinding;
   catId?: string;
-  showAcademyHint?: { text: string; feature: string };
   textOverrides?: TextOverrides;
   onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void;
   isEditing?: boolean;
@@ -520,77 +491,48 @@ const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextCha
 
   if (isPositive) {
     return (
-      <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-emerald-500/[0.08] to-emerald-400/[0.03] border border-emerald-500/20 backdrop-blur-sm">
-        <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/5">
-          <CheckCircle2 className="w-5.5 h-5.5 text-emerald-400" />
+      <div className="flex items-start gap-3.5 p-4 rounded-xl bg-gradient-to-r from-emerald-500/[0.06] to-transparent border border-emerald-500/15">
+        <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <EditableText value={label} onChange={handleChange?.('label')} className="text-emerald-200 text-[15px] font-bold" isEditing={isEditing} />
-            <span className="text-[8px] uppercase tracking-[0.15em] text-emerald-400 font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/20">DOBRZE</span>
-          </div>
-          <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-400 text-[13px] leading-relaxed" isEditing={isEditing} />
+          <EditableText value={label} onChange={handleChange?.('label')} className="text-emerald-200 text-[14px] font-semibold leading-snug" isEditing={isEditing} />
+          <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-500 text-[12px] leading-relaxed mt-1" isEditing={isEditing} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-zinc-800/40 to-zinc-800/20 border border-zinc-700/30 backdrop-blur-sm overflow-hidden shadow-lg shadow-black/10">
-      {/* Issue header strip */}
-      <div className="px-5 py-2 bg-red-500/[0.06] border-b border-red-500/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-          <span className="text-[9px] uppercase tracking-[0.15em] text-red-400/90 font-bold">Wymaga poprawy</span>
-        </div>
-        <span className="text-[10px] text-zinc-600 font-medium">{finding.subSectionName}</span>
-      </div>
-
-      {/* Main finding content */}
-      <div className="p-5">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-500/5">
-            <AlertTriangle className="w-5.5 h-5.5 text-red-400" />
+    <div className="rounded-xl border border-zinc-700/30 overflow-hidden">
+      {/* Issue content */}
+      <div className="p-4 bg-gradient-to-br from-zinc-800/30 to-transparent">
+        <div className="flex items-start gap-3.5">
+          <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <EditableText value={label} onChange={handleChange?.('label')} className="text-white text-[15px] font-bold mb-2" isEditing={isEditing} />
-            <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-400 text-[13px] leading-[1.7]" isEditing={isEditing} />
+            <div className="flex items-center gap-2 mb-1">
+              <EditableText value={label} onChange={handleChange?.('label')} className="text-white text-[14px] font-semibold leading-snug" isEditing={isEditing} />
+              <span className="text-[7px] uppercase tracking-[0.12em] text-red-400/80 font-bold px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/15 flex-shrink-0">DO POPRAWY</span>
+            </div>
+            <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-400 text-[12px] leading-[1.6]" isEditing={isEditing} />
           </div>
         </div>
 
-        {/* Recommendation */}
+        {/* Recommendation inline */}
         {recommendation && (
-          <div className={`mt-4 p-4 rounded-xl bg-gradient-to-r ${a?.bgSubtle ? `from-zinc-800/60 to-zinc-800/30` : 'from-zinc-800/60 to-zinc-800/30'} border ${a?.border || 'border-teal-500/20'}`}>
-            <div className="flex items-start gap-3">
-              <div className={`w-9 h-9 rounded-lg ${a?.iconBg || 'bg-teal-500/15'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Lightbulb className={`w-4.5 h-4.5 ${a?.text || 'text-teal-400'}`} />
-              </div>
-              <div className="flex-1">
-                <span className={`text-[10px] uppercase tracking-[0.15em] font-bold ${a?.text || 'text-teal-400'}`}>Nasza rekomendacja</span>
-                <EditableText value={recommendation} onChange={handleChange?.('recommendation')} className="text-zinc-300 text-[13px] leading-[1.7] mt-1.5" isEditing={isEditing} />
+          <div className={`mt-3 ml-[46px] p-3 rounded-lg ${a?.bgSubtle || 'bg-teal-500/5'} border ${a?.border || 'border-teal-500/15'}`}>
+            <div className="flex items-start gap-2.5">
+              <Lightbulb className={`w-3.5 h-3.5 ${a?.text || 'text-teal-400'} flex-shrink-0 mt-0.5`} />
+              <div>
+                <span className={`text-[8px] uppercase tracking-[0.12em] font-bold ${a?.text || 'text-teal-400'} block mb-0.5`}>Rekomendacja</span>
+                <EditableText value={recommendation} onChange={handleChange?.('recommendation')} className="text-zinc-300 text-[12px] leading-[1.6]" isEditing={isEditing} />
               </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Academy hint - expanded with full description */}
-      {showAcademyHint && (
-        <div className="px-5 py-3.5 bg-gradient-to-r from-fuchsia-500/[0.05] via-cyan-500/[0.04] to-teal-500/[0.05] border-t border-teal-500/15">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/15 border border-fuchsia-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <BookOpen className="w-4 h-4 text-fuchsia-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] uppercase tracking-[0.12em] font-bold text-fuchsia-300/90">Aurine Academy</span>
-                <span className="text-[8px] text-cyan-400/60 font-medium px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/15">{showAcademyHint.feature}</span>
-              </div>
-              <p className="text-zinc-400 text-[12px] leading-relaxed">{showAcademyHint.text}</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -1007,10 +949,10 @@ const CategoryOverviewSlide = ({ data, slideNumber, totalSlides, slide }: {
   );
 };
 
-// ============ FINDINGS SLIDE (redesigned) ============
+// ============ FINDINGS SLIDE (redesigned — two columns with mockup) ============
 
-const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true, textOverrides, onTextChange, isEditing = false, salonName, cityName }: {
-  slideNumber: number; totalSlides: number; slide: AuditSlideData; includeAcademy?: boolean; textOverrides?: TextOverrides; onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void; isEditing?: boolean; salonName?: string; cityName?: string;
+const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true, textOverrides, onTextChange, isEditing = false, salonName, cityName, data }: {
+  slideNumber: number; totalSlides: number; slide: AuditSlideData; includeAcademy?: boolean; textOverrides?: TextOverrides; onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void; isEditing?: boolean; salonName?: string; cityName?: string; data?: AuditFormData;
 }) => {
   const catId = slide.categoryId!;
   const a = getAccent(catId);
@@ -1019,55 +961,93 @@ const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true,
   const positives = findings.filter(f => f.type === "positive");
   const issues = findings.filter(f => f.type === "issue");
 
+  // Find ONE academy hint for the whole slide (first matching issue subsection)
+  let academyHint: { text: string; feature: string } | undefined;
+  if (includeAcademy) {
+    for (const f of issues) {
+      const subId = findSubSectionId(catId, f.subSectionName);
+      if (subId) {
+        const hint = getAcademyHint(subId);
+        if (hint) { academyHint = hint; break; }
+      }
+    }
+  }
+
+  const mockup = data ? getCategoryMockup(catId, data) : null;
+  const hasRightColumn = mockup || academyHint;
+
   return (
     <SlideShell slideNumber={slideNumber} totalSlides={totalSlides} catId={catId}>
       {/* Category-branded header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={`w-11 h-11 rounded-xl ${a.iconBg} border ${a.border} flex items-center justify-center`}>
+          <div className={`w-10 h-10 rounded-xl ${a.iconBg} border ${a.border} flex items-center justify-center`}>
             <span className={a.text}>{icon}</span>
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">{slide.categoryName}</h2>
-            <p className="text-zinc-500 text-sm">Szczegółowa analiza</p>
+            <p className="text-zinc-600 text-xs">{findings[0]?.subSectionName || "Szczegółowa analiza"}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {positives.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-300 text-xs font-semibold">{positives.length} OK</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/15">
+              <Check className="w-3 h-3 text-emerald-400" />
+              <span className="text-emerald-300 text-[10px] font-semibold">{positives.length} OK</span>
             </div>
           )}
           {issues.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
-              <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-red-300 text-xs font-semibold">{issues.length} do poprawy</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/15">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span className="text-red-300 text-[10px] font-semibold">{issues.length} do poprawy</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Accent line under header */}
-      <div className={`h-0.5 w-full rounded-full bg-gradient-to-r ${a.gradient} opacity-20 mb-5`} />
+      {/* Accent line */}
+      <div className={`h-px w-full bg-gradient-to-r ${a.gradient} opacity-15 mb-4`} />
 
-      {/* Finding cards */}
-      <div className="flex-1 space-y-3 overflow-hidden">
-        {findings.map((f) => {
-          // Show Academy hint on every issue finding that has a matching hint
-          const fSubId = f.type === "issue" ? findSubSectionId(catId, f.subSectionName) : undefined;
-          const hint = includeAcademy && fSubId ? getAcademyHint(fSubId) : undefined;
-          return <FindingCard key={f.id} finding={f} catId={catId} showAcademyHint={hint} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={salonName} cityName={cityName} />;
-        })}
-      </div>
+      {/* Two-column: findings left, mockup+academy right */}
+      <div className={`grid ${hasRightColumn ? 'grid-cols-5' : 'grid-cols-1'} gap-6 flex-1 min-h-0`}>
+        {/* Finding cards */}
+        <div className={`${hasRightColumn ? 'col-span-3' : 'col-span-1'} space-y-2.5 overflow-hidden`}>
+          {findings.map((f) => (
+            <FindingCard key={f.id} finding={f} catId={catId} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={salonName} cityName={cityName} />
+          ))}
 
-      {/* All positive celebration */}
-      {issues.length === 0 && positives.length > 0 && positives.length === findings.length && (
-        <div className="mt-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-center flex items-center justify-center gap-3">
-          <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-          <p className="text-emerald-300 font-semibold">Wszystkie elementy w tej sekcji są na dobrym poziomie!</p>
+          {/* All positive celebration */}
+          {issues.length === 0 && positives.length > 0 && positives.length === findings.length && (
+            <div className="mt-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-center flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <p className="text-emerald-300 text-sm font-semibold">Wszystkie elementy na dobrym poziomie!</p>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right column: mockup + subtle Academy */}
+        {hasRightColumn && (
+          <div className="col-span-2 space-y-4 flex flex-col">
+            {mockup}
+            
+            {/* Subtle Academy hint — appears once per slide */}
+            {academyHint && (
+              <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/20 flex-1 flex flex-col">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500/15 to-cyan-500/10 border border-teal-500/15 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] uppercase tracking-[0.1em] font-semibold text-zinc-500">W ramach współpracy</p>
+                    <p className="text-teal-300/80 text-[10px] font-medium">{academyHint.feature}</p>
+                  </div>
+                </div>
+                <p className="text-zinc-500 text-[11px] leading-relaxed">{academyHint.text}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </SlideShell>
   );
 };
@@ -1219,7 +1199,7 @@ const RecommendationsSlide = ({ data, slideNumber, totalSlides, checkedFindings 
       <div className="mt-5 p-4 rounded-xl bg-gradient-to-r from-teal-500/10 to-cyan-500/5 border border-teal-500/20 flex items-center gap-4">
         <Sparkles className="w-6 h-6 text-teal-400 flex-shrink-0" />
         <p className="text-zinc-300 text-sm">
-          <span className="text-teal-300 font-semibold">Aurine Academy</span> — gotowe szablony, kursy wideo i materiały marketingowe stworzone specjalnie dla salonów beauty.
+          W ramach współpracy klientka otrzymuje dostęp do <span className="text-teal-300 font-semibold">Aurine Academy</span> — autorskiej aplikacji ze statusem kampanii, kontaktem z opiekunem, materiałami edukacyjnymi i narzędziami wspierającymi marketing organiczny.
         </p>
       </div>
     </SlideShell>
@@ -1260,10 +1240,10 @@ const SummarySlide = ({ data, slideNumber, totalSlides, includeAcademy = true }:
             </div>
             <p className="text-cyan-300 font-semibold text-base mb-2">Aurine Academy</p>
             <p className="text-zinc-400 text-sm leading-relaxed flex-1">
-              Autorska aplikacja mobilna w pakiecie — kursy marketingu, narzędzia AI, gotowe szablony treści, generator grafik i kalendarz postów.
+              Autorska aplikacja w pakiecie — status kampanii na żywo, kontakt z opiekunem, dokumenty, kursy marketingu organicznego, narzędzia do tworzenia treści i materiały edukacyjne.
             </p>
             <div className="mt-4 pt-3 border-t border-cyan-500/10">
-              <p className="text-zinc-500 text-xs">✓ Kursy · ✓ Generator AI · ✓ Szablony</p>
+              <p className="text-zinc-500 text-xs">✓ Status kampanii · ✓ Kontakt z opiekunem · ✓ Kursy i narzędzia</p>
             </div>
           </div>
         )}
@@ -1303,7 +1283,7 @@ export const AuditPreview = ({ data, currentSlide, enabledCategories, checkedFin
     case 'category-overview':
       return <CategoryOverviewSlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} slide={current} />;
     case 'findings':
-      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={normalizedData.salonName} cityName={normalizedData.city} />;
+      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={normalizedData.salonName} cityName={normalizedData.city} data={normalizedData} />;
     case 'competition':
       return <CompetitionSlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} />;
     case 'recommendations':
