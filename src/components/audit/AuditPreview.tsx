@@ -250,89 +250,61 @@ const CategoryHeader = ({ catId, title, subtitle }: { catId: string; title: stri
 // ============ ACADEMY HINTS (subtle promotion) ============
 
 const ACADEMY_HINTS: Record<string, { text: string; feature: string }> = {
+  fb_profile: {
+    text: "W ramach współpracy klientka otrzymuje dostęp do Aurine Academy — autorskiej aplikacji, w której znajdzie materiały krok po kroku jak uzupełnić i zoptymalizować swój profil. Plus gotowe opisy do personalizacji.",
+    feature: "Materiały i gotowe opisy",
+  },
   fb_posts: {
-    text: "W aplikacji Aurine Academy klientka ma dostęp do generatora strategii AI, który tworzy gotowe opisy postów — z hookiem, storytellingiem i CTA. Wystarczy skopiować i opublikować. Do tego kalendarz postów planuje treści na cały miesiąc.",
-    feature: "Generator opisów AI + Kalendarz",
+    text: "W aplikacji Aurine Academy klientka ma dostęp do narzędzi wspierających tworzenie treści — gotowe szablony opisów, pomysły na posty i wskazówki jak pisać angażująco. Wszystko dopasowane do branży beauty.",
+    feature: "Wsparcie w tworzeniu treści",
   },
   fb_photos: {
-    text: "Generator grafik w Aurine Academy pozwala klientce wkleić swoje zdjęcia z zabiegów, a system automatycznie tworzy profesjonalne grafiki w 10+ szablonach — before/after, karuzele, posty z opisem. Bez Canvy, bez grafika.",
-    feature: "Generator grafik z własnych zdjęć",
-  },
-  fb_profile: {
-    text: "Klientka otrzymuje w aplikacji kurs krok po kroku jak uzupełnić profil Facebook — od zdjęcia w tle, przez opis, po przycisk CTA. Plus gotowe teksty do skopiowania i uzupełnienia swoimi danymi.",
-    feature: "Kurs uzupełniania profilu + gotowe teksty",
-  },
-  fb_engagement: {
-    text: "W Aurine Academy są gotowe szablony odpowiedzi na komentarze i wiadomości — klientka wybiera sytuację (pytanie o cenę, reklamacja, prośba o termin) i ma gotową odpowiedź do personalizacji.",
-    feature: "Szablony odpowiedzi na wiadomości",
+    text: "Aurine Academy zawiera praktyczne poradniki fotografii mobilnej dla salonów — jak robić zdjęcia efektów pracy, jakie oświetlenie wybrać i jak edytować zdjęcia na telefonie.",
+    feature: "Poradniki fotografii mobilnej",
   },
   ig_profile: {
-    text: "Aplikacja zawiera generator bio na Instagram z AI — klientka podaje specjalizację i miasto, a system tworzy profesjonalne bio z emoji i CTA. Plus kurs optymalizacji profilu z przykładami najlepszych salonów.",
-    feature: "Generator bio AI + Kurs profilu IG",
+    text: "W aplikacji klientka znajdzie narzędzia do optymalizacji profilu Instagram — generator bio, wskazówki dotyczące highlights i checklistę kompletnego profilu.",
+    feature: "Optymalizacja profilu IG",
   },
   ig_feed: {
-    text: "Generator grafik tworzy spójne wizualnie posty na feed — klientka wybiera szablon w kolorach swojego salonu, wkleja zdjęcia efektów pracy i dostaje gotową grafikę do publikacji.",
-    feature: "Generator spójnych grafik na feed",
+    text: "Aurine Academy wspiera budowanie spójnego feedu — klientka ma dostęp do szablonów grafik w kolorach swojego salonu i wskazówek jak planować publikacje.",
+    feature: "Spójność wizualna feedu",
   },
   ig_stories: {
-    text: "W aplikacji są gotowe scenariusze stories na każdy dzień tygodnia — poniedziałek: kulisy, wtorek: efekt pracy, środa: porada. Plus interaktywne szablony z ankietami i quizami do zaangażowania obserwujących.",
-    feature: "Scenariusze stories + szablony interakcji",
+    text: "W aplikacji są gotowe scenariusze stories na każdy dzień tygodnia i szablony interaktywne z ankietami — wszystko gotowe do użycia od razu.",
+    feature: "Gotowe scenariusze stories",
   },
   content_copy: {
-    text: "Generator strategii AI analizuje branżę klientki i tworzy spersonalizowany plan treści na 30 dni — z konkretnymi tematami, opisami i hashtagami. Klientka dodaje je jednym kliknięciem do kalendarza postów.",
-    feature: "Plan treści AI na 30 dni + Kalendarz",
+    text: "Aurine Academy oferuje narzędzia do planowania treści — kalendarz postów, pomysły tematyczne na cały miesiąc i wskazówki jak tworzyć angażujące opisy.",
+    feature: "Planowanie treści",
   },
   content_photos: {
-    text: "Generator before/after w aplikacji — klientka wkleja 2 zdjęcia (przed i po zabiegu), wybiera szablon i dostaje profesjonalną grafikę porównawczą gotową do publikacji. 10+ szablonów do wyboru.",
+    text: "W aplikacji klientka znajdzie generator grafik before/after — wkleja swoje zdjęcia, wybiera szablon i dostaje gotową grafikę do publikacji.",
     feature: "Generator grafik before/after",
   },
   content_hashtags: {
-    text: "AI w Aurine Academy dobiera hashtagi do każdego posta automatycznie — analizuje treść, branżę i lokalizację. Klientka dostaje zestaw 20-30 hashtagów podzielonych na kategorie: lokalne, branżowe, popularne.",
-    feature: "Inteligentne hashtagi AI",
-  },
-  content_frequency: {
-    text: "Kalendarz postów w aplikacji pokazuje klientce dokładnie co, kiedy i jak publikować — z przypomnieniami push. Plan na cały miesiąc z różnorodnymi formatami: edukacja, efekty, kulisy, angażowanie.",
-    feature: "Kalendarz postów z przypomnieniami",
+    text: "Aurine Academy dobiera hashtagi automatycznie — analizuje treść i lokalizację, proponując zestaw hashtagów dopasowany do branży beauty.",
+    feature: "Inteligentne hashtagi",
   },
   sr_reels: {
-    text: "Aurine Academy zawiera bibliotekę gotowych scenariuszy Reels — klientka wybiera typ (metamorfoza, porada, dzień z życia salonu), dostaje dokładny skrypt: co powiedzieć, jak sfilmować, jaka muzyka.",
-    feature: "Gotowe scenariusze Reels + instrukcje",
-  },
-  sr_interaction: {
-    text: "Gotowe szablony interaktywnych stories do skopiowania — ankiety, quizy, pytania, slidery. Każdy szablon ma instrukcję jak go użyć i przykład z branży beauty.",
-    feature: "Szablony interaktywnych stories",
+    text: "W aplikacji jest biblioteka gotowych scenariuszy Reels — klientka wybiera typ metamorfozy, dostaje dokładny skrypt co powiedzieć i jak sfilmować.",
+    feature: "Scenariusze Reels",
   },
   brand_visual: {
-    text: "Generator grafik w Aurine Academy ma szablony brandingowe dopasowane do kolorów salonu — klientka ustawia swoje kolory raz i wszystkie generowane materiały są wizualnie spójne.",
-    feature: "Szablony grafik w kolorach salonu",
-  },
-  brand_tone: {
-    text: "Kurs komunikacji marki w aplikacji uczy klientkę jak budować spójny ton komunikacji — od postów, przez stories, po odpowiedzi na wiadomości. Z przykładami i ćwiczeniami.",
-    feature: "Kurs komunikacji + ton marki",
-  },
-  ads_campaigns: {
-    text: "Klientka widzi w aplikacji status swoich kampanii reklamowych na żywo — czy kampania jest aktywna, ile wydano budżetu, jakie są wyniki. Plus bezpośredni kontakt z opiekunem kampanii.",
-    feature: "Podgląd kampanii na żywo + kontakt",
-  },
-  ads_strategy: {
-    text: "W aplikacji klientka ma podgląd całej strategii reklamowej — cele, grupy docelowe, budżety. Może zgłaszać uwagi i zadawać pytania bezpośrednio do opiekuna bez czekania na maile.",
-    feature: "Strategia + bezpośredni kontakt",
+    text: "Szablony grafik w Aurine Academy są dopasowane do kolorów salonu — klientka ustawia swoją paletę raz i wszystkie materiały są wizualnie spójne.",
+    feature: "Spójne szablony grafik",
   },
   gmb_profile: {
-    text: "W Aurine Academy są materiały krok po kroku jak uzupełnić wizytówkę Google — zdjęcia, opis usług, kategorie, godziny otwarcia. Plus gotowe opisy usług do skopiowania i personalizacji.",
-    feature: "Kurs Google + gotowe opisy usług",
+    text: "W Aurine Academy są materiały jak uzupełnić wizytówkę Google — zdjęcia, opisy usług, kategorie. Plus gotowe opisy do skopiowania i personalizacji.",
+    feature: "Optymalizacja wizytówki Google",
   },
   gmb_reviews: {
-    text: "Gotowe szablony wiadomości SMS i WhatsApp z prośbą o opinię Google — klientka salonu dostaje link bezpośrednio do formularza opinii. Plus szablony odpowiedzi na pozytywne i negatywne opinie.",
-    feature: "Szablony próśb o opinie + odpowiedzi",
+    text: "Gotowe szablony wiadomości z prośbą o opinię Google — klientka salonu dostaje link bezpośrednio do formularza opinii. Plus szablony odpowiedzi na opinie.",
+    feature: "Szablony próśb o opinie",
   },
   web_ux: {
-    text: "Kurs w aplikacji pokazuje klientce co powinna mieć na stronie www salonu — rezerwacja online, cennik, galeria efektów, opinie. Z checklistą i przykładami dobrze zrobionych stron.",
-    feature: "Kurs strony www + checklista",
-  },
-  web_seo: {
-    text: "Materiały SEO w Aurine Academy uczą klientkę jak być widoczną w Google — od wizytówki, przez wpisy blogowe, po słowa kluczowe. Gotowe wskazówki dopasowane do branży beauty.",
-    feature: "Poradnik SEO dla salonów beauty",
+    text: "Aurine Academy zawiera checklistę co powinna mieć strona www salonu — rezerwacja online, cennik, galeria efektów, opinie. Z przykładami dobrze zrobionych stron.",
+    feature: "Checklista strony www",
   },
 };
 
