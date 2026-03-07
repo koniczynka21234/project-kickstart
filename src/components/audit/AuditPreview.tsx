@@ -1283,7 +1283,7 @@ export const AuditPreview = ({ data, currentSlide, enabledCategories, checkedFin
     case 'category-overview':
       return <CategoryOverviewSlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} slide={current} />;
     case 'findings':
-      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={normalizedData.salonName} cityName={normalizedData.city} />;
+      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={normalizedData.salonName} cityName={normalizedData.city} data={normalizedData} />;
     case 'competition':
       return <CompetitionSlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} />;
     case 'recommendations':
