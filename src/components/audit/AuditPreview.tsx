@@ -469,12 +469,11 @@ const EditableText = ({ value, onChange, className, tag = "p", isEditing = false
   );
 };
 
-// ============ FINDING CARD (redesigned) ============
+// ============ FINDING CARD (redesigned — compact, visual) ============
 
-const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextChange, isEditing = false, salonName, cityName }: {
+const FindingCard = ({ finding, catId, textOverrides, onTextChange, isEditing = false, salonName, cityName }: {
   finding: EnrichedFinding;
   catId?: string;
-  showAcademyHint?: { text: string; feature: string };
   textOverrides?: TextOverrides;
   onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void;
   isEditing?: boolean;
@@ -492,77 +491,48 @@ const FindingCard = ({ finding, catId, showAcademyHint, textOverrides, onTextCha
 
   if (isPositive) {
     return (
-      <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-emerald-500/[0.08] to-emerald-400/[0.03] border border-emerald-500/20 backdrop-blur-sm">
-        <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/5">
-          <CheckCircle2 className="w-5.5 h-5.5 text-emerald-400" />
+      <div className="flex items-start gap-3.5 p-4 rounded-xl bg-gradient-to-r from-emerald-500/[0.06] to-transparent border border-emerald-500/15">
+        <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <EditableText value={label} onChange={handleChange?.('label')} className="text-emerald-200 text-[15px] font-bold" isEditing={isEditing} />
-            <span className="text-[8px] uppercase tracking-[0.15em] text-emerald-400 font-bold px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/20">DOBRZE</span>
-          </div>
-          <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-400 text-[13px] leading-relaxed" isEditing={isEditing} />
+          <EditableText value={label} onChange={handleChange?.('label')} className="text-emerald-200 text-[14px] font-semibold leading-snug" isEditing={isEditing} />
+          <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-500 text-[12px] leading-relaxed mt-1" isEditing={isEditing} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-zinc-800/40 to-zinc-800/20 border border-zinc-700/30 backdrop-blur-sm overflow-hidden shadow-lg shadow-black/10">
-      {/* Issue header strip */}
-      <div className="px-5 py-2 bg-red-500/[0.06] border-b border-red-500/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-          <span className="text-[9px] uppercase tracking-[0.15em] text-red-400/90 font-bold">Wymaga poprawy</span>
-        </div>
-        <span className="text-[10px] text-zinc-600 font-medium">{finding.subSectionName}</span>
-      </div>
-
-      {/* Main finding content */}
-      <div className="p-5">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-500/5">
-            <AlertTriangle className="w-5.5 h-5.5 text-red-400" />
+    <div className="rounded-xl border border-zinc-700/30 overflow-hidden">
+      {/* Issue content */}
+      <div className="p-4 bg-gradient-to-br from-zinc-800/30 to-transparent">
+        <div className="flex items-start gap-3.5">
+          <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <EditableText value={label} onChange={handleChange?.('label')} className="text-white text-[15px] font-bold mb-2" isEditing={isEditing} />
-            <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-400 text-[13px] leading-[1.7]" isEditing={isEditing} />
+            <div className="flex items-center gap-2 mb-1">
+              <EditableText value={label} onChange={handleChange?.('label')} className="text-white text-[14px] font-semibold leading-snug" isEditing={isEditing} />
+              <span className="text-[7px] uppercase tracking-[0.12em] text-red-400/80 font-bold px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/15 flex-shrink-0">DO POPRAWY</span>
+            </div>
+            <EditableText value={description} onChange={handleChange?.('description')} className="text-zinc-400 text-[12px] leading-[1.6]" isEditing={isEditing} />
           </div>
         </div>
 
-        {/* Recommendation */}
+        {/* Recommendation inline */}
         {recommendation && (
-          <div className={`mt-4 p-4 rounded-xl bg-gradient-to-r ${a?.bgSubtle ? `from-zinc-800/60 to-zinc-800/30` : 'from-zinc-800/60 to-zinc-800/30'} border ${a?.border || 'border-teal-500/20'}`}>
-            <div className="flex items-start gap-3">
-              <div className={`w-9 h-9 rounded-lg ${a?.iconBg || 'bg-teal-500/15'} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Lightbulb className={`w-4.5 h-4.5 ${a?.text || 'text-teal-400'}`} />
-              </div>
-              <div className="flex-1">
-                <span className={`text-[10px] uppercase tracking-[0.15em] font-bold ${a?.text || 'text-teal-400'}`}>Nasza rekomendacja</span>
-                <EditableText value={recommendation} onChange={handleChange?.('recommendation')} className="text-zinc-300 text-[13px] leading-[1.7] mt-1.5" isEditing={isEditing} />
+          <div className={`mt-3 ml-[46px] p-3 rounded-lg ${a?.bgSubtle || 'bg-teal-500/5'} border ${a?.border || 'border-teal-500/15'}`}>
+            <div className="flex items-start gap-2.5">
+              <Lightbulb className={`w-3.5 h-3.5 ${a?.text || 'text-teal-400'} flex-shrink-0 mt-0.5`} />
+              <div>
+                <span className={`text-[8px] uppercase tracking-[0.12em] font-bold ${a?.text || 'text-teal-400'} block mb-0.5`}>Rekomendacja</span>
+                <EditableText value={recommendation} onChange={handleChange?.('recommendation')} className="text-zinc-300 text-[12px] leading-[1.6]" isEditing={isEditing} />
               </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Academy hint - expanded with full description */}
-      {showAcademyHint && (
-        <div className="px-5 py-3.5 bg-gradient-to-r from-fuchsia-500/[0.05] via-cyan-500/[0.04] to-teal-500/[0.05] border-t border-teal-500/15">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/15 border border-fuchsia-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <BookOpen className="w-4 h-4 text-fuchsia-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] uppercase tracking-[0.12em] font-bold text-fuchsia-300/90">Aurine Academy</span>
-                <span className="text-[8px] text-cyan-400/60 font-medium px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/15">{showAcademyHint.feature}</span>
-              </div>
-              <p className="text-zinc-400 text-[12px] leading-relaxed">{showAcademyHint.text}</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
