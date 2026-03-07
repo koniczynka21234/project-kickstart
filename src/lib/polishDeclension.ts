@@ -504,6 +504,48 @@ export function declineSalonNameToGenitive(salonName: string): string {
 }
 
 /**
+ * Decline the full salon name to genitive case, including common noun prefix.
+ * "Salon Beauty Kaja" → "Salonu Beauty Kaja"
+ * "Studio Urody" → "Studia Urody"
+ * "Beauty Kaja" → "Beauty Kaja" (proper nouns unchanged)
+ * Use in contexts like "Audyt profilu [genitive]", "szansa dla [genitive]"
+ */
+const COMMON_NOUN_GENITIVES: Record<string, string> = {
+  'salon': 'salonu',
+  'studio': 'studia',
+  'centrum': 'centrum',
+  'gabinet': 'gabinetu',
+  'pracownia': 'pracowni',
+  'klinika': 'kliniki',
+  'akademia': 'akademii',
+  'instytut': 'instytutu',
+  'atelier': 'atelier',
+  'spa': 'spa',
+};
+
+export function declineSalonNameFullGenitive(salonName: string): string {
+  if (!salonName) return '';
+  
+  const trimmed = salonName.trim();
+  const words = trimmed.split(' ');
+  if (words.length === 0) return trimmed;
+  
+  const firstWordLower = words[0].toLowerCase();
+  const genitive = COMMON_NOUN_GENITIVES[firstWordLower];
+  
+  if (genitive) {
+    // Preserve original casing style (capitalize if original was capitalized)
+    const declinedWord = words[0].charAt(0) === words[0].charAt(0).toUpperCase()
+      ? genitive.charAt(0).toUpperCase() + genitive.slice(1)
+      : genitive;
+    return [declinedWord, ...words.slice(1)].join(' ');
+  }
+  
+  // Proper noun — return unchanged
+  return trimmed;
+}
+
+/**
  * Decline a Polish city name to genitive case (dopełniacz)
  * Used in sentences like "z [miasta]"
  */

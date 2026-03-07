@@ -14,6 +14,7 @@ import {
   getAllCheckedIssues,
 } from "./auditFindings";
 import { CATEGORY_LARGE_ICONS } from "./auditSections";
+import { declineSalonNameFullGenitive } from "@/lib/polishDeclension";
 
 interface AuditFormData {
   ownerName: string;
@@ -339,61 +340,96 @@ const getAcademyHint = (subSectionId: string) => ACADEMY_HINTS[subSectionId];
 
 // ============ TEXT PERSONALIZATION ============
 
+const COMMON_SALON_PREFIXES = [
+  "salon",
+  "studio",
+  "centrum",
+  "gabinet",
+  "pracownia",
+  "klinika",
+  "akademia",
+  "instytut",
+  "atelier",
+  "spa",
+] as const;
+
+const LEADING_PREFIXES_REGEX = new RegExp(`^((?:${COMMON_SALON_PREFIXES.join("|")})\\s+)+`, "i");
+const FIRST_PREFIX_REGEX = new RegExp(`^(?:${COMMON_SALON_PREFIXES.join("|")})\\b`, "i");
+
+const stripLeadingSalonPrefixes = (value: string): string => value.replace(LEADING_PREFIXES_REGEX, "").trim();
+
+const normalizeSalonName = (value?: string): string => {
+  if (!value) return "";
+
+  const trimmed = value.trim().replace(/\s+/g, " ");
+  if (!trimmed) return "";
+
+  const firstPrefixMatch = trimmed.match(FIRST_PREFIX_REGEX);
+  if (!firstPrefixMatch) return trimmed;
+
+  const proper = stripLeadingSalonPrefixes(trimmed);
+  if (!proper) return trimmed;
+
+  const rawPrefix = firstPrefixMatch[0];
+  const normalizedPrefix =
+    rawPrefix.charAt(0) === rawPrefix.charAt(0).toUpperCase()
+      ? rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1).toLowerCase()
+      : rawPrefix.toLowerCase();
+
+  return `${normalizedPrefix} ${proper}`;
+};
+
 /**
  * Replaces generic "Salon" / "salon" references in audit texts with the actual salon name.
- * Handles patterns like:
- * - "Salon nie prowadzi" → "Beauty Studio nie prowadzi"
- * - "salon tylko promuje" → "Beauty Studio tylko promuje"  
- * - "profil salonu" → stays as is (grammatical reference)
- * - "wnetrza salonu" → "wnetrza Beauty Studio"
+ * Uses placeholder-based approach to prevent cascading replacements.
  */
 const personalizeAuditText = (text: string, salonName?: string, cityName?: string): string => {
   if (!text) return text;
-  
+
   let result = text;
 
   if (salonName) {
-    // Only personalize select patterns – NOT every occurrence.
-    // 1. Subject position: "Salon nie prowadzi..." → "[Name] nie prowadzi..."
+    const normalizedSalonName = normalizeSalonName(salonName);
+    const genitiveFullName = declineSalonNameFullGenitive(normalizedSalonName);
+    const properName = stripLeadingSalonPrefixes(normalizedSalonName) || normalizedSalonName;
+
+    const PH_NOM = "\x00NOM\x00";
+    const PH_GEN = "\x00GEN\x00";
+    const PH_LOC = "\x00LOC\x00";
+    const PH_DIR = "\x00DIR\x00";
+    const PH_GENA = "\x00GENA\x00";
+
+    result = result.replace(/Twojego salonu/gi, PH_GEN);
+    result = result.replace(/Tw[oó]j salon(?=[\s.,!?]|$)/gi, PH_NOM);
+
     result = result.replace(
       /\bSalon (nie |tylko |prowadzi|odpowiada|ma |używa|publikuje|stosuje|korzysta|posiada|oferuje|wygląda|może|będzie|jest |został|nie ma|nie używa|nie prowadzi|nie publikuje|nie stosuje|nie korzysta|nie posiada|nie oferuje)/gi,
-      (_, rest) => `${salonName} ${rest}`
+      (_, rest) => `${PH_NOM} ${rest}`,
     );
 
-    // 2. Genitive (dopełniacz): "salonu" → "salonu [Name]" (keeps Polish grammar)
-    //    e.g. "wnętrza salonu" → "wnętrza salonu [Name]"
-    //    e.g. "profil salonu" → "profil salonu [Name]"
-    result = result.replace(/\bsalonu(?=[\s.,!?])/g, `salonu ${salonName}`);
+    result = result.replace(/\bw salonie(?=[\s.,!?\u2013\u2014\u2010-]|$)/g, PH_LOC);
+    result = result.replace(/\bdo salonu(?=[\s.,!?\u2013\u2014\u2010-]|$)/g, PH_DIR);
+    result = result.replace(/\bsalonu(?=[\s.,!?\u2013\u2014\u2010-]|$)/g, PH_GENA);
+    result = result.replace(/\bsalon(?=[\s.,!?\u2013\u2014\u2010-]|$)/gi, PH_NOM);
 
-    // 3. Locative: "w salonie" → "w salonie [Name]"
-    result = result.replace(/\bw salonie(?=[\s.,!?]|$)/g, `w salonie ${salonName}`);
-
-    // 4. Dative/direction: "do salonu" → "do salonu [Name]"
-    result = result.replace(/\bdo salonu(?=[\s.,!?]|$)/g, `do salonu ${salonName}`);
-
-    // 5. "Twojego salonu" → "salonu [Name]"
-    result = result.replace(/Twojego salonu/g, `salonu ${salonName}`);
-    
-    // 6. "Twój salon" / "Twoj salon" → "[Name]"
-    result = result.replace(/Tw[oó]j salon(?=[\s.,!?]|$)/g, salonName);
+    result = result.split(PH_GEN).join(genitiveFullName);
+    result = result.split(PH_NOM).join(normalizedSalonName);
+    result = result.split(PH_LOC).join(`w salonie ${properName}`);
+    result = result.split(PH_DIR).join(`do salonu ${properName}`);
+    result = result.split(PH_GENA).join(`salonu ${properName}`);
   }
 
-  // City personalization – only in select contexts
   if (cityName) {
-    // "w Twoim mieście" → "w [City]"
     result = result.replace(/w Twoim mieście/g, `w ${cityName}`);
-    // "w danym mieście" → "w [City]"
     result = result.replace(/w danym mieście/g, `w ${cityName}`);
-    // "na lokalnym rynku" → "na rynku w [City]"
     result = result.replace(/na lokalnym rynku/g, `na rynku w ${cityName}`);
-    // "lokalna konkurencja" → "konkurencja w [City]"
     result = result.replace(/lokalna konkurencja/gi, (m) => {
-      const prefix = m.charAt(0) === 'L' ? 'K' : 'k';
+      const prefix = m.charAt(0) === "L" ? "K" : "k";
       return `${prefix}onkurencja w ${cityName}`;
     });
   }
 
-  return result;
+  return result.replace(/—/g, "–");
 };
 
 // ============ INLINE EDITABLE TEXT ============
@@ -870,7 +906,7 @@ const IntroSlide = ({ data, slideNumber, totalSlides }: { data: AuditFormData; s
         <h1 className="text-6xl font-bold text-white mb-2 leading-[1.1]">Audyt profilu</h1>
         <h1 className="text-6xl font-bold leading-[1.1] mb-4">
           <span className="bg-gradient-to-r from-teal-400 via-cyan-300 to-teal-400 bg-clip-text text-transparent">
-            {data.salonName || "Twojego salonu"}
+            {data.salonName ? declineSalonNameFullGenitive(normalizeSalonName(data.salonName)) : "Twojego salonu"}
           </span>
         </h1>
         {data.city && (
@@ -915,7 +951,7 @@ const CategoryOverviewSlide = ({ data, slideNumber, totalSlides, slide }: {
 
   return (
     <SlideShell slideNumber={slideNumber} totalSlides={totalSlides} catId={cat.id}>
-      <CategoryHeader catId={cat.id} title={cat.name} subtitle={`Analiza dla ${data.salonName || "salonu"}`} />
+      <CategoryHeader catId={cat.id} title={cat.name} subtitle={`Analiza dla ${data.salonName ? declineSalonNameFullGenitive(normalizeSalonName(data.salonName)) : "salonu"}`} />
 
       <div className="grid grid-cols-5 gap-8 flex-1 min-h-0">
         <div className="col-span-3 space-y-5 overflow-hidden">
@@ -1045,7 +1081,7 @@ const CompetitionSlide = ({ data, slideNumber, totalSlides }: { data: AuditFormD
       <div className="col-span-3 space-y-5 overflow-hidden">
         <p className="text-zinc-300 text-base leading-relaxed">
           {data.city ? `W ${data.city} i okolicach` : "W Twojej okolicy"} działa wiele salonów beauty.
-          Większość nie inwestuje w profesjonalny marketing — to ogromna szansa dla {data.salonName || "Twojego salonu"}.
+          Większość nie inwestuje w profesjonalny marketing — to ogromna szansa dla {data.salonName ? declineSalonNameFullGenitive(normalizeSalonName(data.salonName)) : "Twojego salonu"}.
         </p>
         <div className="grid grid-cols-3 gap-4">
           {[
@@ -1111,7 +1147,7 @@ const RecommendationsSlide = ({ data, slideNumber, totalSlides, checkedFindings 
 
   return (
     <SlideShell slideNumber={slideNumber} totalSlides={totalSlides}>
-      <CategoryHeader catId="content" title="Rekomendacje" subtitle={`Plan działania dla ${data.salonName || "Twojego salonu"}`} />
+      <CategoryHeader catId="content" title="Rekomendacje" subtitle={`Plan działania dla ${data.salonName ? declineSalonNameFullGenitive(normalizeSalonName(data.salonName)) : "Twojego salonu"}`} />
 
       <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
         <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/15 space-y-4">
@@ -1246,6 +1282,11 @@ const SummarySlide = ({ data, slideNumber, totalSlides, includeAcademy = true }:
 // ============ MAIN COMPONENT ============
 
 export const AuditPreview = ({ data, currentSlide, enabledCategories, checkedFindings, includeAcademy = true, textOverrides, isEditing = false, onTextChange }: AuditPreviewProps) => {
+  const normalizedData: AuditFormData = {
+    ...data,
+    salonName: normalizeSalonName(data.salonName),
+  };
+
   const slides = generateAuditSlides(enabledCategories, checkedFindings);
   const totalSlides = slides.length;
   const current = slides[currentSlide - 1];
@@ -1258,17 +1299,17 @@ export const AuditPreview = ({ data, currentSlide, enabledCategories, checkedFin
 
   switch (current.type) {
     case 'intro':
-      return <IntroSlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} />;
+      return <IntroSlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} />;
     case 'category-overview':
-      return <CategoryOverviewSlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} slide={current} />;
+      return <CategoryOverviewSlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} slide={current} />;
     case 'findings':
-      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={data.salonName} cityName={data.city} />;
+      return <FindingsSlide slideNumber={currentSlide} totalSlides={totalSlides} slide={current} includeAcademy={includeAcademy} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={normalizedData.salonName} cityName={normalizedData.city} />;
     case 'competition':
-      return <CompetitionSlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} />;
+      return <CompetitionSlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} />;
     case 'recommendations':
-      return <RecommendationsSlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} checkedFindings={checkedFindings} />;
+      return <RecommendationsSlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} checkedFindings={checkedFindings} />;
     case 'summary':
-      return <SummarySlide data={data} slideNumber={currentSlide} totalSlides={totalSlides} includeAcademy={includeAcademy} />;
+      return <SummarySlide data={normalizedData} slideNumber={currentSlide} totalSlides={totalSlides} includeAcademy={includeAcademy} />;
     default:
       return null;
   }
