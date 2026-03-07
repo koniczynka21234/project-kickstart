@@ -949,10 +949,10 @@ const CategoryOverviewSlide = ({ data, slideNumber, totalSlides, slide }: {
   );
 };
 
-// ============ FINDINGS SLIDE (redesigned) ============
+// ============ FINDINGS SLIDE (redesigned — two columns with mockup) ============
 
-const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true, textOverrides, onTextChange, isEditing = false, salonName, cityName }: {
-  slideNumber: number; totalSlides: number; slide: AuditSlideData; includeAcademy?: boolean; textOverrides?: TextOverrides; onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void; isEditing?: boolean; salonName?: string; cityName?: string;
+const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true, textOverrides, onTextChange, isEditing = false, salonName, cityName, data }: {
+  slideNumber: number; totalSlides: number; slide: AuditSlideData; includeAcademy?: boolean; textOverrides?: TextOverrides; onTextChange?: (findingId: string, field: 'label' | 'description' | 'recommendation', value: string) => void; isEditing?: boolean; salonName?: string; cityName?: string; data?: AuditFormData;
 }) => {
   const catId = slide.categoryId!;
   const a = getAccent(catId);
@@ -961,55 +961,93 @@ const FindingsSlide = ({ slideNumber, totalSlides, slide, includeAcademy = true,
   const positives = findings.filter(f => f.type === "positive");
   const issues = findings.filter(f => f.type === "issue");
 
+  // Find ONE academy hint for the whole slide (first matching issue subsection)
+  let academyHint: { text: string; feature: string } | undefined;
+  if (includeAcademy) {
+    for (const f of issues) {
+      const subId = findSubSectionId(catId, f.subSectionName);
+      if (subId) {
+        const hint = getAcademyHint(subId);
+        if (hint) { academyHint = hint; break; }
+      }
+    }
+  }
+
+  const mockup = data ? getCategoryMockup(catId, data) : null;
+  const hasRightColumn = mockup || academyHint;
+
   return (
     <SlideShell slideNumber={slideNumber} totalSlides={totalSlides} catId={catId}>
       {/* Category-branded header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className={`w-11 h-11 rounded-xl ${a.iconBg} border ${a.border} flex items-center justify-center`}>
+          <div className={`w-10 h-10 rounded-xl ${a.iconBg} border ${a.border} flex items-center justify-center`}>
             <span className={a.text}>{icon}</span>
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">{slide.categoryName}</h2>
-            <p className="text-zinc-500 text-sm">Szczegółowa analiza</p>
+            <p className="text-zinc-600 text-xs">{findings[0]?.subSectionName || "Szczegółowa analiza"}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {positives.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-300 text-xs font-semibold">{positives.length} OK</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/15">
+              <Check className="w-3 h-3 text-emerald-400" />
+              <span className="text-emerald-300 text-[10px] font-semibold">{positives.length} OK</span>
             </div>
           )}
           {issues.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
-              <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-red-300 text-xs font-semibold">{issues.length} do poprawy</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/15">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span className="text-red-300 text-[10px] font-semibold">{issues.length} do poprawy</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Accent line under header */}
-      <div className={`h-0.5 w-full rounded-full bg-gradient-to-r ${a.gradient} opacity-20 mb-5`} />
+      {/* Accent line */}
+      <div className={`h-px w-full bg-gradient-to-r ${a.gradient} opacity-15 mb-4`} />
 
-      {/* Finding cards */}
-      <div className="flex-1 space-y-3 overflow-hidden">
-        {findings.map((f) => {
-          // Show Academy hint on every issue finding that has a matching hint
-          const fSubId = f.type === "issue" ? findSubSectionId(catId, f.subSectionName) : undefined;
-          const hint = includeAcademy && fSubId ? getAcademyHint(fSubId) : undefined;
-          return <FindingCard key={f.id} finding={f} catId={catId} showAcademyHint={hint} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={salonName} cityName={cityName} />;
-        })}
-      </div>
+      {/* Two-column: findings left, mockup+academy right */}
+      <div className={`grid ${hasRightColumn ? 'grid-cols-5' : 'grid-cols-1'} gap-6 flex-1 min-h-0`}>
+        {/* Finding cards */}
+        <div className={`${hasRightColumn ? 'col-span-3' : 'col-span-1'} space-y-2.5 overflow-hidden`}>
+          {findings.map((f) => (
+            <FindingCard key={f.id} finding={f} catId={catId} textOverrides={textOverrides} onTextChange={onTextChange} isEditing={isEditing} salonName={salonName} cityName={cityName} />
+          ))}
 
-      {/* All positive celebration */}
-      {issues.length === 0 && positives.length > 0 && positives.length === findings.length && (
-        <div className="mt-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-center flex items-center justify-center gap-3">
-          <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-          <p className="text-emerald-300 font-semibold">Wszystkie elementy w tej sekcji są na dobrym poziomie!</p>
+          {/* All positive celebration */}
+          {issues.length === 0 && positives.length > 0 && positives.length === findings.length && (
+            <div className="mt-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-center flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+              <p className="text-emerald-300 text-sm font-semibold">Wszystkie elementy na dobrym poziomie!</p>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right column: mockup + subtle Academy */}
+        {hasRightColumn && (
+          <div className="col-span-2 space-y-4 flex flex-col">
+            {mockup}
+            
+            {/* Subtle Academy hint — appears once per slide */}
+            {academyHint && (
+              <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700/20 flex-1 flex flex-col">
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500/15 to-cyan-500/10 border border-teal-500/15 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] uppercase tracking-[0.1em] font-semibold text-zinc-500">W ramach współpracy</p>
+                    <p className="text-teal-300/80 text-[10px] font-medium">{academyHint.feature}</p>
+                  </div>
+                </div>
+                <p className="text-zinc-500 text-[11px] leading-relaxed">{academyHint.text}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </SlideShell>
   );
 };
