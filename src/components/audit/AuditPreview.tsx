@@ -1240,10 +1240,10 @@ const SummarySlide = ({ data, slideNumber, totalSlides, includeAcademy = true }:
             </div>
             <p className="text-cyan-300 font-semibold text-base mb-2">Aurine Academy</p>
             <p className="text-zinc-400 text-sm leading-relaxed flex-1">
-              Autorska aplikacja mobilna w pakiecie — kursy marketingu, narzędzia AI, gotowe szablony treści, generator grafik i kalendarz postów.
+              Autorska aplikacja w pakiecie — status kampanii na żywo, kontakt z opiekunem, dokumenty, kursy marketingu organicznego, narzędzia do tworzenia treści i materiały edukacyjne.
             </p>
             <div className="mt-4 pt-3 border-t border-cyan-500/10">
-              <p className="text-zinc-500 text-xs">✓ Kursy · ✓ Generator AI · ✓ Szablony</p>
+              <p className="text-zinc-500 text-xs">✓ Status kampanii · ✓ Kontakt z opiekunem · ✓ Kursy i narzędzia</p>
             </div>
           </div>
         )}
