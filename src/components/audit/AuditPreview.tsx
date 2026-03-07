@@ -1199,7 +1199,7 @@ const RecommendationsSlide = ({ data, slideNumber, totalSlides, checkedFindings 
       <div className="mt-5 p-4 rounded-xl bg-gradient-to-r from-teal-500/10 to-cyan-500/5 border border-teal-500/20 flex items-center gap-4">
         <Sparkles className="w-6 h-6 text-teal-400 flex-shrink-0" />
         <p className="text-zinc-300 text-sm">
-          <span className="text-teal-300 font-semibold">Aurine Academy</span> — gotowe szablony, kursy wideo i materiały marketingowe stworzone specjalnie dla salonów beauty.
+          W ramach współpracy klientka otrzymuje dostęp do <span className="text-teal-300 font-semibold">Aurine Academy</span> — autorskiej aplikacji ze statusem kampanii, kontaktem z opiekunem, materiałami edukacyjnymi i narzędziami wspierającymi marketing organiczny.
         </p>
       </div>
     </SlideShell>
